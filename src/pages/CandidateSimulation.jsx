@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Loader2, Lock, AlertTriangle, Bot } from 'lucide-react';
+import { Send, Loader2, Lock, AlertTriangle, Bot, ClipboardX } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { analyzeResponse, generateFinalAssessment } from '@/lib/skillosAI';
 import SimulationLock from '@/components/SimulationLock';
@@ -20,6 +20,7 @@ export default function CandidateSimulation() {
   const [analyzing, setAnalyzing] = useState(false);
   const [responses, setResponses] = useState([]);
   const [violations, setViolations] = useState(0);
+  const [pasteWarning, setPasteWarning] = useState(false);
   const [user, setUser] = useState(null);
   const scrollRef = useRef(null);
 
@@ -36,6 +37,13 @@ export default function CandidateSimulation() {
   }, [messages, analyzing]);
 
   const handleViolation = () => setViolations(v => v + 1);
+
+  const handlePasteBlock = (e) => {
+    e.preventDefault();
+    setPasteWarning(true);
+    handleViolation();
+    setTimeout(() => setPasteWarning(false), 3000);
+  };
 
   const startSimulation = async () => {
     const candidateName = user?.full_name || user?.email || 'Candidato Anônimo';
@@ -190,6 +198,7 @@ export default function CandidateSimulation() {
               </div>
               <ul className="text-xs text-slate-400 space-y-1">
                 <li>• A simulação entra em tela cheia — não é possível alternar abas</li>
+                <li>• <span className="text-rose-300">Colar, copiar e recortar são bloqueados</span> — escreva com suas palavras</li>
                 <li>• Cada resposta é analisada por IA para detectar uso de IA externa</li>
                 <li>• Violações de integridade são registradas e visíveis para a empresa</li>
                 <li>• Responda como você agiria no trabalho real — mostre seu potencial verdadeiro</li>
@@ -243,6 +252,24 @@ export default function CandidateSimulation() {
   return (
     <SimulationLock onViolation={handleViolation} violationCount={violations}>
       <div className="min-h-screen bg-slate-950 text-white flex flex-col">
+        <AnimatePresence>
+          {pasteWarning && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-6 left-1/2 -translate-x-1/2 z-[70] bg-rose-950/95 border border-rose-500/50 rounded-xl px-5 py-4 shadow-2xl shadow-rose-500/20 max-w-md"
+            >
+              <div className="flex items-start gap-3">
+                <ClipboardX className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <div className="text-rose-300 font-semibold text-sm">Colar Bloqueado</div>
+                  <div className="text-rose-200/80 text-xs mt-0.5">Colar, copiar e recortar são proibidos. Escreva sua resposta com as próprias palavras.</div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 py-3 flex items-center gap-4">
           <div className="flex-1">
             <div className="text-sm font-semibold">{job.title}</div>
@@ -372,8 +399,12 @@ export default function CandidateSimulation() {
                 <textarea
                   value={openResponse}
                   onChange={e => setOpenResponse(e.target.value)}
+                  onPaste={handlePasteBlock}
+                  onCopy={handlePasteBlock}
+                  onCut={handlePasteBlock}
+                  onContextMenu={handlePasteBlock}
                   rows={2}
-                  placeholder="Digite sua resposta detalhada..."
+                  placeholder="Digite sua resposta detalhada (não é possível colar)..."
                   className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm focus:border-violet-500 focus:outline-none resize-none"
                 />
                 <button

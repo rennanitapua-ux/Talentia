@@ -6,7 +6,12 @@ import { base44 } from '@/api/base44Client';
 import { generateSimulationScenarios } from '@/lib/skillosAI';
 import BootSequence from '@/components/BootSequence';
 
-const SECTORS = ['Tecnologia', 'Vendas', 'Financeiro', 'Marketing', 'RH', 'Atendimento', 'Logística', 'Saúde', 'Educação', 'Administrativo'];
+const SECTORS = [
+  'Tecnologia / Software', 'Vendas B2B', 'Vendas B2C', 'Financeiro', 'Marketing Digital', 'Marketing Tradicional',
+  'Recursos Humanos', 'Atendimento ao Cliente', 'Logística', 'Saúde', 'Educação', 'Administrativo',
+  'Engenharia', 'Jurídico', 'Compras', 'Operações', 'Produto', 'Design', 'Data & Analytics', 'Customer Success',
+  'Finanças / Fintech', 'Agronegócio', 'Varejo', 'Imobiliário', 'Consultoria', 'Outra (escrever abaixo)',
+];
 const DIFFICULTIES = [
   { value: 'entry', label: 'Júnior / Entry' },
   { value: 'mid', label: 'Pleno / Mid' },
@@ -19,8 +24,8 @@ export default function CompanyJobCreate() {
   const [step, setStep] = useState(1);
   const [generating, setGenerating] = useState(false);
   const [form, setForm] = useState({
-    title: '', sector: '', role: '', company_context: '', product: '', client: '',
-    competencies: [], situations: [], difficulty: 'mid', company_name: '',
+    title: '', sector: '', area_description: '', role: '', company_context: '', product: '', client: '',
+    company_problems: '', competencies: [], situations: [], difficulty: 'mid', company_name: '',
   });
   const [newCompetency, setNewCompetency] = useState('');
   const [newSituation, setNewSituation] = useState('');
@@ -130,6 +135,15 @@ export default function CompanyJobCreate() {
                   <input value={form.role} onChange={e => update('role', e.target.value)} placeholder="Ex: Executivo de Vendas"
                     className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
                 </div>
+                {form.sector === 'Outra (escrever abaixo)' && (
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Descreva a área <span className="text-cyan-400">(a IA vai analisar)</span></label>
+                    <textarea value={form.area_description} onChange={e => update('area_description', e.target.value)}
+                      rows={2} placeholder="Ex: Setor de energia renovável, foco em vendas de painéis solares para residências..."
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none resize-none" />
+                    <p className="text-[10px] text-slate-500 mt-1">Escreva livremente — a IA usa sua descrição para gerar perguntas específicas da área.</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -145,15 +159,26 @@ export default function CompanyJobCreate() {
                     rows={3} placeholder="Ex: Startup SaaS B2B de 80 pessoas, crescendo rápido, cultura data-driven..."
                     className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none resize-none" />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Produto / Serviço principal *</label>
-                  <input value={form.product} onChange={e => update('product', e.target.value)} placeholder="Ex: Plataforma de automação de marketing"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Produto / Serviço principal *</label>
+                    <input value={form.product} onChange={e => update('product', e.target.value)} placeholder="Ex: Plataforma de automação de marketing"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Cliente típico *</label>
+                    <input value={form.client} onChange={e => update('client', e.target.value)} placeholder="Ex: Diretores de marketing de médias empresas"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Cliente típico *</label>
-                  <input value={form.client} onChange={e => update('client', e.target.value)} placeholder="Ex: Diretores de marketing de médias empresas"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    Problemas e desafios reais da empresa <span className="text-cyan-400">(a IA gera perguntas a partir disso)</span>
+                  </label>
+                  <textarea value={form.company_problems} onChange={e => update('company_problems', e.target.value)}
+                    rows={3} placeholder="Ex: Alto churn de clientes nos primeiros 90 dias. Equipe de vendas tem dificuldade em fechar contratos anuais. Suporte sobrecarregado com tickets repetitivos..."
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none resize-none" />
+                  <p className="text-[10px] text-slate-500 mt-1">Descreva os problemas reais — a IA criará cenários específicos para testar como o candidato os resolve.</p>
                 </div>
               </div>
             </motion.div>

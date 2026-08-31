@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldAlert, Eye, Lock } from 'lucide-react';
+import { ShieldAlert, Eye, Lock, ClipboardX } from 'lucide-react';
 
 // Fullscreen lock + anti-cheating: detects tab switches, window blur, fullscreen exit
 export default function SimulationLock({ onViolation, violationCount, children }) {
@@ -72,6 +72,8 @@ export default function SimulationLock({ onViolation, violationCount, children }
       <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2 bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-1.5">
         <Lock className="w-3.5 h-3.5 text-cyan-400" />
         <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Modo Protegido</span>
+        <ClipboardX className="w-3.5 h-3.5 text-rose-400" />
+        <span className="text-[10px] font-mono text-rose-400/70 uppercase">Colar Off</span>
         <Eye className="w-3.5 h-3.5 text-slate-500" />
       </div>
     </div>

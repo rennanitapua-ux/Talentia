@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layers } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layers, GitCompare, Link2, Check, Copy } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
 
@@ -12,6 +12,7 @@ export default function CompanyJobDetail() {
   const [simulations, setSimulations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('candidates');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -29,6 +30,13 @@ export default function CompanyJobDetail() {
   if (!job) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Vaga não encontrada</div>;
 
   const ranked = [...simulations].sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0));
+  const shareUrl = `${window.location.origin}/candidate/simulate/${id}`;
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -44,6 +52,34 @@ export default function CompanyJobDetail() {
           <span className="px-3 py-1 rounded-full text-xs font-mono bg-emerald-500/15 text-emerald-400 uppercase">{job.status}</span>
         </div>
       </header>
+
+      {/* Share link bar */}
+      <div className="bg-gradient-to-r from-cyan-500/10 to-transparent border-b border-slate-800">
+        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-wider">
+            <Link2 className="w-3.5 h-3.5" />
+            Link do Processo
+          </div>
+          <div className="flex-1 min-w-[200px] bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-400 font-mono truncate">
+            {shareUrl}
+          </div>
+          <button
+            onClick={copyLink}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+              copied ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+            }`}
+          >
+            {copied ? <><Check className="w-3.5 h-3.5" /> Copiado!</> : <><Copy className="w-3.5 h-3.5" /> Copiar Link</>}
+          </button>
+          <button
+            onClick={() => navigate(`/company/jobs/${id}/compare`)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 transition-colors"
+          >
+            <GitCompare className="w-3.5 h-3.5" />
+            Comparar Candidatos
+          </button>
+        </div>
+      </div>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Virtual company profile */}
