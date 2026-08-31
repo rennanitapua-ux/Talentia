@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, X, Sparkles, Loader2, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { generateSimulationScenarios } from '@/lib/skillosAI';
 import BootSequence from '@/components/BootSequence';
+import SelectableChips from '@/components/SelectableChips';
 
 const SECTORS = [
   'Tecnologia / Software', 'Vendas B2B', 'Vendas B2C', 'Financeiro', 'Marketing Digital', 'Marketing Tradicional',
@@ -114,21 +115,21 @@ export default function CompanyJobCreate() {
                     className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Setor *</label>
-                    <select value={form.sector} onChange={e => update('sector', e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none">
-                      <option value="">Selecione...</option>
-                      {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Cargo / Nível *</label>
-                    <select value={form.difficulty} onChange={e => update('difficulty', e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none">
-                      {DIFFICULTIES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                    </select>
-                  </div>
+                  <SelectableChips
+                    label="Setor *"
+                    options={SECTORS}
+                    value={form.sector}
+                    onChange={v => update('sector', v)}
+                    columns={2}
+                    maxH="220px"
+                  />
+                  <SelectableChips
+                    label="Cargo / Nível *"
+                    options={DIFFICULTIES}
+                    value={form.difficulty}
+                    onChange={v => update('difficulty', v)}
+                    columns={1}
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome do cargo *</label>
