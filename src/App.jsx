@@ -6,6 +6,21 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { Navigate } from 'react-router-dom';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
+import Home from '@/pages/Home';
+import CompanyDashboard from '@/pages/CompanyDashboard';
+import CompanyJobCreate from '@/pages/CompanyJobCreate';
+import CompanyJobDetail from '@/pages/CompanyJobDetail';
+import CompanyCandidateDetail from '@/pages/CompanyCandidateDetail';
+import CandidateJobs from '@/pages/CandidateJobs';
+import CandidateSimulation from '@/pages/CandidateSimulation';
+import CandidateResults from '@/pages/CandidateResults';
+import CandidatePassport from '@/pages/CandidatePassport';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -34,7 +49,21 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/company" element={<CompanyDashboard />} />
+        <Route path="/company/jobs/new" element={<CompanyJobCreate />} />
+        <Route path="/company/jobs/:id" element={<CompanyJobDetail />} />
+        <Route path="/company/candidates/:id" element={<CompanyCandidateDetail />} />
+        <Route path="/candidate" element={<CandidateJobs />} />
+        <Route path="/candidate/simulate/:id" element={<CandidateSimulation />} />
+        <Route path="/candidate/results/:id" element={<CandidateResults />} />
+        <Route path="/candidate/passport" element={<CandidatePassport />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

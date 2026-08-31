@@ -1,0 +1,73 @@
+{
+  "name": "Simulation",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string"
+    },
+    "job_title": {
+      "type": "string"
+    },
+    "company_name": {
+      "type": "string"
+    },
+    "candidate_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_progress",
+        "completed"
+      ],
+      "default": "in_progress"
+    },
+    "responses": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "skill_scores": {
+      "type": "object"
+    },
+    "skill_dna": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "skill_graph": {
+      "type": "object"
+    },
+    "overall_score": {
+      "type": "number"
+    },
+    "recommendation": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "ai_flags": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "focus_violations": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "job_id",
+    "candidate_name"
+  ]
+}

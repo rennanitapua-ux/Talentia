@@ -1,0 +1,73 @@
+{
+  "name": "Job",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "sector": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "company_context": {
+      "type": "string"
+    },
+    "product": {
+      "type": "string"
+    },
+    "client": {
+      "type": "string"
+    },
+    "competencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "situations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "company_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published",
+        "closed"
+      ],
+      "default": "published"
+    },
+    "virtual_company_profile": {
+      "type": "string"
+    },
+    "simulation_scenarios": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "entry",
+        "mid",
+        "senior",
+        "lead"
+      ],
+      "default": "mid"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}
