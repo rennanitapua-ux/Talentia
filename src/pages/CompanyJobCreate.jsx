@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, X, Sparkles, Loader2, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { generateSimulationScenarios } from '@/lib/skillosAI';
+import { generateSimulationPhases } from '@/lib/skillosAI';
 import BootSequence from '@/components/BootSequence';
 import SelectableChips from '@/components/SelectableChips';
 
@@ -57,12 +57,12 @@ export default function CompanyJobCreate() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const result = await generateSimulationScenarios(form);
+      const result = await generateSimulationPhases(form);
       const job = await base44.entities.Job.create({
         ...form,
         status: 'published',
         virtual_company_profile: result.virtual_company_profile,
-        simulation_scenarios: result.scenarios || [],
+        simulation_scenarios: result.phases || [],
       });
       navigate(`/company/jobs/${job.id}`);
     } catch (e) {

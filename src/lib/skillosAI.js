@@ -1,10 +1,9 @@
-// SkillOS — AI Engine v2
-// Rigorous AI analysis for competency-based hiring simulations
-// Questions generated according to company problems, not generic templates
+// SkillOS — AI Engine v3
+// Phase-based simulation: choice phases and write phases, each with 2-3 questions
 import { base44 } from '@/api/base44Client';
 
-// Generate simulation scenarios from a job definition — tailored to company problems
-export async function generateSimulationScenarios(job) {
+// Generate simulation phases from a job definition — tailored to company problems
+export async function generateSimulationPhases(job) {
   const prompt = `Você é o SkillOS, uma IA que cria simulações de trabalho ULTRA-REALISTAS para contratação baseada em competências.
 
 DADOS DA VAGA:
@@ -20,37 +19,48 @@ DADOS DA VAGA:
 SITUAÇÕES REAIS FORNECIDAS PELA EMPRESA:
 ${(job.situations || []).map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
 
-INSTRUÇÕES CRÍTICAS PARA GERAÇÃO:
-1. Cada cenário deve ser ÚNICO e específico para ESTA empresa — nada genérico. Use o nome do produto, o tipo de cliente e os problemas reais.
-2. As perguntas devem refletir os PROBLEMAS reais da empresa — se a empresa tem problema de churn, crie cenários de retenção; se tem problema de vendas, crie cenários de negociação difícil.
-3. Cada cenário deve ter um personagem com nome, cargo e personalidade distintos — não repita personagens.
-4. As 4 opções de múltipla escolha devem ser plausíveis mas distinguíveis por competência — uma pessoa experiente deve identificar a melhor, mas nenhuma deve ser óbvia demais para um novato.
-5. A pergunta de follow-up aberta deve aprofundar o pensamento estratégico, não apenas pedir justificativa.
-6. Varie o TIPO de situação: algumas urgentes, algumas de planejamento, algumas interpessoais, algumas técnicas.
-7. Os critérios de avaliação devem ser específicos o suficiente para distinguir respostas genéricas de respostas com pensamento real.
+INSTRUÇÕES CRÍTICAS:
+1. Gere EXATAMENTE 4 fases, alternando entre tipo "choice" (múltipla escolha) e "write" (escrita livre):
+   - Fase 1: tipo "choice" com 3 perguntas
+   - Fase 2: tipo "write" com 2 perguntas
+   - Fase 3: tipo "choice" com 3 perguntas
+   - Fase 4: tipo "write" com 2 perguntas
+2. Cada pergunta deve ser ÚNICA e específica para ESTA empresa — use o nome do produto, o tipo de cliente e os problemas reais.
+3. As perguntas devem refletir os PROBLEMAS reais da empresa — se tem problema de churn, crie perguntas de retenção; se tem problema de vendas, crie perguntas de negociação.
+4. Para perguntas "choice": 4 opções plausíveis mas distinguíveis por competência — uma pessoa experiente deve identificar a melhor.
+5. Para perguntas "write": a pergunta deve exigir pensamento estratégico real, não apenas justificativa.
+6. Varie o tipo de situação: algumas urgentes, algumas de planejamento, algumas interpessoais, algumas técnicas.
+7. Cada pergunta pode ter um personagem (nome, cargo, tom) que apresenta a situação.
 
 Gere também um perfil da empresa virtual que contextualize a cultura, os desafios do mercado e o momento da empresa.
 
 Retorne JSON com esta estrutura EXATA:
 {
   "virtual_company_profile": "perfil da empresa virtual (cultura, desafios de mercado, momento) — 2-3 parágrafos ricos",
-  "scenarios": [
+  "phases": [
     {
-      "id": "scenario_1",
-      "situation": "situação original adaptada",
-      "scenario_type": "urgente|planejamento|interpessoal|tecnica|etica",
-      "character": { "name": "nome", "role": "cargo", "tone": "tom de voz e personalidade" },
-      "opening_message": "mensagem do personagem apresentando a situação como um chat real — inclua detalhes específicos do produto/cliente",
-      "context": "contexto adicional que o candidato precisa saber",
-      "multiple_choice": [
-        { "id": "a", "text": "texto da opção", "level": "high|medium_high|medium_low|low", "competencies": ["competência demonstrada"] }
-      ],
-      "follow_up_question": "pergunta aberta de aprofundamento que exige pensamento estratégico real",
-      "expected_competencies": ["competências avaliadas nesta situação"],
-      "evaluation_criteria": "critérios detalhados e específicos de avaliação — o que distingue uma resposta excelente de uma genérica"
+      "id": "phase_1",
+      "type": "choice",
+      "title": "título curto da fase",
+      "subtitle": "descrição breve do que será testado",
+      "questions": [
+        {
+          "id": "q1",
+          "prompt": "a pergunta ou situação apresentada ao candidato",
+          "context": "contexto adicional que o candidato precisa saber (pode ser vazio)",
+          "character": { "name": "nome do personagem", "role": "cargo", "tone": "tom de voz" },
+          "multiple_choice": [
+            { "id": "a", "text": "texto da opção", "level": "high|medium_high|medium_low|low", "competencies": ["competência demonstrada"] }
+          ],
+          "expected_competencies": ["competências avaliadas nesta pergunta"],
+          "evaluation_criteria": "critérios detalhados de avaliação"
+        }
+      ]
     }
   ]
-}`;
+}
+
+Para perguntas "write", o campo "multiple_choice" deve ser um array vazio [].`;
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,
@@ -58,21 +68,30 @@ Retorne JSON com esta estrutura EXATA:
       type: "object",
       properties: {
         virtual_company_profile: { type: "string" },
-        scenarios: {
+        phases: {
           type: "array",
           items: {
             type: "object",
             properties: {
               id: { type: "string" },
-              situation: { type: "string" },
-              scenario_type: { type: "string" },
-              character: { type: "object" },
-              opening_message: { type: "string" },
-              context: { type: "string" },
-              multiple_choice: { type: "array" },
-              follow_up_question: { type: "string" },
-              expected_competencies: { type: "array" },
-              evaluation_criteria: { type: "string" }
+              type: { type: "string" },
+              title: { type: "string" },
+              subtitle: { type: "string" },
+              questions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    prompt: { type: "string" },
+                    context: { type: "string" },
+                    character: { type: "object" },
+                    multiple_choice: { type: "array" },
+                    expected_competencies: { type: "array" },
+                    evaluation_criteria: { type: "string" }
+                  }
+                }
+              }
             }
           }
         }
@@ -83,50 +102,40 @@ Retorne JSON com esta estrutura EXATA:
 }
 
 // Analyze a single candidate response — RIGOROUS, detailed, with AI detection
-export async function analyzeResponse(scenario, choiceId, openResponse, previousResponses) {
-  const choice = scenario.multiple_choice?.find(c => c.id === choiceId);
+export async function analyzeQuestionResponse(question, answer, isChoice, previousResponses) {
+  const choiceObj = isChoice ? (question.multiple_choice || []).find(c => c.id === answer) : null;
+  const choiceText = choiceObj?.text || '';
+
   const prompt = `Você é o SkillOS, uma IA que analisa RIGOROSAMENTE respostas de candidatos em simulações de trabalho. Sua análise é a evidência que a empresa usa para contratar — seja crítico, justo e específico.
 
-CENÁRIO:
-- Situação: ${scenario.situation}
-- Tipo: ${scenario.scenario_type || 'geral'}
-- Personagem: ${scenario.character?.name} (${scenario.character?.role}) — tom: ${scenario.character?.tone}
-- Mensagem recebida: ${scenario.opening_message}
-- Pergunta de follow-up: ${scenario.follow_up_question}
-- Competências esperadas: ${(scenario.expected_competencies || []).join(", ")}
-- Critérios de avaliação: ${scenario.evaluation_criteria}
+PERGUNTA:
+- Enunciado: ${question.prompt}
+${question.context ? `- Contexto: ${question.context}` : ''}
+${question.character?.name ? `- Personagem: ${question.character.name} (${question.character.role})` : ''}
+- Competências esperadas: ${(question.expected_competencies || []).join(", ")}
+- Critérios de avaliação: ${question.evaluation_criteria || 'Não especificados'}
 
 RESPOSTA DO CANDIDATO:
-- Opção escolhida: ${choice?.text || "Nenhuma"} (nível avaliado: ${choice?.level || "N/A"})
-- Resposta aberta: """${openResponse || "Sem resposta"}"""
+${isChoice ? `- Opção escolhida: ${choiceText} (nível: ${choiceObj?.level || "N/A"})` : `- Resposta escrita: """${answer || "Sem resposta"}"""`}
 
-RESPOSTAS ANTERIORES (para avaliar consistência e evolução):
-${(previousResponses || []).map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
+RESPOSTAS ANTERIORES (para avaliar consistência):
+${(previousResponses || []).map((r, i) => `  ${i + 1}. ${r}`).join("\n") || "Nenhuma"}
 
 ANÁLISE MINUCIOSA — seja RIGOROSO:
 
-1. COMPETÊNCIAS: Para CADA competência esperada:
-   - Determine: demonstrada (✓), parcialmente demonstrada (~), ou não demonstrada (✗)
-   - Cite um TRECHO EXATO da resposta como evidência
-   - Pontue de 0-100 com justificativa detalhada
-   - Diferencie: resposta que demonstra competência real vs resposta que apenas "soa bem"
+1. COMPETÊNCIAS: Para CADA competência esperada, determine se foi demonstrada (✓), parcialmente (~), ou não (✗). Pontue 0-100 com justificativa e cite um trecho exato da resposta.
 
-2. DETECÇÃO DE IA — analise a resposta aberta minuciosamente:
-   - Linguagem excessivamente formal ou templated ("é importante notar", "vale ressaltar", "em suma")
-   - Estrutura perfeita demais (introdução, desenvolvimento, conclusão em resposta curta)
+2. DETECÇÃO DE IA (apenas para respostas escritas): Analise se a resposta parece gerada por IA:
+   - Linguagem excessivamente formal ou templated
+   - Estrutura perfeita demais para uma resposta curta
    - Vocabulário fora do esperado para o cargo/nível
-   - Ausência de voz pessoal ou opinião própria
-   - Hedging e generalidades sem especificidade
-   - Resposta que poderia ser copiada de qualquer candidato (falta de contexto específico)
-   - Consistência entre a escolha múltipla e a resposta aberta
-   - Dê uma confiança de 0-100 e liste indicadores específicos
+   - Ausência de voz pessoal
+   - Generalidades sem especificidade
+   - Dê confiança 0-100 e liste indicadores
 
-3. QUALIDADE DA RESPOSTA:
-   - Especificidade: a resposta usa detalhes do cenário ou é genérica?
-   - Profundidade: demonstra pensamento estratégico ou apenas reativo?
-   - Autenticidade: soa como uma pessoa real ou como um template?
+3. QUALIDADE: Especificidade (0-100), Profundidade (0-100), Autenticidade (0-100).
 
-Seja CRÍTICO. Uma resposta genérica deve pontuar BAIXO em especificidade, mesmo se "soa bem". Não inflacione notas.
+Seja CRÍTICO. Uma resposta genérica deve pontuar BAIXO, mesmo se "soa bem".
 
 Retorne JSON:
 {
@@ -134,24 +143,24 @@ Retorne JSON:
     "nome_da_competencia": {
       "score": 0-100,
       "evidence": "✓|~|✗",
-      "justification": "justificativa detalhada e específica",
+      "justification": "justificativa detalhada",
       "evidence_quote": "trecho exato citado da resposta"
     }
   },
   "ai_detection": {
     "is_ai_generated": true|false,
     "confidence": 0-100,
-    "indicators": ["indicador específico 1", "indicador específico 2"],
-    "analysis": "análise detalhada explicando o raciocínio"
+    "indicators": ["indicador 1", "indicador 2"],
+    "analysis": "análise detalhada"
   },
   "response_quality": {
     "specificity": 0-100,
     "depth": 0-100,
     "authenticity": 0-100,
-    "notes": "observações sobre a qualidade"
+    "notes": "observações"
   },
   "response_score": 0-100,
-  "detailed_feedback": "feedback abrangente, específico e construtivo — diga o que foi bem, o que faltou, e como melhorar"
+  "detailed_feedback": "feedback construtivo — o que foi bem, o que faltou, como melhorar"
 }`;
 
   const result = await base44.integrations.Core.InvokeLLM({
@@ -159,9 +168,36 @@ Retorne JSON:
     response_json_schema: {
       type: "object",
       properties: {
-        competency_scores: { type: "object" },
-        ai_detection: { type: "object" },
-        response_quality: { type: "object" },
+        competency_scores: {
+          type: "object",
+          additionalProperties: {
+            type: "object",
+            properties: {
+              score: { type: "number" },
+              evidence: { type: "string" },
+              justification: { type: "string" },
+              evidence_quote: { type: "string" }
+            }
+          }
+        },
+        ai_detection: {
+          type: "object",
+          properties: {
+            is_ai_generated: { type: "boolean" },
+            confidence: { type: "number" },
+            indicators: { type: "array", items: { type: "string" } },
+            analysis: { type: "string" }
+          }
+        },
+        response_quality: {
+          type: "object",
+          properties: {
+            specificity: { type: "number" },
+            depth: { type: "number" },
+            authenticity: { type: "number" },
+            notes: { type: "string" }
+          }
+        },
         response_score: { type: "number" },
         detailed_feedback: { type: "string" }
       }
@@ -180,38 +216,31 @@ SETOR: ${job.sector}
 PROBLEMAS DA EMPRESA: ${job.company_problems || 'Não especificados'}
 COMPETÊNCIAS AVALIADAS: ${(job.competencies || []).join(", ")}
 
-RESPOSTAS E ANÁLISES DE CADA CENÁRIO (todas as evidências):
+RESPOSTAS E ANÁLISES DE CADA PERGUNTA (todas as evidências):
 ${JSON.stringify(allResponses, null, 2)}
 
 Gere uma avaliação final rigorosa e completa:
 
-1. SCORES FINAIS: Para cada competência, aggregate os scores de todos os cenários. Pondere consistência — uma competência demonstrada em todos os cenários deve pontuar mais alto que uma demonstrada em apenas um.
+1. SCORES FINAIS: Para cada competência, agregue os scores de todas as perguntas. Pondere consistência — uma competência demonstrada em todas deve pontuar mais alto.
 
-2. SKILL DNA: 
-   - Top 3 fortalezas com evidência específica de qual cenário
-   - Top 3 áreas de desenvolvimento com evidência específica
+2. SKILL DNA: Top 3 fortalezas e Top 3 áreas de desenvolvimento, com evidência específica.
 
-3. SKILL SCORE GERAL (0-100): média ponderada considerando consistência
+3. SKILL SCORE GERAL (0-100): média ponderada considerando consistência.
 
-4. SKILL GRAPH: score final de cada competência
+4. SKILL GRAPH: score final de cada competência.
 
-5. RECOMENDAÇÃO: Contratação Forte / Contratar / Talvez / Não Recomendado / Não Contratar
+5. RECOMENDAÇÃO: Contratação Forte / Contratar / Talvez / Não Recomendado / Não Contratar.
 
-6. RESUMO EXECUTIVO: 3-5 parágrafos detalhados cobrindo:
-   - Como o candidato se saiu nos cenários mais desafiadores
-   - Padrões de comportamento observados
-   - Riscos e alertas (incluindo detecções de IA)
-   - Potencial de crescimento
-   - Recomendação final justificada
+6. RESUMO EXECUTIVO: 3-5 parágrafos detalhados.
 
-7. Se houve múltiplas detecções de IA, reduza a confiança na avaliação e mencione explicitamente.
+7. Se houve múltiplas detecções de IA, reduza a confiança e mencione explicitamente.
 
 Retorne JSON:
 {
   "skill_scores": { "competencia": 0-100 },
   "skill_dna": {
-    "strengths": [{ "competency": "nome", "score": 0-100, "evidence": "evidência específica com referência ao cenário" }],
-    "growth_areas": [{ "competency": "nome", "score": 0-100, "evidence": "evidência específica com referência ao cenário" }]
+    "strengths": [{ "competency": "nome", "score": 0-100, "evidence": "evidência específica" }],
+    "growth_areas": [{ "competency": "nome", "score": 0-100, "evidence": "evidência específica" }]
   },
   "overall_score": 0-100,
   "recommendation": "Contratação Forte|Contratar|Talvez|Não Recomendado|Não Contratar",
@@ -224,12 +253,18 @@ Retorne JSON:
     response_json_schema: {
       type: "object",
       properties: {
-        skill_scores: { type: "object" },
-        skill_dna: { type: "object" },
+        skill_scores: { type: "object", additionalProperties: { type: "number" } },
+        skill_dna: {
+          type: "object",
+          properties: {
+            strengths: { type: "array" },
+            growth_areas: { type: "array" }
+          }
+        },
         overall_score: { type: "number" },
         recommendation: { type: "string" },
         summary: { type: "string" },
-        skill_graph: { type: "object" }
+        skill_graph: { type: "object", additionalProperties: { type: "number" } }
       }
     }
   });

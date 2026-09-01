@@ -108,7 +108,7 @@ export default function CompanyJobDetail() {
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
             <Layers className="w-4 h-4 text-amber-400 mb-2" />
             <div className="text-2xl font-bold font-mono">{(job.simulation_scenarios || []).length}</div>
-            <div className="text-xs text-slate-500">Cenários</div>
+            <div className="text-xs text-slate-500">Fases</div>
           </div>
         </div>
 
@@ -180,27 +180,36 @@ export default function CompanyJobDetail() {
 
         {tab === 'scenarios' && (
           <div className="space-y-4">
-            {(job.simulation_scenarios || []).map((sc, i) => (
+            {(job.simulation_scenarios || []).map((ph, i) => (
               <div key={i} className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-mono text-cyan-400">CENÁRIO {String(i + 1).padStart(2, '0')}</span>
-                  {sc.character?.name && (
-                    <span className="text-xs text-slate-500">· {sc.character.name} ({sc.character.role})</span>
-                  )}
+                  <span className="text-xs font-mono text-cyan-400">FASE {String(i + 1).padStart(2, '0')}</span>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${
+                    ph.type === 'choice' ? 'bg-cyan-500/15 text-cyan-300' : 'bg-violet-500/15 text-violet-300'
+                  }`}>
+                    {ph.type === 'choice' ? 'Múltipla Escolha' : 'Resposta Escrita'}
+                  </span>
+                  <span className="text-xs text-slate-500">· {ph.questions?.length || 0} perguntas</span>
                 </div>
-                <p className="text-sm text-slate-300 mb-3 italic">"{sc.opening_message}"</p>
-                <div className="text-xs text-slate-500 mb-2">Opções de múltipla escolha:</div>
-                <div className="space-y-1.5">
-                  {(sc.multiple_choice || []).map((opt, j) => (
-                    <div key={j} className="flex items-start gap-2 text-xs">
-                      <span className="font-mono text-slate-600 mt-0.5">{opt.id}.</span>
-                      <span className="text-slate-400">{opt.text}</span>
+                <div className="text-sm font-medium mb-3">{ph.title}</div>
+                <div className="space-y-2">
+                  {(ph.questions || []).map((q, j) => (
+                    <div key={j} className="bg-slate-800/30 rounded-lg p-3 border border-slate-800">
+                      <div className="flex items-start gap-2 mb-1">
+                        <span className="text-xs font-mono text-slate-600 mt-0.5">Q{j + 1}.</span>
+                        <span className="text-xs text-slate-300 flex-1">{q.prompt}</span>
+                      </div>
+                      {q.multiple_choice?.length > 0 && (
+                        <div className="mt-2 pl-5 space-y-1">
+                          {q.multiple_choice.map((opt, k) => (
+                            <div key={k} className="flex items-start gap-1.5 text-[11px]">
+                              <span className="font-mono text-slate-600">{opt.id.toUpperCase()}.</span>
+                              <span className="text-slate-500">{opt.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {(sc.expected_competencies || []).map((c, j) => (
-                    <span key={j} className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 text-[10px]">{c}</span>
                   ))}
                 </div>
               </div>
