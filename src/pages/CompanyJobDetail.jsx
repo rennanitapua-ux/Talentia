@@ -54,30 +54,44 @@ export default function CompanyJobDetail() {
       </header>
 
       {/* Share link bar */}
-      <div className="bg-gradient-to-r from-cyan-500/10 to-transparent border-b border-slate-800">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-wider">
-            <Link2 className="w-3.5 h-3.5" />
-            Link do Processo
+      <div className="bg-gradient-to-r from-cyan-500/10 via-violet-500/5 to-transparent border-b border-slate-800">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-7 h-7 rounded-lg bg-cyan-500/15 flex items-center justify-center">
+              <Link2 className="w-3.5 h-3.5 text-cyan-400" />
+            </div>
+            <span className="text-sm font-semibold text-cyan-200">Link do Candidato</span>
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">compartilhe para receber respostas</span>
           </div>
-          <div className="flex-1 min-w-[200px] bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-400 font-mono truncate">
-            {shareUrl}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex-1 min-w-[200px] bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-300 font-mono truncate">
+              {shareUrl}
+            </div>
+            <button
+              onClick={copyLink}
+              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors ${
+                copied ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+              }`}
+            >
+              {copied ? <><Check className="w-3.5 h-3.5" /> Copiado!</> : <><Copy className="w-3.5 h-3.5" /> Copiar</>}
+            </button>
+            <a
+              href={shareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition-colors"
+            >
+              <Play className="w-3.5 h-3.5" />
+              Abrir Simulação
+            </a>
+            <button
+              onClick={() => navigate(`/company/jobs/${id}/compare`)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition-colors"
+            >
+              <GitCompare className="w-3.5 h-3.5" />
+              Comparar
+            </button>
           </div>
-          <button
-            onClick={copyLink}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-              copied ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-            }`}
-          >
-            {copied ? <><Check className="w-3.5 h-3.5" /> Copiado!</> : <><Copy className="w-3.5 h-3.5" /> Copiar Link</>}
-          </button>
-          <button
-            onClick={() => navigate(`/company/jobs/${id}/compare`)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 transition-colors"
-          >
-            <GitCompare className="w-3.5 h-3.5" />
-            Comparar Candidatos
-          </button>
         </div>
       </div>
 

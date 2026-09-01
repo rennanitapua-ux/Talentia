@@ -67,54 +67,192 @@ Para perguntas "write", o campo "multiple_choice" deve ser um array vazio [].`;
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,
-    response_json_schema: {
-      type: "object",
-      properties: {
-        virtual_company_profile: { type: "string" },
-        phases: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              id: { type: "string" },
-              type: { type: "string" },
-              title: { type: "string" },
-              subtitle: { type: "string" },
-              questions: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string" },
-                    prompt: { type: "string" },
-                    context: { type: "string" },
-                    write_guidance: { type: "string" },
-                    character: { type: "object" },
-                    multiple_choice: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          id: { type: "string" },
-                          text: { type: "string" },
-                          level: { type: "string" },
-                          competencies: { type: "array", items: { type: "string" } }
-                        }
-                      }
-                    },
-                    expected_competencies: { type: "array", items: { type: "string" } },
-                    evaluation_criteria: { type: "string" }
-                  },
-                  required: ["id", "prompt"]
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    model: 'gemini_3_flash',
   });
-  return result;
+
+  // Parse JSON from string response (no rigid schema — AI has freedom to generate full structure)
+  let parsed;
+  try {
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    parsed = JSON.parse(jsonMatch ? jsonMatch[0] : result);
+  } catch (e) {
+    console.error('Failed to parse simulation JSON, using fallback:', e);
+    parsed = null;
+  }
+
+  // Validate and fix: ensure every phase has questions
+  if (parsed?.phases?.length) {
+    parsed.phases = parsed.phases.map((ph, pi) => {
+      if (!ph.questions || ph.questions.length === 0) {
+        // Fallback: generate questions from job situations/problems
+        ph.questions = generateFallbackQuestions(ph.type, job, pi);
+      }
+      // Ensure each question has required fields
+      ph.questions = ph.questions.map((q, qi) => ({
+        id: q.id || `q${pi}_${qi}`,
+        prompt: q.prompt || 'Descreva como você lidaria com esta situação no contexto da empresa.',
+        context: q.context || '',
+        write_guidance: q.write_guidance || (ph.type === 'write' ? 'Escreva sua resposta detalhada, explicando seu raciocínio e as ações que tomaria.' : ''),
+        character: q.character || null,
+        multiple_choice: q.multiple_choice || [],
+        expected_competencies: q.expected_competencies || job.competencies || [],
+        evaluation_criteria: q.evaluation_criteria || '',
+      }));
+      return ph;
+    });
+  } else {
+    // Total fallback: generate all phases from scratch
+    parsed = generateFallbackPhases(job);
+  }
+
+  return parsed;
+}
+
+// Fallback: generate questions from job situations and problems when AI returns empty
+function generateFallbackQuestions(type, job, phaseIdx) {
+  const situations = job.situations || [];
+  const problems = job.company_problems || '';
+  const competencies = job.competencies || ['Comunicação', 'Resolução de Problemas'];
+  const productName = job.product || 'o produto';
+  const clientName = job.client || 'o cliente';
+
+  const baseSituation = situations[phaseIdx % situations.length] ||
+    `A empresa enfrenta um desafio com ${productName} envolvendo ${clientName}. ${problems ? 'Contexto: ' + problems : ''}`;
+
+  if (type === 'choice') {
+    return [{
+      id: `q_${phaseIdx}_0`,
+      prompt: `Situação: ${baseSituation}\n\nQual seria a melhor abordagem para resolver esta situação?`,
+      context: '',
+      character: null,
+      multiple_choice: [
+        { id: 'a', text: 'Abordar diretamente o problema com o cliente, buscando uma solução imediata.', level: 'high', competencies: [competencies[0]] },
+        { id: 'b', text: 'Encaminhar para a equipe responsável e acompanhar o caso.', level: 'medium_high', competencies: [competencies[0]] },
+        { id: 'c', text: 'Documentar o caso e aguardar orientação da liderança.', level: 'medium_low', competencies: [competencies[0]] },
+        { id: 'd', text: 'Responder com uma solução genérica padronizada.', level: 'low', competencies: [competencies[0]] },
+      ],
+      expected_competencies: competencies,
+      evaluation_criteria: 'Capacidade de identificar a melhor abordagem para a situação.',
+    }];
+  }
+
+  return [{
+    id: `q_${phaseIdx}_0`,
+    prompt: `Situação: ${baseSituation}\n\nComo você lidaria com esta situação? Explique seu raciocínio passo a passo.`,
+    context: '',
+    write_guidance: `Descreva detalhadamente: 1) Como você analisaria a situação, 2) Que perguntas faria, 3) Que solução proporia, 4) Como mediria o sucesso da sua abordagem.`,
+    character: null,
+    multiple_choice: [],
+    expected_competencies: competencies,
+    evaluation_criteria: 'Profundidade do raciocínio, especificidade da resposta e alinhamento com as competências esperadas.',
+  }];
+}
+
+// Total fallback: generate all 4 phases from scratch
+function generateFallbackPhases(job) {
+  const situations = job.situations || [];
+  const problems = job.company_problems || '';
+  const competencies = job.competencies || ['Comunicação', 'Resolução de Problemas'];
+  const productName = job.product || 'o produto';
+  const clientName = job.client || 'o cliente';
+
+  // Build 7 different situations from job data
+  const allSituations = [];
+  if (situations.length > 0) {
+    situations.forEach(s => allSituations.push(s));
+  }
+  // Add problem-based situations
+  if (problems) {
+    allSituations.push(`A empresa enfrenta: ${problems}. Como você abordaria esse desafio no seu primeiro mês?`);
+    allSituations.push(`Um cliente relatou insatisfação relacionada a: ${problems}. Como você resolveria?`);
+  }
+  // Fill remaining with generic but specific situations
+  while (allSituations.length < 7) {
+    allSituations.push(`Cenário ${allSituations.length + 1}: Uma situação inesperada surge com ${clientName} sobre ${productName}. Como você age?`);
+  }
+
+  return {
+    virtual_company_profile: `${job.company_name || 'A empresa'} atua no setor de ${job.sector || 'tecnologia'} oferecendo ${productName} para ${clientName}. ${problems ? 'Enfrenta desafios como: ' + problems + '.' : ''} A cultura valoriza proatividade e resultados.`,
+    phases: [
+      {
+        id: 'phase_1', type: 'choice', title: 'Decisões Rápidas', subtitle: 'Avalia tomada de decisão',
+        questions: [
+          {
+            id: 'q1_0', prompt: `Situação: ${allSituations[0]}\n\nQual a melhor abordagem?`,
+            context: '', character: null,
+            multiple_choice: [
+              { id: 'a', text: 'Agir imediatamente, assumindo responsabilidade.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Consultar a equipe antes de decidir.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Esperar mais informações antes de agir.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Seguir o processo padrão sem adaptação.', level: 'low', competencies: [competencies[0]] },
+            ],
+            expected_competencies: competencies, evaluation_criteria: 'Tomada de decisão adequada ao contexto.',
+          },
+          {
+            id: 'q1_1', prompt: `Situação: ${allSituations[1]}\n\nQual opção escolheria?`,
+            context: '', character: null,
+            multiple_choice: [
+              { id: 'a', text: 'Priorizar a relação com o cliente acima de tudo.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Equilibrar relação e processo.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Seguir o processo rigidamente.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Evitar o conflito.', level: 'low', competencies: [competencies[0]] },
+            ],
+            expected_competencies: competencies, evaluation_criteria: 'Equilíbrio entre empatia e processo.',
+          },
+        ],
+      },
+      {
+        id: 'phase_2', type: 'write', title: 'Resposta Estratégica', subtitle: 'Avalia raciocínio estratégico',
+        questions: [
+          {
+            id: 'q2_0', prompt: `Situação: ${allSituations[2]}\n\nComo você lidaria com esta situação?`,
+            context: '', write_guidance: 'Descreva: 1) Sua análise da situação, 2) As ações que tomaria, 3) Como mediria o resultado.',
+            character: null, multiple_choice: [],
+            expected_competencies: competencies, evaluation_criteria: 'Profundidade do raciocínio.',
+          },
+          {
+            id: 'q2_1', prompt: `Situação: ${allSituations[3]}\n\nExplique sua abordagem detalhadamente.`,
+            context: '', write_guidance: 'Detalhe seu plano de ação passo a passo, incluindo como envolveria a equipe.',
+            character: null, multiple_choice: [],
+            expected_competencies: competencies, evaluation_criteria: 'Clareza e especificidade.',
+          },
+        ],
+      },
+      {
+        id: 'phase_3', type: 'choice', title: 'Cenário Crítico', subtitle: 'Avalia priorização',
+        questions: [
+          {
+            id: 'q3_0', prompt: `Situação: ${allSituations[4]}\n\nQual a melhor decisão?`,
+            context: '', character: null,
+            multiple_choice: [
+              { id: 'a', text: 'Resolver a causa raiz do problema.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Conter o problema e depois investigar.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Escalar imediatamente para a liderança.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Esperar o problema se resolver sozinho.', level: 'low', competencies: [competencies[0]] },
+            ],
+            expected_competencies: competencies, evaluation_criteria: 'Priorização adequada.',
+          },
+        ],
+      },
+      {
+        id: 'phase_4', type: 'write', title: 'Plano de Ação', subtitle: 'Avalia planejamento',
+        questions: [
+          {
+            id: 'q4_0', prompt: `Situação: ${allSituations[5]}\n\nDescreva como você resolveria.`,
+            context: '', write_guidance: 'Apresente um plano completo: diagnóstico, ações, prazos e métricas de sucesso.',
+            character: null, multiple_choice: [],
+            expected_competencies: competencies, evaluation_criteria: 'Capacidade de planejamento.',
+          },
+          {
+            id: 'q4_1', prompt: `Situação: ${allSituations[6]}\n\nComo você abordaria este desafio?`,
+            context: '', write_guidance: 'Explique sua estratégia, como comunicaria aos stakeholders e que resultados esperaria.',
+            character: null, multiple_choice: [],
+            expected_competencies: competencies, evaluation_criteria: 'Visão estratégica.',
+          },
+        ],
+      },
+    ],
+  };
 }
 
 // Analyze a single candidate response — RIGOROUS, detailed, with AI detection
