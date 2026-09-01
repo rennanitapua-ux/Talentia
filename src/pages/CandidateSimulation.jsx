@@ -223,12 +223,8 @@ export default function CandidateSimulation() {
               <div className="space-y-2">
                 {phases.map((p, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/30 border border-slate-800">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      p.type === 'choice' ? 'bg-cyan-500/15' : 'bg-violet-500/15'
-                    }`}>
-                      {p.type === 'choice'
-                        ? <MousePointerClick className="w-4 h-4 text-cyan-400" />
-                        : <PenLine className="w-4 h-4 text-violet-400" />
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${p.type === 'choice' ? 'bg-cyan-500/15' : 'bg-violet-500/15'}`}>
+                      {p.type === 'choice' ? <MousePointerClick className="w-4 h-4 text-cyan-400" /> : <PenLine className="w-4 h-4 text-violet-400" />}
                     </div>
                     <div className="flex-1">
                       <div className="text-sm font-medium">{p.title || `Fase ${i + 1}`}</div>
