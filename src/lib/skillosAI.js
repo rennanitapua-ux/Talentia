@@ -21,16 +21,18 @@ ${(job.situations || []).map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
 
 INSTRUÇÕES CRÍTICAS:
 1. Gere EXATAMENTE 4 fases, alternando entre tipo "choice" (múltipla escolha) e "write" (escrita livre):
-   - Fase 1: tipo "choice" com 3 perguntas
+   - Fase 1: tipo "choice" com 2 perguntas
    - Fase 2: tipo "write" com 2 perguntas
-   - Fase 3: tipo "choice" com 3 perguntas
+   - Fase 3: tipo "choice" com 1 pergunta
    - Fase 4: tipo "write" com 2 perguntas
-2. Cada pergunta deve ser ÚNICA e específica para ESTA empresa — use o nome do produto, o tipo de cliente e os problemas reais.
-3. As perguntas devem refletir os PROBLEMAS reais da empresa — se tem problema de churn, crie perguntas de retenção; se tem problema de vendas, crie perguntas de negociação.
+   TOTAL: 3 perguntas de múltipla escolha + 4 perguntas de escrita = 7 perguntas.
+2. Cada pergunta deve ser ÚNICA e específica para ESTA empresa — use o nome do produto, o tipo de cliente e os problemas reais. NUNCA reuse a mesma situação entre perguntas.
+3. As perguntas devem refletir os PROBLEMAS reais da empresa — se tem problema de churn, crie perguntas de retenção; se tem problema de vendas, crie perguntas de negociação. Cada pergunta deve abordar uma SITUAÇÃO DIFERENTE.
 4. Para perguntas "choice": 4 opções plausíveis mas distinguíveis por competência — uma pessoa experiente deve identificar a melhor.
-5. Para perguntas "write": a pergunta deve exigir pensamento estratégico real, não apenas justificativa.
-6. Varie o tipo de situação: algumas urgentes, algumas de planejamento, algumas interpessoais, algumas técnicas.
+5. Para perguntas "write": o campo "prompt" DEVE conter a situação/pergunta completa e detalhada que o candidato precisa responder. O campo "write_guidance" DEVE conter instruções claras sobre o que o candidato deve escrever (ex: "Descreva como você abordaria a conversa com o cliente, quais perguntas faria, e que solução proporia"). A pergunta deve exigir pensamento estratégico real, não apenas justificativa.
+6. Varie o tipo de situação: algumas urgentes, algumas de planejamento, algumas interpessoais, algumas técnicas. Cada pergunta = uma situação totalmente diferente.
 7. Cada pergunta pode ter um personagem (nome, cargo, tom) que apresenta a situação.
+8. O campo "prompt" é OBRIGATÓRIO e nunca pode ser vazio — é o que o candidato vê na tela.
 
 Gere também um perfil da empresa virtual que contextualize a cultura, os desafios do mercado e o momento da empresa.
 
@@ -46,8 +48,9 @@ Retorne JSON com esta estrutura EXATA:
       "questions": [
         {
           "id": "q1",
-          "prompt": "a pergunta ou situação apresentada ao candidato",
+          "prompt": "a pergunta ou situação completa e detalhada apresentada ao candidato (OBRIGATÓRIO, nunca vazio)",
           "context": "contexto adicional que o candidato precisa saber (pode ser vazio)",
+          "write_guidance": "para perguntas write: instruções claras sobre o que escrever (vazio para choice)",
           "character": { "name": "nome do personagem", "role": "cargo", "tone": "tom de voz" },
           "multiple_choice": [
             { "id": "a", "text": "texto da opção", "level": "high|medium_high|medium_low|low", "competencies": ["competência demonstrada"] }
@@ -85,11 +88,24 @@ Para perguntas "write", o campo "multiple_choice" deve ser um array vazio [].`;
                     id: { type: "string" },
                     prompt: { type: "string" },
                     context: { type: "string" },
+                    write_guidance: { type: "string" },
                     character: { type: "object" },
-                    multiple_choice: { type: "array" },
-                    expected_competencies: { type: "array" },
+                    multiple_choice: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          text: { type: "string" },
+                          level: { type: "string" },
+                          competencies: { type: "array", items: { type: "string" } }
+                        }
+                      }
+                    },
+                    expected_competencies: { type: "array", items: { type: "string" } },
                     evaluation_criteria: { type: "string" }
-                  }
+                  },
+                  required: ["id", "prompt"]
                 }
               }
             }

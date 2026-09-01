@@ -399,7 +399,7 @@ export default function CandidateSimulation() {
                   </div>
                   <div className="flex-1 bg-slate-800/60 rounded-2xl rounded-tl-sm p-4">
                     <div className="text-xs text-slate-500 mb-1">{currentQuestion.character.name} · {currentQuestion.character.role}</div>
-                    <p className="text-sm text-slate-200">{currentQuestion.prompt}</p>
+                    <p className="text-sm text-slate-200">{currentQuestion.prompt || 'Responda a pergunta abaixo com suas próprias palavras.'}</p>
                     {currentQuestion.context && (
                       <p className="text-xs text-slate-500 mt-2 pt-2 border-t border-slate-700/50">{currentQuestion.context}</p>
                     )}
@@ -410,7 +410,7 @@ export default function CandidateSimulation() {
               {/* Question without character */}
               {!currentQuestion.character?.name && (
                 <div className="bg-slate-800/60 rounded-2xl p-5 mb-4">
-                  <p className="text-sm text-slate-200">{currentQuestion.prompt}</p>
+                  <p className="text-sm text-slate-200">{currentQuestion.prompt || 'Responda a pergunta abaixo com suas próprias palavras.'}</p>
                   {currentQuestion.context && (
                     <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-700/50">{currentQuestion.context}</p>
                   )}
@@ -445,6 +445,15 @@ export default function CandidateSimulation() {
               {/* Write answer */}
               {!isChoice && (
                 <div>
+                  {currentQuestion.write_guidance && (
+                    <div className="mb-3 p-3 rounded-xl bg-violet-500/5 border border-violet-500/20">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <PenLine className="w-3.5 h-3.5 text-violet-400" />
+                        <span className="text-[10px] font-mono text-violet-400 uppercase tracking-wider">O que escrever</span>
+                      </div>
+                      <p className="text-xs text-violet-200/80 leading-relaxed">{currentQuestion.write_guidance}</p>
+                    </div>
+                  )}
                   <div className="text-xs font-mono text-slate-500 uppercase mb-2">Sua resposta</div>
                   <textarea
                     value={writeAnswer}
