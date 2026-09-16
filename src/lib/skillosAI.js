@@ -1,5 +1,5 @@
-// TalentOS — AI Engine v3
-// Phase-based simulation: choice phases and write phases, each with 2-3 questions
+// TalentOS — AI Engine v4
+// Deep per-response analysis + comprehensive final assessment report
 import { base44 } from '@/api/base44Client';
 
 // Generate simulation phases from a job definition — tailored to company problems
@@ -29,7 +29,7 @@ INSTRUÇÕES CRÍTICAS:
 2. Cada pergunta deve ser ÚNICA e específica para ESTA empresa — use o nome do produto, o tipo de cliente e os problemas reais. NUNCA reuse a mesma situação entre perguntas.
 3. As perguntas devem refletir os PROBLEMAS reais da empresa — se tem problema de churn, crie perguntas de retenção; se tem problema de vendas, crie perguntas de negociação. Cada pergunta deve abordar uma SITUAÇÃO DIFERENTE.
 4. Para perguntas "choice": 4 opções plausíveis mas distinguíveis por competência — uma pessoa experiente deve identificar a melhor.
-5. Para perguntas "write": o campo "prompt" DEVE conter a situação/pergunta completa e detalhada que o candidato precisa responder. O campo "write_guidance" DEVE conter instruções claras sobre o que o candidato deve escrever (ex: "Descreva como você abordaria a conversa com o cliente, quais perguntas faria, e que solução proporia"). A pergunta deve exigir pensamento estratégico real, não apenas justificativa.
+5. Para perguntas "write": o campo "prompt" DEVE conter a situação/pergunta completa e detalhada que o candidato precisa responder. O campo "write_guidance" DEVE conter instruções claras sobre o que o candidato deve escrever. A pergunta deve exigir pensamento estratégico real, não apenas justificativa.
 6. Varie o tipo de situação: algumas urgentes, algumas de planejamento, algumas interpessoais, algumas técnicas. Cada pergunta = uma situação totalmente diferente.
 7. Cada pergunta pode ter um personagem (nome, cargo, tom) que apresenta a situação.
 8. O campo "prompt" é OBRIGATÓRIO e nunca pode ser vazio — é o que o candidato vê na tela.
@@ -70,7 +70,6 @@ Para perguntas "write", o campo "multiple_choice" deve ser um array vazio [].`;
     model: 'gemini_3_flash',
   });
 
-  // Parse JSON from string response (no rigid schema — AI has freedom to generate full structure)
   let parsed;
   try {
     const jsonMatch = result.match(/\{[\s\S]*\}/);
@@ -80,14 +79,11 @@ Para perguntas "write", o campo "multiple_choice" deve ser um array vazio [].`;
     parsed = null;
   }
 
-  // Validate and fix: ensure every phase has questions
   if (parsed?.phases?.length) {
     parsed.phases = parsed.phases.map((ph, pi) => {
       if (!ph.questions || ph.questions.length === 0) {
-        // Fallback: generate questions from job situations/problems
         ph.questions = generateFallbackQuestions(ph.type, job, pi);
       }
-      // Ensure each question has required fields
       ph.questions = ph.questions.map((q, qi) => ({
         id: q.id || `q${pi}_${qi}`,
         prompt: q.prompt || 'Descreva como você lidaria com esta situação no contexto da empresa.',
@@ -101,14 +97,12 @@ Para perguntas "write", o campo "multiple_choice" deve ser um array vazio [].`;
       return ph;
     });
   } else {
-    // Total fallback: generate all phases from scratch
     parsed = generateFallbackPhases(job);
   }
 
   return parsed;
 }
 
-// Fallback: generate questions from job situations and problems when AI returns empty
 function generateFallbackQuestions(type, job, phaseIdx) {
   const situations = job.situations || [];
   const problems = job.company_problems || '';
@@ -148,7 +142,6 @@ function generateFallbackQuestions(type, job, phaseIdx) {
   }];
 }
 
-// Total fallback: generate all 4 phases from scratch
 function generateFallbackPhases(job) {
   const situations = job.situations || [];
   const problems = job.company_problems || '';
@@ -156,17 +149,14 @@ function generateFallbackPhases(job) {
   const productName = job.product || 'o produto';
   const clientName = job.client || 'o cliente';
 
-  // Build 7 different situations from job data
   const allSituations = [];
   if (situations.length > 0) {
     situations.forEach(s => allSituations.push(s));
   }
-  // Add problem-based situations
   if (problems) {
     allSituations.push(`A empresa enfrenta: ${problems}. Como você abordaria esse desafio no seu primeiro mês?`);
     allSituations.push(`Um cliente relatou insatisfação relacionada a: ${problems}. Como você resolveria?`);
   }
-  // Fill remaining with generic but specific situations
   while (allSituations.length < 7) {
     allSituations.push(`Cenário ${allSituations.length + 1}: Uma situação inesperada surge com ${clientName} sobre ${productName}. Como você age?`);
   }
@@ -255,14 +245,17 @@ function generateFallbackPhases(job) {
   };
 }
 
-// Analyze a single candidate response — RIGOROUS, detailed, with AI detection
+// ============================================================================
+// DEEP PER-RESPONSE ANALYSIS
+// Analyzes each written response with full evidence-based rigor
+// ============================================================================
 export async function analyzeQuestionResponse(question, answer, isChoice, previousResponses) {
   const choiceObj = isChoice ? (question.multiple_choice || []).find(c => c.id === answer) : null;
   const choiceText = choiceObj?.text || '';
 
-  const prompt = `Você é o TalentOS, uma IA que analisa RIGOROSAMENTE respostas de candidatos em simulações de trabalho. Sua análise é a evidência que a empresa usa para contratar — seja crítico, justo e específico.
+  const prompt = `Você é o TalentOS, uma IA de avaliação de candidatos que faz análise RIGOROSA, EVIDÊNCIADA e TRANSPARENTE de respostas em simulações de trabalho. Sua análise é usada por recrutadores para decisões de contratação.
 
-PERGUNTA:
+PERGUNTA AVALIADA:
 - Enunciado: ${question.prompt}
 ${question.context ? `- Contexto: ${question.context}` : ''}
 ${question.character?.name ? `- Personagem: ${question.character.name} (${question.character.role})` : ''}
@@ -275,45 +268,69 @@ ${isChoice ? `- Opção escolhida: ${choiceText} (nível: ${choiceObj?.level || 
 RESPOSTAS ANTERIORES (para avaliar consistência):
 ${(previousResponses || []).map((r, i) => `  ${i + 1}. ${r}`).join("\n") || "Nenhuma"}
 
-ANÁLISE MINUCIOSA — seja RIGOROSO:
+INSTRUÇÕES DE ANÁLISE — seja RIGOROSA, ESPECÍFICA e EVIDÊNCIADA:
 
-1. COMPETÊNCIAS: Para CADA competência esperada, determine se foi demonstrada (✓), parcialmente (~), ou não (✗). Pontue 0-100 com justificativa e cite um trecho exato da resposta.
+1. COMPETÊNCIAS (competency_scores): Para CADA competência esperada, avalie se foi demonstrada. Pontue 0-100. Use evidence: "✓" (demonstrada), "~" (parcial), "✗" (não demonstrada). Cite um trecho EXATO da resposta como evidence_quote. A justification deve explicar o raciocínio.
 
-2. DETECÇÃO DE IA (apenas para respostas escritas): Analise se a resposta parece gerada por IA:
+2. HABILIDADES IDENTIFICADAS (skills_identified): Extraia habilidades REAIS da resposta — não as invente.
+   - hard_skills: conhecimentos técnicos, ferramentas, tecnologias, métodos específicos. Para cada uma, cite o trecho da resposta que evidencia a habilidade.
+   - soft_skills: comunicação, liderança, trabalho em equipe, organização, adaptabilidade, pensamento crítico, etc. Para cada uma, cite o trecho que evidencia.
+   NÃO atribua uma habilidade apenas porque o candidato usou a palavra — procure COMPORTAMENTOS ou SITUAÇÕES que demonstrem a habilidade.
+
+3. CADEIA DE EVIDÊNCIAS (evidence_chain): Para cada habilidade identificada, mostre: Habilidade → Evidência (trecho exato) → Interpretação. Isso torna a análise transparente.
+
+4. PROFUNDIDADE DA RESPOSTA (response_depth): Classifique em um dos níveis:
+   - "superficial": resposta genérica, sem detalhes
+   - "explanation": apresenta alguma explicação
+   - "examples": inclui exemplos concretos
+   - "context_results": traz contexto e resultados
+   - "practical_experience": demonstra experiência prática real
+   Explique o motivo da classificação no campo "reasoning".
+
+5. MÉTRICAS DE QUALIDADE (quality_metrics): Avalie 0-100:
+   - clarity: clareza da comunicação
+   - communication: capacidade de expressar ideias
+   - reasoning: capacidade de raciocínio lógico
+   - problem_solving: capacidade de resolução de problemas
+   - coherence: coerência entre pergunta e resposta (0-100)
+   - has_concrete_examples: true|false
+
+6. PONTOS POSITIVOS (positive_points): Liste 2-4 aspectos positivos específicos da resposta.
+
+7. PONTOS A INVESTIGAR (points_to_investigate): Liste 2-4 aspectos que precisam de mais esclarecimento na entrevista.
+
+8. DETECÇÃO DE IA (ai_detection): Analise se a resposta parece gerada por IA externa:
    - Linguagem excessivamente formal ou templated
-   - Estrutura perfeita demais para uma resposta curta
+   - Estrutura perfeita demais
    - Vocabulário fora do esperado para o cargo/nível
    - Ausência de voz pessoal
    - Generalidades sem especificidade
-   - Dê confiança 0-100 e liste indicadores
+   Dê confiança 0-100 e liste indicadores.
 
-3. QUALIDADE: Especificidade (0-100), Profundidade (0-100), Autenticidade (0-100).
-
-Seja CRÍTICO. Uma resposta genérica deve pontuar BAIXO, mesmo se "soa bem".
+Seja CRÍTICO. Uma resposta genérica deve pontuar BAIXO. Diferencie claramente: fato observado vs interpretação da IA vs informação não comprovada.
 
 Retorne JSON:
 {
   "competency_scores": {
     "nome_da_competencia": {
-      "score": 0-100,
+      "score": 0,
       "evidence": "✓|~|✗",
       "justification": "justificativa detalhada",
       "evidence_quote": "trecho exato citado da resposta"
     }
   },
-  "ai_detection": {
-    "is_ai_generated": true|false,
-    "confidence": 0-100,
-    "indicators": ["indicador 1", "indicador 2"],
-    "analysis": "análise detalhada"
+  "skills_identified": {
+    "hard_skills": [{ "name": "nome da habilidade", "evidence": "trecho que evidencia" }],
+    "soft_skills": [{ "name": "nome da habilidade", "evidence": "trecho que evidencia" }]
   },
-  "response_quality": {
-    "specificity": 0-100,
-    "depth": 0-100,
-    "authenticity": 0-100,
-    "notes": "observações"
-  },
-  "response_score": 0-100,
+  "evidence_chain": [{ "skill": "habilidade", "evidence_quote": "trecho", "interpretation": "interpretação" }],
+  "response_depth": { "level": "superficial|explanation|examples|context_results|practical_experience", "reasoning": "motivo da classificação" },
+  "quality_metrics": { "clarity": 0, "communication": 0, "reasoning": 0, "problem_solving": 0, "coherence": 0, "has_concrete_examples": true },
+  "positive_points": ["ponto positivo 1", "ponto positivo 2"],
+  "points_to_investigate": ["ponto a investigar 1", "ponto a investigar 2"],
+  "ai_detection": { "is_ai_generated": false, "confidence": 0, "indicators": [], "analysis": "análise detalhada" },
+  "response_quality": { "specificity": 0, "depth": 0, "authenticity": 0, "notes": "observações" },
+  "response_score": 0,
   "detailed_feedback": "feedback construtivo — o que foi bem, o que faltou, como melhorar"
 }`;
 
@@ -328,19 +345,32 @@ Retorne JSON:
       return JSON.parse(jsonMatch ? jsonMatch[0] : result);
     } catch (e) {
       console.error('Failed to parse analysis JSON:', e);
-      return {
-        competency_scores: {},
-        ai_detection: { is_ai_generated: false, confidence: 0, indicators: [], analysis: 'Análise indisponível.' },
-        response_quality: { specificity: 0, depth: 0, authenticity: 0, notes: 'Análise indisponível.' },
-        response_score: 0,
-        detailed_feedback: 'Análise indisponível para esta resposta.',
-      };
+      return getFallbackAnalysis();
     }
   }
   return result;
 }
 
-// Generate comprehensive final assessment with personality analysis
+function getFallbackAnalysis() {
+  return {
+    competency_scores: {},
+    skills_identified: { hard_skills: [], soft_skills: [] },
+    evidence_chain: [],
+    response_depth: { level: 'superficial', reasoning: 'Análise indisponível.' },
+    quality_metrics: { clarity: 0, communication: 0, reasoning: 0, problem_solving: 0, coherence: 0, has_concrete_examples: false },
+    positive_points: [],
+    points_to_investigate: [],
+    ai_detection: { is_ai_generated: false, confidence: 0, indicators: [], analysis: 'Análise indisponível.' },
+    response_quality: { specificity: 0, depth: 0, authenticity: 0, notes: 'Análise indisponível.' },
+    response_score: 0,
+    detailed_feedback: 'Análise indisponível para esta resposta.',
+  };
+}
+
+// ============================================================================
+// COMPREHENSIVE FINAL ASSESSMENT REPORT
+// Aggregates all responses into a professional intelligence report
+// ============================================================================
 export async function generateFinalAssessment(candidateName, job, allResponses, discResults) {
   const discInfo = discResults
     ? `PERFIL COMPORTAMENTAL DISC:
@@ -350,58 +380,88 @@ export async function generateFinalAssessment(candidateName, job, allResponses, 
 - Código do perfil: ${discResults.profile_code}`
     : 'Perfil DISC não disponível.';
 
-  const prompt = `Você é o TalentOS, gerando uma avaliação final COMPLETA, RIGOROSA e DETALHADA de competências e personalidade.
+  const prompt = `Você é o TalentOS, gerando um RELATÓRIO COMPLETO de inteligência de recrutamento. Este relatório é usado por recrutadores para decidir contratações — seja RIGOROSO, EVIDÊNCIADO, TRANSPARENTE e ESPECÍFICO.
 
 CANDIDATO: ${candidateName}
 VAGA: ${job.title} (${job.role})
 SETOR: ${job.sector}
 PROBLEMAS DA EMPRESA: ${job.company_problems || 'Não especificados'}
-COMPETÊNCIAS AVALIADAS: ${(job.competencies || []).join(", ")}
+COMPETÊNCIAS EXIGIDAS: ${(job.competencies || []).join(", ")}
 
 ${discInfo}
 
-RESPOSTAS E ANÁLISES DE CADA PERGUNTA (todas as evidências):
+RESPOSTAS E ANÁLISES INDIVIDUAIS DE CADA PERGUNTA (todas as evidências):
 ${JSON.stringify(allResponses, null, 2)}
 
-Gere uma avaliação final RIGOROSA, COMPLETA e DETALHADA:
+Gere um RELATÓRIO COMPLETO estruturado:
 
-1. SCORES FINAIS: Para cada competência, agregue os scores de todas as perguntas. Pondere consistência.
+1. RESUMO DO PERFIL (profile_summary): Síntese objetiva, 2-3 parágrafos, do que as respostas demonstram sobre o candidato.
 
-2. SKILL DNA: Top 3 fortalezas e Top 3 áreas de desenvolvimento, com evidência específica citada das respostas.
+2. HABILIDADES IDENTIFICADAS:
+   - hard_skills: Extraia TODAS as hard skills demonstradas nas respostas. Para cada uma: { name, evidence (trecho da resposta que evidencia) }. NÃO invente habilidades — só inclua as que têm evidência real.
+   - soft_skills: Extraia TODAS as soft skills demonstradas. Para cada uma: { name, evidence }. Baseie-se em comportamentos, não em palavras-chave.
 
-3. SKILL SCORE GERAL (0-100): média ponderada considerando consistência.
+3. SCORES FINAIS (skill_scores): Para cada competência exigida pela vaga, agregue os scores de todas as perguntas. Pondere consistência e profundidade.
 
-4. SKILL GRAPH: score final de cada competência.
+4. SKILL DNA (skill_dna): Top 3 fortalezas e Top 3 áreas de desenvolvimento, cada uma com evidence específica citada das respostas.
 
-5. RECOMENDAÇÃO: Contratação Forte / Contratar / Talvez / Não Recomendado / Não Contratar.
+5. SKILL SCORE GERAL (overall_score): 0-100, média ponderada considerando consistência.
 
-6. RESUMO EXECUTIVO: 3-5 parágrafos detalhados sobre a performance do candidato.
+6. SKILL GRAPH (skill_graph): Score final de cada competência.
 
-7. ANÁLISE DE PERSONALIDADE (2-3 parágrafos): Descreva detalhadamente as características da pessoa, seu estilo de trabalho, como se comunica, como lida com pressão, como trabalha em equipe. Use o perfil DISC como base, mas enriqueça com evidências das respostas. Seja específico sobre quem é essa pessoa profissionalmente.
+7. RECOMENDAÇÃO (recommendation): "Contratação Forte" | "Contratar" | "Talvez" | "Não Recomendado" | "Não Contratar".
 
-8. PONTOS FORTES DETALHADOS (1-2 parágrafos): Liste e explique os pontos fortes do candidato com exemplos concretos das respostas.
+8. RESUMO EXECUTIVO (summary): 3-5 parágrafos detalhados sobre a performance.
 
-9. PONTOS FRACOS DETALHADOS (1-2 parágrafos): Liste e explique os pontos fracos e áreas de melhoria, com sugestões construtivas.
+9. ANÁLISE DE PERSONALIDADE (personality_analysis): 2-3 parágrafos detalhados. Descreva quem é essa pessoa profissionalmente: características, estilo de comunicação, como lida com pressão, como trabalha em equipe. Use o DISC como base, enriqueça com evidências das respostas.
 
-10. ESTILO DE TRABALHO (1 parágrafo): Como essa pessoa trabalha no dia a dia, que ambiente prefere, como se relaciona com colegas e líderes.
+10. PONTOS FORTES DETALHADOS (strengths_detail): 1-2 parágrafos. Liste e explique os pontos fortes com exemplos concretos das respostas.
 
-11. Se houve detecções de IA, reduza a confiança e mencione explicitamente.
+11. PONTOS A INVESTIGAR (weaknesses_detail): 1-2 parágrafos. Liste áreas de melhoria e pontos que precisam de investigação, com sugestões construtivas.
+
+12. ESTILO DE TRABALHO (work_style): 1 parágrafo. Como essa pessoa trabalha no dia a dia, que ambiente prefere.
+
+13. COMPATIBILIDADE COM A VAGA (job_compatibility): Compare as evidências com os requisitos da vaga:
+   - demonstrated: competências demonstradas com evidência [{ competency, evidence }]
+   - partial: competências parcialmente demonstradas [{ competency, evidence }]
+   - not_evidenced: competências não evidenciadas [{ competency, note }]
+   - needs_investigation: requisitos que precisam investigação na entrevista [{ competency, reason }]
+   NÃO invente competências que não aparecem nas respostas.
+
+14. ANÁLISE DE CONSISTÊNCIA (consistency_analysis): Compare as diferentes respostas. Identifique: informações que se complementam, possíveis contradições, evolução de raciocínio, padrões de comportamento, habilidades que aparecem repetidamente. Se não houver evidência suficiente, indique claramente.
+
+15. PERGUNTAS INTELIGENTES PARA ENTREVISTA (interview_questions): Gere 5-8 perguntas personalizadas para o recrutador. Cada pergunta deve investigar: pontos pouco esclarecidos, habilidades não comprovadas, experiências sem detalhes, possíveis contradições, competências essenciais. Para cada: { question, rationale (por que perguntar isso), competency (competência investigada) }. Seja específico para este candidato — não perguntas genéricas.
+
+TRANSPARÊNCIA: Diferencie claramente fato observado vs interpretação vs informação não comprovada. Evite julgamentos baseados em características pessoais (aparência, idade, gênero, etc.). Concentre-se exclusivamente em competências profissionais.
+
+Se houve detecções de IA, reduza a confiança e mencione explicitamente no resumo.
 
 Retorne JSON:
 {
-  "skill_scores": { "competencia": 0-100 },
+  "profile_summary": "síntese objetiva em 2-3 parágrafos",
+  "hard_skills": [{ "name": "nome", "evidence": "evidência" }],
+  "soft_skills": [{ "name": "nome", "evidence": "evidência" }],
+  "skill_scores": { "competencia": 0 },
   "skill_dna": {
-    "strengths": [{ "competency": "nome", "score": 0-100, "evidence": "evidência específica" }],
-    "growth_areas": [{ "competency": "nome", "score": 0-100, "evidence": "evidência específica" }]
+    "strengths": [{ "competency": "nome", "score": 0, "evidence": "evidência" }],
+    "growth_areas": [{ "competency": "nome", "score": 0, "evidence": "evidência" }]
   },
-  "overall_score": 0-100,
+  "overall_score": 0,
   "recommendation": "Contratação Forte|Contratar|Talvez|Não Recomendado|Não Contratar",
-  "summary": "resumo executivo detalhado em 3-5 parágrafos",
-  "skill_graph": { "competencia": 0-100 },
-  "personality_analysis": "análise detalhada de personalidade em 2-3 parágrafos",
+  "summary": "resumo executivo em 3-5 parágrafos",
+  "skill_graph": { "competencia": 0 },
+  "personality_analysis": "análise de personalidade em 2-3 parágrafos",
   "work_style": "estilo de trabalho em 1 parágrafo",
-  "strengths_detail": "pontos fortes detalhados em 1-2 parágrafos",
-  "weaknesses_detail": "pontos fracos detalhados em 1-2 parágrafos"
+  "strengths_detail": "pontos fortes em 1-2 parágrafos",
+  "weaknesses_detail": "pontos a investigar em 1-2 parágrafos",
+  "job_compatibility": {
+    "demonstrated": [{ "competency": "nome", "evidence": "evidência" }],
+    "partial": [{ "competency": "nome", "evidence": "evidência" }],
+    "not_evidenced": [{ "competency": "nome", "note": "observação" }],
+    "needs_investigation": [{ "competency": "nome", "reason": "motivo" }]
+  },
+  "consistency_analysis": "análise de consistência detalhada",
+  "interview_questions": [{ "question": "pergunta", "rationale": "justificativa", "competency": "competência" }]
 }`;
 
   const result = await base44.integrations.Core.InvokeLLM({
@@ -414,6 +474,9 @@ Retorne JSON:
       const jsonMatch = result.match(/\{[\s\S]*\}/);
       const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : result);
       return {
+        profile_summary: parsed.profile_summary || '',
+        hard_skills: parsed.hard_skills || [],
+        soft_skills: parsed.soft_skills || [],
         skill_scores: parsed.skill_scores || {},
         skill_dna: parsed.skill_dna || { strengths: [], growth_areas: [] },
         overall_score: parsed.overall_score || 0,
@@ -424,22 +487,35 @@ Retorne JSON:
         work_style: parsed.work_style || '',
         strengths_detail: parsed.strengths_detail || '',
         weaknesses_detail: parsed.weaknesses_detail || '',
+        job_compatibility: parsed.job_compatibility || { demonstrated: [], partial: [], not_evidenced: [], needs_investigation: [] },
+        consistency_analysis: parsed.consistency_analysis || '',
+        interview_questions: parsed.interview_questions || [],
       };
     } catch (e) {
       console.error('Failed to parse final assessment JSON:', e);
-      return {
-        skill_scores: {},
-        skill_dna: { strengths: [], growth_areas: [] },
-        overall_score: 0,
-        recommendation: 'Talvez',
-        summary: 'Avaliação indisponível.',
-        skill_graph: {},
-        personality_analysis: '',
-        work_style: '',
-        strengths_detail: '',
-        weaknesses_detail: '',
-      };
+      return getFallbackAssessment();
     }
   }
   return result;
+}
+
+function getFallbackAssessment() {
+  return {
+    profile_summary: 'Avaliação indisponível.',
+    hard_skills: [],
+    soft_skills: [],
+    skill_scores: {},
+    skill_dna: { strengths: [], growth_areas: [] },
+    overall_score: 0,
+    recommendation: 'Talvez',
+    summary: 'Avaliação indisponível.',
+    skill_graph: {},
+    personality_analysis: '',
+    work_style: '',
+    strengths_detail: '',
+    weaknesses_detail: '',
+    job_compatibility: { demonstrated: [], partial: [], not_evidenced: [], needs_investigation: [] },
+    consistency_analysis: '',
+    interview_questions: [],
+  };
 }

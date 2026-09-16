@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 import SkillGraph from '@/components/SkillGraph';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
 import DiscResults from '@/components/DiscResults';
+import AnalysisReport from '@/components/AnalysisReport';
 import { getRecommendation } from '@/lib/skillScoring';
 
 const HIRING_STATUS = {
@@ -31,8 +32,8 @@ export default function CandidateResults() {
     }).catch(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" /></div>;
-  if (!sim) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Resultado não encontrado</div>;
+  if (loading) return <div className="min-h-screen bg-[hsl(240,15%,3.5%)] flex items-center justify-center"><div className="w-8 h-8 border-2 border-[hsl(280,65%,60%)] border-t-transparent rounded-full animate-spin" /></div>;
+  if (!sim) return <div className="min-h-screen bg-[hsl(240,15%,3.5%)] flex items-center justify-center text-slate-400">Resultado não encontrado</div>;
 
   const competencies = Object.keys(sim.skill_scores || {});
   const rec = getRecommendation(sim.overall_score || 0);
@@ -49,39 +50,39 @@ export default function CandidateResults() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-30">
+    <div className="min-h-screen bg-[hsl(240,15%,3.5%)] text-white">
+      <header className="border-b border-[hsl(240,8%,14%)] bg-[hsl(240,12%,5%)]/80 backdrop-blur-xl sticky top-0 z-30">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">
-          <button onClick={() => navigate('/candidate')} className="p-2 rounded-lg hover:bg-slate-800">
+          <button onClick={() => navigate('/candidate')} className="p-2 rounded-lg hover:bg-[hsl(240,8%,12%)] transition-colors">
             <ArrowLeft className="w-4 h-4 text-slate-400" />
           </button>
           <div className="flex-1">
             <div className="text-sm font-semibold">Seu Resultado</div>
-            <div className="text-[10px] text-slate-500 font-mono">{sim.job_title} · {sim.company_name}</div>
+            <div className="text-xs text-slate-500">{sim.job_title} · {sim.company_name}</div>
           </div>
-          <button onClick={() => navigate('/candidate/passport')} className="text-xs text-violet-400 hover:text-violet-300">
+          <button onClick={() => navigate('/candidate/passport')} className="text-xs text-[hsl(280,65%,70%)] hover:text-[hsl(280,65%,75%)] transition-colors">
             Ver Talent Passport →
           </button>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-6 py-10">
         {/* Hero result */}
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-            <span className="text-violet-300 text-xs font-mono tracking-wider uppercase">Avaliação Completa</span>
+        <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[hsl(280,65%,60%,0.08)] border border-[hsl(280,65%,60%,0.2)] mb-5">
+            <Sparkles className="w-3.5 h-3.5 text-[hsl(280,65%,70%)]" />
+            <span className="text-[hsl(280,65%,70%)] text-xs font-medium tracking-wide uppercase">Avaliação Completa</span>
           </div>
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-5">
             <SkillScoreBadge score={sim.overall_score || 0} size="xl" />
           </div>
-          <div className="inline-block px-4 py-1.5 rounded-lg" style={{ background: rec.color === 'emerald' ? '#10b98115' : rec.color === 'amber' ? '#f59e0b15' : '#f43f5e15' }}>
-            <span className="text-sm font-bold" style={{ color: rec.color === 'emerald' ? '#10b981' : rec.color === 'amber' ? '#f59e0b' : '#f43f5e' }}>
+          <div className="inline-block px-4 py-2 rounded-xl" style={{ background: rec.color === 'emerald' ? 'hsl(160,60%,45%,0.1)' : rec.color === 'amber' ? 'hsl(30,80%,55%,0.1)' : 'hsl(0,72%,51%,0.1)' }}>
+            <span className="text-sm font-bold" style={{ color: rec.color === 'emerald' ? 'hsl(160,60%,55%)' : rec.color === 'amber' ? 'hsl(30,80%,60%)' : 'hsl(0,72%,60%)' }}>
               {sim.recommendation || rec.label}
             </span>
           </div>
           {totalTime > 0 && (
-            <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-slate-500">
+            <div className="flex items-center justify-center gap-1.5 mt-4 text-xs text-slate-500">
               <Clock className="w-3 h-3" />
               Tempo total: {formatTime(totalTime)}
             </div>
@@ -89,17 +90,17 @@ export default function CandidateResults() {
         </motion.div>
 
         {/* Hiring process tracker */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Briefcase className="w-4 h-4 text-cyan-400" />
-            <span className="text-sm font-semibold">Andamento do Processo de Contratação</span>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card mb-8">
+          <div className="flex items-center gap-2 mb-5">
+            <Briefcase className="w-4 h-4 text-[hsl(190,85%,55%)]" />
+            <span className="text-sm font-semibold text-white">Andamento do Processo de Contratação</span>
           </div>
           {sim.hiring_status === 'reprovado' ? (
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-rose-500/5 border border-rose-500/20">
-              <AlertTriangle className="w-5 h-5 text-rose-400" />
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-[hsl(0,72%,51%,0.04)] border border-[hsl(0,72%,51%,0.2)]">
+              <AlertTriangle className="w-5 h-5 text-[hsl(0,72%,60%)]" />
               <div>
-                <div className="text-sm font-medium text-rose-300">Processo Encerrado</div>
-                <div className="text-xs text-slate-400">Infelizmente você não avançou neste processo. Continue se candidatando a outras vagas.</div>
+                <div className="text-sm font-medium text-[hsl(0,72%,65%)]">Processo Encerrado</div>
+                <div className="text-xs text-slate-400 mt-0.5">Infelizmente você não avançou neste processo. Continue se candidatando a outras vagas.</div>
               </div>
             </div>
           ) : (
@@ -112,22 +113,22 @@ export default function CandidateResults() {
                 return (
                   <React.Fragment key={status}>
                     <div className="flex flex-col items-center gap-2 flex-shrink-0">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                        isComplete ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-600'
-                      } ${isCurrent ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900' : ''}`}>
+                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
+                        isComplete ? 'bg-[hsl(190,85%,45%)] text-[hsl(240,15%,3.5%)]' : 'bg-[hsl(240,8%,10%)] text-slate-600 border border-[hsl(240,8%,14%)]'
+                      } ${isCurrent ? 'ring-2 ring-[hsl(190,85%,45%,0.4)] ring-offset-2 ring-offset-[hsl(240,12%,6%)]' : ''}`}>
                         <Icon className="w-4 h-4" />
                       </div>
-                      <span className={`text-[10px] text-center ${isComplete ? 'text-cyan-300' : 'text-slate-600'}`}>{s.label}</span>
+                      <span className={`text-[10px] text-center ${isComplete ? 'text-[hsl(190,85%,65%)]' : 'text-slate-600'}`}>{s.label}</span>
                     </div>
                     {i < HIRING_FLOW.length - 1 && (
-                      <div className={`flex-1 h-0.5 rounded-full ${currentStepIdx > i ? 'bg-cyan-500' : 'bg-slate-800'}`} />
+                      <div className={`flex-1 h-0.5 rounded-full ${currentStepIdx > i ? 'bg-[hsl(190,85%,45%)]' : 'bg-[hsl(240,8%,14%)]'}`} />
                     )}
                   </React.Fragment>
                 );
               })}
             </div>
           )}
-          <div className="mt-4 p-3 rounded-lg bg-slate-800/30 text-xs text-slate-400">
+          <div className="mt-4 p-3.5 rounded-xl bg-[hsl(240,10%,8%)] text-xs text-slate-400">
             Status atual: <span className="font-medium" style={{ color: hiringStatus.color }}>{hiringStatus.label}</span>
             <br />
             <span className="text-slate-500">A empresa atualiza seu status automaticamente. Volte a esta página para acompanhar.</span>
@@ -136,111 +137,98 @@ export default function CandidateResults() {
 
         {/* DISC Results */}
         {sim.disc_results && (
-          <div className="mb-6">
+          <div className="mb-8">
             <DiscResults results={sim.disc_results} />
           </div>
         )}
 
+        {/* Enhanced Analysis Report */}
+        <div className="mb-8">
+          <AnalysisReport sim={sim} />
+        </div>
+
         {/* Personality Analysis */}
         {sim.personality_analysis && (
-          <div className="grid md:grid-cols-2 gap-4 mb-6">
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Brain className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm font-semibold">Análise de Personalidade</span>
-              </div>
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <InsightCard icon={Brain} title="Análise de Personalidade" accent="cyan">
               <p className="text-sm text-slate-300 leading-relaxed">{sim.personality_analysis}</p>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-4 h-4 text-violet-400" />
-                <span className="text-sm font-semibold">Estilo de Trabalho</span>
-              </div>
+            </InsightCard>
+            <InsightCard icon={TrendingUp} title="Estilo de Trabalho" accent="violet">
               <p className="text-sm text-slate-300 leading-relaxed">{sim.work_style}</p>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm font-semibold">Seus Pontos Fortes</span>
-              </div>
+            </InsightCard>
+            <InsightCard icon={CheckCircle2} title="Seus Pontos Fortes" accent="emerald">
               <p className="text-sm text-slate-300 leading-relaxed">{sim.strengths_detail}</p>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-semibold">Pontos a Desenvolver</span>
-              </div>
+            </InsightCard>
+            <InsightCard icon={AlertTriangle} title="Pontos a Desenvolver" accent="amber">
               <p className="text-sm text-slate-300 leading-relaxed">{sim.weaknesses_detail}</p>
-            </div>
+            </InsightCard>
           </div>
         )}
 
         {/* Summary */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 mb-6">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card mb-8">
           <div className="flex items-center gap-2 mb-3">
-            <Award className="w-4 h-4 text-cyan-400" />
-            <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider">Resumo da Avaliação</span>
+            <Award className="w-4 h-4 text-[hsl(190,85%,55%)]" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(190,85%,55%)]">Resumo da Avaliação</span>
           </div>
           <p className="text-sm text-slate-300 leading-relaxed">{sim.summary || 'Avaliação em processamento.'}</p>
         </motion.div>
 
         {/* AI detection notice */}
-        {aiFlags.length > 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-5 mb-6">
+        {aiFlags.length > 0 ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(0,72%,51%,0.04)] border border-[hsl(0,72%,51%,0.2)] rounded-2xl p-5 mb-8">
             <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
-              <span className="text-sm font-medium text-rose-300">Atenção: Padrões de IA Detectados</span>
+              <AlertTriangle className="w-4 h-4 text-[hsl(0,72%,60%)]" />
+              <span className="text-sm font-medium text-[hsl(0,72%,65%)]">Atenção: Padrões de IA Detectados</span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 leading-relaxed">
               Detectamos {aiFlags.length} resposta(s) com possível uso de IA externa. Isso foi registrado e comunicado à empresa. Respostas autênticas demonstram seu potencial real.
             </p>
           </motion.div>
-        )}
-
-        {aiFlags.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5 mb-6">
+        ) : (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(160,60%,45%,0.04)] border border-[hsl(160,60%,45%,0.2)] rounded-2xl p-5 mb-8">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span className="text-sm font-medium text-emerald-300">Respostas Autênticas</span>
+              <CheckCircle2 className="w-4 h-4 text-[hsl(160,60%,55%)]" />
+              <span className="text-sm font-medium text-[hsl(160,60%,65%)]">Respostas Autênticas</span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">Nenhuma evidência de uso de IA externa foi detectada em suas respostas escritas.</p>
+            <p className="text-xs text-slate-400 mt-1.5">Nenhuma evidência de uso de IA externa foi detectada em suas respostas escritas.</p>
           </motion.div>
         )}
 
         {/* Skill Graph + DNA */}
         {competencies.length > 0 && (
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card">
               <div className="flex items-center gap-2 mb-4">
-                <Award className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm font-semibold">Seu Skill Graph</span>
+                <Award className="w-4 h-4 text-[hsl(190,85%,55%)]" />
+                <span className="text-sm font-semibold text-white">Seu Skill Graph</span>
               </div>
               <SkillGraph scores={sim.skill_scores} competencies={competencies} />
             </div>
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+            <div className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card">
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-sm font-semibold">Seu Skill DNA</span>
+                <span className="text-sm font-semibold text-white">Seu Skill DNA</span>
               </div>
               <div className="space-y-4">
                 <div>
-                  <div className="text-xs font-mono text-emerald-400 uppercase mb-2">Fortalezas</div>
+                  <div className="text-xs font-mono text-[hsl(160,60%,55%)] uppercase mb-2 tracking-wider">Fortalezas</div>
                   {(sim.skill_dna?.strengths || []).map((s, i) => (
-                    <div key={i} className="mb-2 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                    <div key={i} className="mb-2 p-3 rounded-xl bg-[hsl(160,60%,45%,0.04)] border border-[hsl(160,60%,45%,0.2)]">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">{s.competency}</span>
-                        <span className="text-sm font-mono text-emerald-400">{s.score}</span>
+                        <span className="text-sm font-medium text-white">{s.competency}</span>
+                        <span className="text-sm font-mono text-[hsl(160,60%,55%)]">{s.score}</span>
                       </div>
                       <div className="text-xs text-slate-400">{s.evidence}</div>
                     </div>
                   ))}
                 </div>
                 <div>
-                  <div className="text-xs font-mono text-amber-400 uppercase mb-2">Áreas para Desenvolver</div>
+                  <div className="text-xs font-mono text-[hsl(30,80%,60%)] uppercase mb-2 tracking-wider">Áreas para Desenvolver</div>
                   {(sim.skill_dna?.growth_areas || []).map((s, i) => (
-                    <div key={i} className="mb-2 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                    <div key={i} className="mb-2 p-3 rounded-xl bg-[hsl(30,80%,55%,0.04)] border border-[hsl(30,80%,55%,0.2)]">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">{s.competency}</span>
-                        <span className="text-sm font-mono text-amber-400">{s.score}</span>
+                        <span className="text-sm font-medium text-white">{s.competency}</span>
+                        <span className="text-sm font-mono text-[hsl(30,80%,60%)]">{s.score}</span>
                       </div>
                       <div className="text-xs text-slate-400">{s.evidence}</div>
                     </div>
@@ -251,19 +239,19 @@ export default function CandidateResults() {
           </div>
         )}
 
-        {/* Response history — questions and progress */}
+        {/* Response history */}
         {responses.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <PenLine className="w-4 h-4 text-violet-400" />
+          <div className="mb-8">
+            <h3 className="font-heading text-xl text-white mb-5 flex items-center gap-2.5">
+              <PenLine className="w-4 h-4 text-[hsl(280,65%,70%)]" />
               Suas Respostas ({responses.length} perguntas)
             </h3>
             <div className="space-y-3">
               {responses.map((r, i) => (
-                <div key={i} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
+                <div key={i} className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-xl p-5 shadow-soft">
+                  <div className="flex items-center gap-2 mb-3">
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${
-                      r.is_choice ? 'bg-cyan-500/15 text-cyan-300' : 'bg-violet-500/15 text-violet-300'
+                      r.is_choice ? 'bg-[hsl(190,85%,45%,0.1)] text-[hsl(190,85%,65%)]' : 'bg-[hsl(280,65%,60%,0.1)] text-[hsl(280,65%,70%)]'
                     }`}>
                       {r.is_choice ? <MousePointerClick className="w-3 h-3" /> : <PenLine className="w-3 h-3" />}
                       {r.is_choice ? 'Escolha' : 'Escrita'}
@@ -276,8 +264,8 @@ export default function CandidateResults() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-500 italic mb-2">"{r.question_prompt}"</p>
-                  <p className="text-sm text-slate-200">{r.answer || '—'}</p>
+                  <p className="text-xs text-slate-500 italic mb-2.5 leading-relaxed">"{r.question_prompt}"</p>
+                  <p className="text-sm text-slate-200 leading-relaxed">{r.answer || '—'}</p>
                 </div>
               ))}
             </div>
@@ -286,16 +274,32 @@ export default function CandidateResults() {
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button onClick={() => navigate('/candidate/passport')} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-violet-500 text-white font-semibold text-sm hover:bg-violet-400">
+          <button onClick={() => navigate('/candidate/passport')} className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-[hsl(280,65%,60%)] text-white font-semibold text-sm hover:bg-[hsl(280,65%,65%)] transition-colors shadow-lg shadow-[hsl(280,65%,60%,0.15)]">
             <Award className="w-4 h-4" />
             Ver no Talent Passport
           </button>
-          <button onClick={() => navigate('/candidate')} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800 text-slate-300 font-semibold text-sm hover:bg-slate-700">
+          <button onClick={() => navigate('/candidate')} className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-[hsl(240,8%,12%)] border border-[hsl(240,8%,16%)] text-slate-300 font-semibold text-sm hover:bg-[hsl(240,8%,16%)] transition-colors">
             <TrendingUp className="w-4 h-4" />
             Explorar Mais Vagas
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function InsightCard({ icon: Icon, title, accent, children }) {
+  const accentColor = accent === 'cyan' ? 'text-[hsl(190,85%,55%)]'
+    : accent === 'violet' ? 'text-[hsl(280,65%,65%)]'
+    : accent === 'emerald' ? 'text-[hsl(160,60%,55%)]'
+    : 'text-[hsl(30,80%,60%)]';
+  return (
+    <div className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-5 shadow-card">
+      <div className="flex items-center gap-2 mb-3">
+        <Icon className={`w-4 h-4 ${accentColor}`} />
+        <span className="text-sm font-semibold text-white">{title}</span>
+      </div>
+      {children}
     </div>
   );
 }

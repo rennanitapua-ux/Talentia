@@ -1,5 +1,6 @@
 // DISC Behavioral Test — TalentOS
 // D = Dominance, I = Influence, S = Steadiness, C = Conscientiousness
+// Internal letters stay D/I/S/C; display letters (A/B/C/D) are shuffled per question.
 
 export const DISC_QUESTIONS = [
   {
@@ -170,6 +171,31 @@ export const DISC_PROFILES = {
     ideal_environment: 'Ambientes analíticos, técnicos ou de qualidade. Projetos com requisitos claros e padrões definidos.',
   },
 };
+
+// Shuffle array (Fisher-Yates) — returns a new array
+function shuffle(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Build shuffled questions: each question gets a random display order for its options.
+// Each option keeps its internal `letter` (D/I/S/C) but gets a display label (A/B/C/D).
+// This prevents the user from associating a letter with a DISC profile.
+export function getShuffledQuestions() {
+  const displayLabels = ['A', 'B', 'C', 'D'];
+  return DISC_QUESTIONS.map((q) => {
+    const shuffledOptions = shuffle(q.options);
+    const options = shuffledOptions.map((opt, i) => ({
+      ...opt,
+      displayLabel: displayLabels[i],
+    }));
+    return { ...q, options };
+  });
+}
 
 export function calculateDiscResults(answers) {
   const counts = { D: 0, I: 0, S: 0, C: 0 };

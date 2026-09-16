@@ -88,6 +88,33 @@
     "weaknesses_detail": {
       "type": "string"
     },
+    "profile_summary": {
+      "type": "string"
+    },
+    "hard_skills": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "soft_skills": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "job_compatibility": {
+      "type": "object"
+    },
+    "interview_questions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "consistency_analysis": {
+      "type": "string"
+    },
     "ai_flags": {
       "type": "array",
       "items": {

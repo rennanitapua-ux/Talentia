@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Award, AlertTriangle, Bot, MessageSquare, CheckCircle2, XCircle, CircleDot, Play, MousePointerClick, PenLine, Clock, FileText, Phone, MapPin, User, Briefcase, Brain, TrendingUp, Calendar, Download } from 'lucide-react';
+import { ArrowLeft, Award, AlertTriangle, Bot, MessageSquare, CheckCircle2, Play, MousePointerClick, PenLine, Clock, FileText, Phone, Briefcase, Brain, TrendingUp, Download } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillGraph from '@/components/SkillGraph';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
 import DiscResults from '@/components/DiscResults';
-import { getEvidenceMarker, getRecommendation } from '@/lib/skillScoring';
+import AnalysisReport from '@/components/AnalysisReport';
+import ResponseAnalysis from '@/components/ResponseAnalysis';
+import { getRecommendation } from '@/lib/skillScoring';
 import { DISC_PROFILES } from '@/lib/discTest';
+import Logo from '@/components/Logo';
 
 const HIRING_STATUS = {
   em_analise: { label: 'Em Análise', color: '#64748b', bg: 'bg-slate-500/15', text: 'text-slate-400' },
@@ -49,8 +52,8 @@ export default function CompanyCandidateDetail() {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>;
-  if (!sim) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Simulação não encontrada</div>;
+  if (loading) return <div className="min-h-screen bg-[hsl(240,15%,3.5%)] flex items-center justify-center"><div className="w-8 h-8 border-2 border-[hsl(190,85%,45%)] border-t-transparent rounded-full animate-spin" /></div>;
+  if (!sim) return <div className="min-h-screen bg-[hsl(240,15%,3.5%)] flex items-center justify-center text-slate-400">Simulação não encontrada</div>;
 
   const rec = getRecommendation(sim.overall_score || 0);
   const responses = sim.responses || [];
@@ -59,7 +62,6 @@ export default function CompanyCandidateDetail() {
   const aiFlags = sim.ai_flags || [];
   const totalTime = sim.total_time_seconds || responses.reduce((sum, r) => sum + (r.time_spent_seconds || 0), 0);
   const hiringStatus = HIRING_STATUS[sim.hiring_status] || HIRING_STATUS.em_analise;
-  const discProfile = sim.disc_results ? DISC_PROFILES[sim.disc_results.dominant] : null;
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
@@ -68,27 +70,26 @@ export default function CompanyCandidateDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-30">
+    <div className="min-h-screen bg-[hsl(240,15%,3.5%)] text-white">
+      <header className="border-b border-[hsl(240,8%,14%)] bg-[hsl(240,12%,5%)]/80 backdrop-blur-xl sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-slate-800">
+          <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-[hsl(240,8%,12%)] transition-colors">
             <ArrowLeft className="w-4 h-4 text-slate-400" />
           </button>
-          <div className="flex-1">
-            <div className="text-sm font-semibold">{sim.candidate_name}</div>
-            <div className="text-[10px] text-slate-500 font-mono">{sim.job_title} · {sim.company_name}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold truncate">{sim.candidate_name}</div>
+            <div className="text-xs text-slate-500">{sim.job_title} · {sim.company_name}</div>
           </div>
           <SkillScoreBadge score={sim.overall_score || 0} size="md" />
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-10">
         {/* Candidate profile + hiring status */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid lg:grid-cols-3 gap-6 mb-8">
-          {/* Profile card */}
-          <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="w-16 h-16 rounded-full bg-slate-800 overflow-hidden flex items-center justify-center text-xl font-bold flex-shrink-0">
+          <div className="lg:col-span-2 bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card">
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-16 h-16 rounded-2xl bg-[hsl(240,8%,10%)] border border-[hsl(240,8%,16%)] overflow-hidden flex items-center justify-center text-xl font-bold flex-shrink-0">
                 {sim.candidate_profile_photo ? (
                   <img src={sim.candidate_profile_photo} alt={sim.candidate_name} className="w-full h-full object-cover" />
                 ) : (
@@ -96,35 +97,34 @@ export default function CompanyCandidateDetail() {
                 )}
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold">{sim.candidate_name}</h2>
+                <h2 className="font-heading text-xl text-white mb-1">{sim.candidate_name}</h2>
                 {sim.candidate_email && <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-1"><MessageSquare className="w-3 h-3" />{sim.candidate_email}</div>}
                 {sim.candidate_phone && <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-1"><Phone className="w-3 h-3" />{sim.candidate_phone}</div>}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-4">
+            <div className="grid grid-cols-2 gap-3">
               {sim.candidate_resume_url && (
                 <a href={sim.candidate_resume_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs font-medium hover:bg-cyan-500/20 transition-colors">
+                  className="flex items-center gap-2 px-3.5 py-3 rounded-xl bg-[hsl(190,85%,45%,0.08)] border border-[hsl(190,85%,45%,0.2)] text-[hsl(190,85%,65%)] text-xs font-medium hover:bg-[hsl(190,85%,45%,0.12)] transition-colors">
                   <FileText className="w-4 h-4" />
                   Ver Currículo
                   <Download className="w-3 h-3 ml-auto" />
                 </a>
               )}
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-800/50 text-slate-400 text-xs">
+              <div className="flex items-center gap-2 px-3.5 py-3 rounded-xl bg-[hsl(240,8%,10%)] border border-[hsl(240,8%,14%)] text-slate-400 text-xs">
                 <Clock className="w-4 h-4 text-slate-500" />
                 Tempo total: {formatTime(totalTime)}
               </div>
             </div>
           </div>
 
-          {/* Hiring status management */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Briefcase className="w-4 h-4 text-cyan-400" />
-              <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider">Status do Processo</span>
+          <div className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card">
+            <div className="flex items-center gap-2 mb-4">
+              <Briefcase className="w-4 h-4 text-[hsl(190,85%,55%)]" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(190,85%,55%)]">Status do Processo</span>
             </div>
-            <div className={`px-3 py-2 rounded-lg ${hiringStatus.bg} mb-4`}>
+            <div className={`px-3 py-2.5 rounded-xl ${hiringStatus.bg} mb-4`}>
               <span className={`text-sm font-bold ${hiringStatus.text}`}>{hiringStatus.label}</span>
             </div>
             <div className="space-y-1.5">
@@ -133,10 +133,10 @@ export default function CompanyCandidateDetail() {
                   key={key}
                   onClick={() => updateHiringStatus(key)}
                   disabled={updatingStatus || sim.hiring_status === key}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
                     sim.hiring_status === key
                       ? `${val.bg} ${val.text} border border-current`
-                      : 'bg-slate-800/30 text-slate-400 hover:bg-slate-800/60 border border-transparent'
+                      : 'bg-[hsl(240,8%,10%)] text-slate-400 hover:bg-[hsl(240,8%,14%)] border border-transparent'
                   }`}
                 >
                   {val.label}
@@ -153,35 +153,35 @@ export default function CompanyCandidateDetail() {
           </div>
         )}
 
-        {/* Summary */}
+        {/* Summary + AI Detection */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Award className="w-4 h-4 text-cyan-400" />
-              <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider">Avaliação Final</span>
+          <div className="lg:col-span-2 bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card">
+            <div className="flex items-center gap-2 mb-4">
+              <Award className="w-4 h-4 text-[hsl(190,85%,55%)]" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(190,85%,55%)]">Avaliação Final</span>
             </div>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="px-4 py-2 rounded-lg" style={{ background: `${rec.color === 'emerald' ? '#10b98115' : rec.color === 'amber' ? '#f59e0b15' : '#f43f5e15'}` }}>
-                <span className="text-sm font-bold" style={{ color: rec.color === 'emerald' ? '#10b981' : rec.color === 'amber' ? '#f59e0b' : '#f43f5e' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="px-4 py-2 rounded-xl" style={{ background: rec.color === 'emerald' ? 'hsl(160,60%,45%,0.1)' : rec.color === 'amber' ? 'hsl(30,80%,55%,0.1)' : 'hsl(0,72%,51%,0.1)' }}>
+                <span className="text-sm font-bold" style={{ color: rec.color === 'emerald' ? 'hsl(160,60%,55%)' : rec.color === 'amber' ? 'hsl(30,80%,60%)' : 'hsl(0,72%,60%)' }}>
                   {sim.recommendation || rec.label}
                 </span>
               </div>
               {sim.focus_violations > 0 && (
-                <div className="flex items-center gap-1.5 text-rose-400 text-xs">
+                <div className="flex items-center gap-1.5 text-[hsl(0,72%,60%)] text-xs">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  {sim.focus_violations} violações de integridade
+                  {sim.focus_violations} violações
                 </div>
               )}
             </div>
             <p className="text-sm text-slate-300 leading-relaxed">{sim.summary || 'Avaliação em processamento.'}</p>
           </div>
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Bot className="w-4 h-4 text-violet-400" />
-              <span className="text-xs font-mono text-violet-400 uppercase tracking-wider">Detecção de IA</span>
+          <div className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card">
+            <div className="flex items-center gap-2 mb-4">
+              <Bot className="w-4 h-4 text-[hsl(280,65%,65%)]" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(280,65%,65%)]">Detecção de IA</span>
             </div>
             {aiFlags.length === 0 ? (
-              <div className="flex items-center gap-2 text-emerald-400 text-sm">
+              <div className="flex items-center gap-2 text-[hsl(160,60%,55%)] text-sm">
                 <CheckCircle2 className="w-4 h-4" />
                 Sem evidências de IA
               </div>
@@ -189,7 +189,7 @@ export default function CompanyCandidateDetail() {
               <div className="space-y-2">
                 {aiFlags.map((flag, i) => (
                   <div key={i} className="text-xs">
-                    <div className="flex items-center gap-1.5 text-rose-400">
+                    <div className="flex items-center gap-1.5 text-[hsl(0,72%,60%)]">
                       <AlertTriangle className="w-3 h-3" />
                       Fase {(flag.phase_index || 0) + 1} — {flag.confidence}% confiança
                     </div>
@@ -201,76 +201,65 @@ export default function CompanyCandidateDetail() {
           </div>
         </motion.div>
 
+        {/* Enhanced Analysis Report */}
+        <div className="mb-8">
+          <AnalysisReport sim={sim} />
+        </div>
+
         {/* Personality Analysis */}
         {sim.personality_analysis && (
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Brain className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm font-semibold">Análise de Personalidade</span>
-              </div>
+            <InsightCard icon={Brain} title="Análise de Personalidade" accent="cyan">
               <p className="text-sm text-slate-300 leading-relaxed">{sim.personality_analysis}</p>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-4 h-4 text-violet-400" />
-                <span className="text-sm font-semibold">Estilo de Trabalho</span>
-              </div>
+            </InsightCard>
+            <InsightCard icon={TrendingUp} title="Estilo de Trabalho" accent="violet">
               <p className="text-sm text-slate-300 leading-relaxed">{sim.work_style}</p>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm font-semibold">Pontos Fortes</span>
-              </div>
+            </InsightCard>
+            <InsightCard icon={CheckCircle2} title="Pontos Fortes" accent="emerald">
               <p className="text-sm text-slate-300 leading-relaxed">{sim.strengths_detail}</p>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-semibold">Pontos de Atenção</span>
-              </div>
+            </InsightCard>
+            <InsightCard icon={AlertTriangle} title="Pontos de Atenção" accent="amber">
               <p className="text-sm text-slate-300 leading-relaxed">{sim.weaknesses_detail}</p>
-            </div>
+            </InsightCard>
           </div>
         )}
 
         {/* Skill Graph */}
         {competencies.length > 0 && (
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+            <div className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card">
               <div className="flex items-center gap-2 mb-4">
-                <Award className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm font-semibold">Skill Graph</span>
+                <Award className="w-4 h-4 text-[hsl(190,85%,55%)]" />
+                <span className="text-sm font-semibold text-white">Skill Graph</span>
               </div>
               <SkillGraph scores={sim.skill_scores} competencies={competencies} />
             </div>
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+            <div className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card">
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-sm font-semibold">Skill DNA</span>
+                <span className="text-sm font-semibold text-white">Skill DNA</span>
               </div>
               <div className="space-y-4">
                 <div>
-                  <div className="text-xs font-mono text-emerald-400 uppercase mb-2">Fortalezas</div>
+                  <div className="text-xs font-mono text-[hsl(160,60%,55%)] uppercase mb-2 tracking-wider">Fortalezas</div>
                   {(sim.skill_dna?.strengths || []).map((s, i) => (
-                    <div key={i} className="mb-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{s.competency}</span>
-                        <span className="text-xs font-mono text-emerald-400">{s.score}</span>
+                    <div key={i} className="mb-2 p-3 rounded-xl bg-[hsl(160,60%,45%,0.04)] border border-[hsl(160,60%,45%,0.2)]">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-white">{s.competency}</span>
+                        <span className="text-xs font-mono text-[hsl(160,60%,55%)]">{s.score}</span>
                       </div>
-                      <div className="text-xs text-slate-400 mt-1">{s.evidence}</div>
+                      <div className="text-xs text-slate-400">{s.evidence}</div>
                     </div>
                   ))}
                 </div>
                 <div>
-                  <div className="text-xs font-mono text-amber-400 uppercase mb-2">Áreas de Desenvolvimento</div>
+                  <div className="text-xs font-mono text-[hsl(30,80%,60%)] uppercase mb-2 tracking-wider">Áreas de Desenvolvimento</div>
                   {(sim.skill_dna?.growth_areas || []).map((s, i) => (
-                    <div key={i} className="mb-2 p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{s.competency}</span>
-                        <span className="text-xs font-mono text-amber-400">{s.score}</span>
+                    <div key={i} className="mb-2 p-3 rounded-xl bg-[hsl(30,80%,55%,0.04)] border border-[hsl(30,80%,55%,0.2)]">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-white">{s.competency}</span>
+                        <span className="text-xs font-mono text-[hsl(30,80%,60%)]">{s.score}</span>
                       </div>
-                      <div className="text-xs text-slate-400 mt-1">{s.evidence}</div>
+                      <div className="text-xs text-slate-400">{s.evidence}</div>
                     </div>
                   ))}
                 </div>
@@ -281,17 +270,19 @@ export default function CompanyCandidateDetail() {
 
         {/* Response replay */}
         <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Play className="w-4 h-4 text-cyan-400" />
+          <h3 className="font-heading text-xl text-white mb-5 flex items-center gap-2.5">
+            <Play className="w-4 h-4 text-[hsl(190,85%,55%)]" />
             Replay da Simulação
           </h3>
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+          <div className="flex gap-2 mb-5 overflow-x-auto pb-2">
             {responses.map((r, i) => (
               <button
                 key={i}
                 onClick={() => setActiveResponse(i)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${
-                  activeResponse === i ? 'bg-cyan-500 text-slate-950' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
+                className={`flex-shrink-0 px-3.5 py-2 rounded-lg text-xs font-mono transition-all ${
+                  activeResponse === i
+                    ? 'bg-[hsl(190,85%,45%)] text-[hsl(240,15%,3.5%)] font-semibold'
+                    : 'bg-[hsl(240,12%,6%)] text-slate-400 hover:bg-[hsl(240,10%,10%)] border border-[hsl(240,8%,14%)]'
                 }`}
               >
                 Q{String(i + 1).padStart(2, '0')}
@@ -303,11 +294,10 @@ export default function CompanyCandidateDetail() {
           </div>
 
           {current && (
-            <motion.div key={activeResponse} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-5">
-              {/* Phase badge + time */}
+            <motion.div key={activeResponse} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 md:p-8 shadow-card space-y-6">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium ${
-                  current.is_choice ? 'bg-cyan-500/15 text-cyan-300' : 'bg-violet-500/15 text-violet-300'
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${
+                  current.is_choice ? 'bg-[hsl(190,85%,45%,0.1)] text-[hsl(190,85%,65%)]' : 'bg-[hsl(280,65%,60%,0.1)] text-[hsl(280,65%,70%)]'
                 }`}>
                   {current.is_choice ? <MousePointerClick className="w-3 h-3" /> : <PenLine className="w-3 h-3" />}
                   {current.is_choice ? 'Múltipla Escolha' : 'Resposta Escrita'}
@@ -321,12 +311,11 @@ export default function CompanyCandidateDetail() {
                 )}
               </div>
 
-              {/* Question */}
               <div>
-                <div className="text-xs font-mono text-slate-500 uppercase mb-2">Pergunta</div>
+                <div className="text-xs font-mono text-slate-500 uppercase tracking-wider mb-2.5">Pergunta</div>
                 <div className="flex items-start gap-3">
                   {current.character_name && (
-                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-[hsl(240,8%,10%)] border border-[hsl(240,8%,14%)] flex items-center justify-center text-xs font-bold flex-shrink-0">
                       {current.character_name?.charAt(0) || '?'}
                     </div>
                   )}
@@ -334,74 +323,30 @@ export default function CompanyCandidateDetail() {
                     {current.character_name && (
                       <div className="text-xs text-slate-500 mb-1">{current.character_name} · {current.character_role}</div>
                     )}
-                    <p className="text-sm text-slate-200 italic">"{current.question_prompt}"</p>
+                    <p className="text-sm text-slate-200 italic leading-relaxed">"{current.question_prompt}"</p>
                   </div>
                 </div>
               </div>
 
-              {/* Candidate response */}
               <div>
-                <div className="text-xs font-mono text-slate-500 uppercase mb-2">Resposta do Candidato</div>
-                <div className="bg-slate-800/50 rounded-lg p-4">
-                  <p className="text-sm text-slate-200">{current.answer || '—'}</p>
+                <div className="text-xs font-mono text-slate-500 uppercase tracking-wider mb-2.5">Resposta do Candidato</div>
+                <div className="bg-[hsl(240,10%,8%)] border border-[hsl(240,8%,14%)] rounded-xl p-4">
+                  <p className="text-sm text-slate-200 leading-relaxed">{current.answer || '—'}</p>
                 </div>
               </div>
 
-              {/* Analysis — only for write questions */}
               {current.analysis && !current.is_choice && (
                 <div>
-                  <div className="text-xs font-mono text-slate-500 uppercase mb-2">Análise da IA</div>
-                  <div className="space-y-3">
-                    {Object.entries(current.analysis.competency_scores || {}).map(([comp, data]) => {
-                      const marker = getEvidenceMarker(data.score);
-                      const Icon = data.evidence === '✓' ? CheckCircle2 : data.evidence === '✗' ? XCircle : CircleDot;
-                      const color = marker.color === 'emerald' ? 'text-emerald-400' : marker.color === 'amber' ? 'text-amber-400' : 'text-rose-400';
-                      return (
-                        <div key={comp} className="bg-slate-800/30 rounded-lg p-3 border border-slate-800">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <Icon className={`w-4 h-4 ${color}`} />
-                              <span className="text-sm font-medium">{comp}</span>
-                            </div>
-                            <span className={`text-lg font-bold font-mono ${color}`}>{data.score}</span>
-                          </div>
-                          <p className="text-xs text-slate-400 mb-1">{data.justification}</p>
-                          {data.evidence_quote && (
-                            <p className="text-xs text-slate-500 italic mt-1">"{data.evidence_quote}"</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {current.analysis.ai_detection && (
-                    <div className={`mt-3 p-3 rounded-lg border ${current.analysis.ai_detection.is_ai_generated ? 'bg-rose-500/5 border-rose-500/30' : 'bg-emerald-500/5 border-emerald-500/20'}`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <Bot className={`w-3.5 h-3.5 ${current.analysis.ai_detection.is_ai_generated ? 'text-rose-400' : 'text-emerald-400'}`} />
-                        <span className="text-xs font-medium">
-                          {current.analysis.ai_detection.is_ai_generated ? 'Possível resposta gerada por IA' : 'Resposta autêntica'}
-                        </span>
-                        <span className="text-xs font-mono text-slate-500">({current.analysis.ai_detection.confidence}%)</span>
-                      </div>
-                      <p className="text-xs text-slate-400">{current.analysis.ai_detection.analysis}</p>
-                    </div>
-                  )}
-
-                  {current.analysis.detailed_feedback && (
-                    <div className="mt-3 p-3 rounded-lg bg-slate-800/30 border border-slate-800">
-                      <div className="text-xs font-mono text-slate-500 uppercase mb-1">Feedback Detalhado</div>
-                      <p className="text-xs text-slate-300">{current.analysis.detailed_feedback}</p>
-                    </div>
-                  )}
+                  <div className="text-xs font-mono text-slate-500 uppercase tracking-wider mb-3">Análise Detalhada</div>
+                  <ResponseAnalysis analysis={current.analysis} />
                 </div>
               )}
 
-              {/* Choice question — no AI analysis note */}
               {current.is_choice && (
-                <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-800">
+                <div className="p-4 rounded-xl bg-[hsl(240,10%,8%)] border border-[hsl(240,8%,14%)]">
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     <MousePointerClick className="w-3.5 h-3.5" />
-                    Resposta de múltipla escolha — análise de IA aplicada apenas em respostas escritas. Apenas integridade (tela, colar, pesquisar) é monitorada.
+                    Resposta de múltipla escolha — análise de IA aplicada apenas em respostas escritas. Integridade (tela, colar, pesquisar) é monitorada.
                   </div>
                 </div>
               )}
@@ -409,6 +354,22 @@ export default function CompanyCandidateDetail() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function InsightCard({ icon: Icon, title, accent, children }) {
+  const accentColor = accent === 'cyan' ? 'text-[hsl(190,85%,55%)]'
+    : accent === 'violet' ? 'text-[hsl(280,65%,65%)]'
+    : accent === 'emerald' ? 'text-[hsl(160,60%,55%)]'
+    : 'text-[hsl(30,80%,60%)]';
+  return (
+    <div className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card">
+      <div className="flex items-center gap-2 mb-3">
+        <Icon className={`w-4 h-4 ${accentColor}`} />
+        <span className="text-sm font-semibold text-white">{title}</span>
+      </div>
+      {children}
     </div>
   );
 }
