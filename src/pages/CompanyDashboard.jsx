@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Plus, Building2, Users, TrendingUp, Award, ArrowLeft, Briefcase, BarChart3 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
+import Logo from '@/components/Logo';
 
 export default function CompanyDashboard() {
   const navigate = useNavigate();
@@ -35,15 +36,7 @@ export default function CompanyDashboard() {
             <button onClick={() => navigate('/')} className="p-2 rounded-lg hover:bg-slate-800 transition-colors">
               <ArrowLeft className="w-4 h-4 text-slate-400" />
             </button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-cyan-400" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold">Painel da Empresa</div>
-                <div className="text-[10px] text-slate-500 font-mono">SkillOS / Enterprise Console</div>
-              </div>
-            </div>
+            <Logo size="sm" withText />
           </div>
           <button
             onClick={() => navigate('/company/jobs/new')}

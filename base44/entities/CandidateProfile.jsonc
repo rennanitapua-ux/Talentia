@@ -1,0 +1,43 @@
+{
+  "name": "CandidateProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "resume_url": {
+      "type": "string"
+    },
+    "resume_name": {
+      "type": "string"
+    },
+    "profile_photo_url": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "linkedin": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "user_id"
+  ]
+}

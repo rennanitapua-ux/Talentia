@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Loader2, Lock, AlertTriangle, Bot, ClipboardX, CheckCircle2, PenLine, MousePointerClick, ArrowRight, Sparkles } from 'lucide-react';
+import { Send, Loader2, Lock, AlertTriangle, Bot, ClipboardX, CheckCircle2, PenLine, MousePointerClick, ArrowRight, Sparkles, Clock, FileText, User } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { analyzeQuestionResponse, generateFinalAssessment } from '@/lib/skillosAI';
 import SimulationLock from '@/components/SimulationLock';
+import DiscTest from '@/components/DiscTest';
+import Logo from '@/components/Logo';
 
 export default function CandidateSimulation() {
   const { id } = useParams();
@@ -12,7 +14,7 @@ export default function CandidateSimulation() {
   const [job, setJob] = useState(null);
   const [sim, setSim] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [phase, setPhase] = useState('intro');
+  const [phase, setPhase] = useState('intro'); // intro, disc, simulating, analyzing, done
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [qIdx, setQIdx] = useState(0);
   const [choice, setChoice] = useState(null);
@@ -22,20 +24,64 @@ export default function CandidateSimulation() {
   const [violations, setViolations] = useState(0);
   const [pasteWarning, setPasteWarning] = useState(false);
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [phaseTransition, setPhaseTransition] = useState(false);
+  const [discResults, setDiscResults] = useState(null);
+  const [discAnswers, setDiscAnswers] = useState([]);
+  const [questionStartTime, setQuestionStartTime] = useState(null);
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    base44.auth.me().then(u => setUser(u)).catch(() => {});
-    base44.entities.Job.get(id).then(j => {
-      setJob(j);
-      setLoading(false);
+    base44.auth.me().then(u => {
+      setUser(u);
+      if (u) {
+        // Check if candidate already completed this simulation
+        base44.entities.Simulation.filter({
+          job_id: id,
+          candidate_user_id: u.id,
+          status: 'completed'
+        }).then(existing => {
+          if (existing && existing.length > 0) {
+            // Already completed — redirect to results
+            navigate(`/candidate/results/${existing[0].id}`);
+            return;
+          }
+          // Also check for in-progress simulation
+          base44.entities.Simulation.filter({
+            job_id: id,
+            candidate_user_id: u.id,
+            status: 'in_progress'
+          }).then(inProgress => {
+            if (inProgress && inProgress.length > 0) {
+              // Has an in-progress simulation — resume it
+              setSim(inProgress[0]);
+              setResponses(inProgress[0].responses || []);
+              setViolations(inProgress[0].focus_violations || 0);
+            }
+            // Get candidate profile
+            base44.entities.CandidateProfile.filter({ user_id: u.id }).then(profiles => {
+              if (profiles && profiles.length > 0) setProfile(profiles[0]);
+            }).catch(() => {});
+          }).catch(() => {});
+        }).catch(() => {});
+      }
+      base44.entities.Job.get(id).then(j => {
+        setJob(j);
+        setLoading(false);
+      }).catch(() => setLoading(false));
     }).catch(() => setLoading(false));
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [analyzing, phaseTransition]);
+
+  useEffect(() => {
+    // Track question start time when question changes
+    if (phase === 'simulating' && !analyzing && !phaseTransition) {
+      setQuestionStartTime(Date.now());
+    }
+  }, [phase, phaseIdx, qIdx, analyzing, phaseTransition]);
 
   const handleViolation = () => setViolations(v => v + 1);
 
@@ -55,17 +101,32 @@ export default function CandidateSimulation() {
   const answeredQuestions = responses.length;
   const overallProgress = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
 
+  const handleDiscComplete = (results, answers) => {
+    setDiscResults(results);
+    setDiscAnswers(answers);
+    startSimulation();
+  };
+
   const startSimulation = async () => {
-    const candidateName = user?.full_name || user?.email || 'Candidato Anônimo';
+    const candidateName = profile?.full_name || user?.full_name || user?.email || 'Candidato';
     const newSim = await base44.entities.Simulation.create({
       job_id: id,
       job_title: job.title,
       company_name: job.company_name,
       candidate_name: candidateName,
+      candidate_user_id: user?.id || '',
+      candidate_email: user?.email || '',
+      candidate_phone: profile?.phone || '',
+      candidate_resume_url: profile?.resume_url || '',
+      candidate_profile_photo: profile?.profile_photo_url || '',
       status: 'in_progress',
       started_at: new Date().toISOString(),
       focus_violations: 0,
       responses: [],
+      disc_results: discResults,
+      disc_profile: discResults?.profile_code || '',
+      disc_answers: discAnswers,
+      hiring_status: 'em_analise',
     });
     setSim(newSim);
     setPhase('simulating');
@@ -82,6 +143,9 @@ export default function CandidateSimulation() {
     const answer = isChoice ? choice : writeAnswer;
     const choiceObj = isChoice ? (currentQuestion.multiple_choice || []).find(c => c.id === choice) : null;
 
+    // Calculate time spent
+    const timeSpent = questionStartTime ? Math.round((Date.now() - questionStartTime) / 1000) : 0;
+
     const responseData = {
       phase_index: phaseIdx,
       phase_type: currentPhase.type,
@@ -93,22 +157,36 @@ export default function CandidateSimulation() {
       is_choice: isChoice,
       choice_id: isChoice ? choice : null,
       answer: isChoice ? (choiceObj?.text || '') : writeAnswer,
+      time_spent_seconds: timeSpent,
       analysis: null,
     };
 
-    const previousTexts = responses.map(r => r.answer);
+    // Only run AI analysis for write questions — choice questions only track integrity
+    if (!isChoice) {
+      const previousTexts = responses.filter(r => !r.is_choice).map(r => r.answer);
 
-    try {
-      const analysis = await analyzeQuestionResponse(currentQuestion, answer, isChoice, previousTexts);
-      responseData.analysis = analysis;
-    } catch (e) {
-      console.error('Analysis failed, continuing with fallback:', e);
+      try {
+        const analysis = await analyzeQuestionResponse(currentQuestion, answer, isChoice, previousTexts);
+        responseData.analysis = analysis;
+      } catch (e) {
+        console.error('Analysis failed, continuing with fallback:', e);
+        responseData.analysis = {
+          competency_scores: {},
+          ai_detection: { is_ai_generated: false, confidence: 0, indicators: [], analysis: 'Análise indisponível.' },
+          response_quality: { specificity: 0, depth: 0, authenticity: 0, notes: 'Análise indisponível.' },
+          response_score: 0,
+          detailed_feedback: 'Análise indisponível para esta resposta.',
+        };
+      }
+    } else {
+      // For choice questions: no AI analysis, just record the choice level
       responseData.analysis = {
         competency_scores: {},
-        ai_detection: { is_ai_generated: false, confidence: 0, indicators: [], analysis: 'Análise indisponível.' },
-        response_quality: { specificity: 0, depth: 0, authenticity: 0, notes: 'Análise indisponível.' },
+        ai_detection: null,
+        response_quality: null,
         response_score: 0,
-        detailed_feedback: 'Análise indisponível para esta resposta.',
+        detailed_feedback: 'Resposta de múltipla escolha — análise de IA aplicada apenas em respostas escritas.',
+        choice_level: choiceObj?.level || 'unknown',
       };
     }
 
@@ -152,7 +230,9 @@ export default function CandidateSimulation() {
   const finishSimulation = async (allResponses) => {
     setPhase('analyzing');
     try {
-      const assessment = await generateFinalAssessment(sim.candidate_name, job, allResponses);
+      const assessment = await generateFinalAssessment(
+        sim.candidate_name, job, allResponses, discResults
+      );
 
       const aiFlags = allResponses
         .filter(r => r.analysis?.ai_detection?.is_ai_generated)
@@ -163,6 +243,8 @@ export default function CandidateSimulation() {
           analysis: r.analysis.ai_detection.analysis,
         }));
 
+      const totalTime = allResponses.reduce((sum, r) => sum + (r.time_spent_seconds || 0), 0);
+
       await base44.entities.Simulation.update(sim.id, {
         status: 'completed',
         skill_scores: assessment.skill_scores || {},
@@ -171,9 +253,14 @@ export default function CandidateSimulation() {
         overall_score: assessment.overall_score || 0,
         recommendation: assessment.recommendation || '',
         summary: assessment.summary || '',
+        personality_analysis: assessment.personality_analysis || '',
+        work_style: assessment.work_style || '',
+        strengths_detail: assessment.strengths_detail || '',
+        weaknesses_detail: assessment.weaknesses_detail || '',
         ai_flags: aiFlags,
         completed_at: new Date().toISOString(),
         focus_violations: violations,
+        total_time_seconds: totalTime,
       });
 
       setPhase('done');
@@ -188,6 +275,11 @@ export default function CandidateSimulation() {
   if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" /></div>;
   if (!job) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Vaga não encontrada</div>;
 
+  // DISC TEST PHASE
+  if (phase === 'disc') {
+    return <DiscTest onComplete={handleDiscComplete} />;
+  }
+
   // INTRO SCREEN
   if (phase === 'intro') {
     return (
@@ -195,8 +287,8 @@ export default function CandidateSimulation() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl w-full">
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-              <span className="text-xs font-mono text-violet-400 uppercase tracking-wider">Simulação Pronta</span>
+              <Logo size="xs" />
+              <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider">Simulação Pronta</span>
             </div>
             <h1 className="text-3xl font-bold mb-2">{job.title}</h1>
             <div className="text-sm text-slate-400 mb-6">{job.company_name} · {job.role}</div>
@@ -221,6 +313,15 @@ export default function CandidateSimulation() {
             <div className="mb-6">
               <div className="text-xs font-mono text-slate-500 uppercase mb-3">Estrutura da simulação</div>
               <div className="space-y-2">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-cyan-500/5 border border-cyan-500/20">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-cyan-500/15">
+                    <Sparkles className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">Teste Comportamental DISC</div>
+                    <div className="text-xs text-slate-500">12 perguntas · 5 min · antes da simulação</div>
+                  </div>
+                </div>
                 {phases.map((p, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/30 border border-slate-800">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${p.type === 'choice' ? 'bg-cyan-500/15' : 'bg-violet-500/15'}`}>
@@ -245,17 +346,18 @@ export default function CandidateSimulation() {
               <ul className="text-xs text-slate-400 space-y-1">
                 <li>• A simulação entra em tela cheia — não é possível alternar abas</li>
                 <li>• <span className="text-rose-300">Colar, copiar e recortar são bloqueados</span> — escreva com suas palavras</li>
-                <li>• Cada resposta é analisada por IA para detectar uso de IA externa</li>
+                <li>• Respostas escritas são analisadas por IA para detectar uso de IA externa</li>
+                <li>• <span className="text-cyan-300">O tempo de cada questão é registrado</span></li>
                 <li>• Violações de integridade são registradas e visíveis para a empresa</li>
               </ul>
             </div>
 
             <button
-              onClick={startSimulation}
+              onClick={() => setPhase('disc')}
               className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-violet-500 text-white font-semibold text-sm hover:bg-violet-400 transition-colors"
             >
-              <Lock className="w-4 h-4" />
-              Iniciar Simulação Protegida
+              <Sparkles className="w-4 h-4" />
+              Iniciar Teste DISC + Simulação
             </button>
           </div>
         </motion.div>
@@ -272,8 +374,9 @@ export default function CandidateSimulation() {
           <h2 className="text-xl font-semibold mb-2">Gerando sua avaliação</h2>
           <p className="text-slate-400 text-sm">A IA está consolidando todas as evidências...</p>
           <div className="mt-6 space-y-1.5 text-left max-w-sm mx-auto font-mono text-xs text-slate-500">
+            <div className="text-violet-400">{'>'} Integrando perfil DISC...</div>
             <div className="text-violet-400">{'>'} Calculando Skill Scores...</div>
-            <div className="text-violet-400">{'>'} Gerando Skill DNA...</div>
+            <div className="text-violet-400">{'>'} Gerando análise de personalidade...</div>
             <div className="text-violet-400">{'>'} Construindo Skill Graph...</div>
             <div className="text-violet-400">{'>'} Detectando padrões de IA...</div>
           </div>
@@ -466,8 +569,8 @@ export default function CandidateSimulation() {
                     placeholder="Digite sua resposta detalhada (não é possível colar)..."
                     className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-violet-500 focus:outline-none resize-none"
                   />
-                  <div className="text-[10px] text-slate-600 mt-1.5">
-                    {writeAnswer.length} caracteres · mínimo recomendado: 80
+                  <div className="text-[10px] text-slate-600 mt-1.5 flex items-center gap-3">
+                    <span>{writeAnswer.length} caracteres · mínimo recomendado: 80</span>
                   </div>
                 </div>
               )}

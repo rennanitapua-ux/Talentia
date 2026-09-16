@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Award, AlertTriangle, Bot, MessageSquare, CheckCircle2, XCircle, CircleDot, Play, MousePointerClick, PenLine } from 'lucide-react';
+import { ArrowLeft, Award, AlertTriangle, Bot, MessageSquare, CheckCircle2, XCircle, CircleDot, Play, MousePointerClick, PenLine, Clock, FileText, Phone, MapPin, User, Briefcase, Brain, TrendingUp, Calendar, Download } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillGraph from '@/components/SkillGraph';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
+import DiscResults from '@/components/DiscResults';
 import { getEvidenceMarker, getRecommendation } from '@/lib/skillScoring';
+import { DISC_PROFILES } from '@/lib/discTest';
+
+const HIRING_STATUS = {
+  em_analise: { label: 'Em Análise', color: '#64748b', bg: 'bg-slate-500/15', text: 'text-slate-400' },
+  convocacao_entrevista: { label: 'Convocado para Entrevista', color: '#3b82f6', bg: 'bg-blue-500/15', text: 'text-blue-400' },
+  entrevista_agendada: { label: 'Entrevista Agendada', color: '#8b5cf6', bg: 'bg-violet-500/15', text: 'text-violet-400' },
+  aprovado: { label: 'Aprovado', color: '#10b981', bg: 'bg-emerald-500/15', text: 'text-emerald-400' },
+  reprovado: { label: 'Reprovado', color: '#ef4444', bg: 'bg-rose-500/15', text: 'text-rose-400' },
+};
 
 export default function CompanyCandidateDetail() {
   const { id } = useParams();
@@ -14,6 +24,7 @@ export default function CompanyCandidateDetail() {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeResponse, setActiveResponse] = useState(0);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     base44.entities.Simulation.get(id).then(async (s) => {
@@ -26,6 +37,18 @@ export default function CompanyCandidateDetail() {
     }).catch(() => setLoading(false));
   }, [id]);
 
+  const updateHiringStatus = async (status) => {
+    setUpdatingStatus(true);
+    try {
+      await base44.entities.Simulation.update(sim.id, { hiring_status: status });
+      setSim({ ...sim, hiring_status: status });
+    } catch (e) {
+      alert('Erro ao atualizar status.');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>;
   if (!sim) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Simulação não encontrada</div>;
 
@@ -34,6 +57,15 @@ export default function CompanyCandidateDetail() {
   const current = responses[activeResponse];
   const competencies = Object.keys(sim.skill_scores || {});
   const aiFlags = sim.ai_flags || [];
+  const totalTime = sim.total_time_seconds || responses.reduce((sum, r) => sum + (r.time_spent_seconds || 0), 0);
+  const hiringStatus = HIRING_STATUS[sim.hiring_status] || HIRING_STATUS.em_analise;
+  const discProfile = sim.disc_results ? DISC_PROFILES[sim.disc_results.dominant] : null;
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}m ${s}s`;
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -51,6 +83,76 @@ export default function CompanyCandidateDetail() {
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Candidate profile + hiring status */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid lg:grid-cols-3 gap-6 mb-8">
+          {/* Profile card */}
+          <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-16 h-16 rounded-full bg-slate-800 overflow-hidden flex items-center justify-center text-xl font-bold flex-shrink-0">
+                {sim.candidate_profile_photo ? (
+                  <img src={sim.candidate_profile_photo} alt={sim.candidate_name} className="w-full h-full object-cover" />
+                ) : (
+                  (sim.candidate_name || 'U').charAt(0).toUpperCase()
+                )}
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold">{sim.candidate_name}</h2>
+                {sim.candidate_email && <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-1"><MessageSquare className="w-3 h-3" />{sim.candidate_email}</div>}
+                {sim.candidate_phone && <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-1"><Phone className="w-3 h-3" />{sim.candidate_phone}</div>}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              {sim.candidate_resume_url && (
+                <a href={sim.candidate_resume_url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs font-medium hover:bg-cyan-500/20 transition-colors">
+                  <FileText className="w-4 h-4" />
+                  Ver Currículo
+                  <Download className="w-3 h-3 ml-auto" />
+                </a>
+              )}
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-800/50 text-slate-400 text-xs">
+                <Clock className="w-4 h-4 text-slate-500" />
+                Tempo total: {formatTime(totalTime)}
+              </div>
+            </div>
+          </div>
+
+          {/* Hiring status management */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Briefcase className="w-4 h-4 text-cyan-400" />
+              <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider">Status do Processo</span>
+            </div>
+            <div className={`px-3 py-2 rounded-lg ${hiringStatus.bg} mb-4`}>
+              <span className={`text-sm font-bold ${hiringStatus.text}`}>{hiringStatus.label}</span>
+            </div>
+            <div className="space-y-1.5">
+              {Object.entries(HIRING_STATUS).map(([key, val]) => (
+                <button
+                  key={key}
+                  onClick={() => updateHiringStatus(key)}
+                  disabled={updatingStatus || sim.hiring_status === key}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                    sim.hiring_status === key
+                      ? `${val.bg} ${val.text} border border-current`
+                      : 'bg-slate-800/30 text-slate-400 hover:bg-slate-800/60 border border-transparent'
+                  }`}
+                >
+                  {val.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* DISC Results */}
+        {sim.disc_results && (
+          <div className="mb-8">
+            <DiscResults results={sim.disc_results} />
+          </div>
+        )}
+
         {/* Summary */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
@@ -98,6 +200,40 @@ export default function CompanyCandidateDetail() {
             )}
           </div>
         </motion.div>
+
+        {/* Personality Analysis */}
+        {sim.personality_analysis && (
+          <div className="grid lg:grid-cols-2 gap-6 mb-8">
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Brain className="w-4 h-4 text-cyan-400" />
+                <span className="text-sm font-semibold">Análise de Personalidade</span>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed">{sim.personality_analysis}</p>
+            </div>
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-4 h-4 text-violet-400" />
+                <span className="text-sm font-semibold">Estilo de Trabalho</span>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed">{sim.work_style}</p>
+            </div>
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm font-semibold">Pontos Fortes</span>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed">{sim.strengths_detail}</p>
+            </div>
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span className="text-sm font-semibold">Pontos de Atenção</span>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed">{sim.weaknesses_detail}</p>
+            </div>
+          </div>
+        )}
 
         {/* Skill Graph */}
         {competencies.length > 0 && (
@@ -158,15 +294,18 @@ export default function CompanyCandidateDetail() {
                   activeResponse === i ? 'bg-cyan-500 text-slate-950' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
                 }`}
               >
-                C{String(i + 1).padStart(2, '0')}
+                Q{String(i + 1).padStart(2, '0')}
+                {r.time_spent_seconds != null && (
+                  <span className="ml-1.5 text-[10px] opacity-60">{Math.floor(r.time_spent_seconds / 60)}:{String(r.time_spent_seconds % 60).padStart(2, '0')}</span>
+                )}
               </button>
             ))}
           </div>
 
           {current && (
             <motion.div key={activeResponse} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-5">
-              {/* Phase badge */}
-              <div className="flex items-center gap-2">
+              {/* Phase badge + time */}
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium ${
                   current.is_choice ? 'bg-cyan-500/15 text-cyan-300' : 'bg-violet-500/15 text-violet-300'
                 }`}>
@@ -174,6 +313,12 @@ export default function CompanyCandidateDetail() {
                   {current.is_choice ? 'Múltipla Escolha' : 'Resposta Escrita'}
                 </span>
                 <span className="text-xs text-slate-500">{current.phase_title || `Fase ${current.phase_index + 1}`}</span>
+                {current.time_spent_seconds != null && (
+                  <span className="flex items-center gap-1 text-xs text-slate-500 ml-auto">
+                    <Clock className="w-3 h-3" />
+                    {Math.floor(current.time_spent_seconds / 60)}m {current.time_spent_seconds % 60}s
+                  </span>
+                )}
               </div>
 
               {/* Question */}
@@ -202,8 +347,8 @@ export default function CompanyCandidateDetail() {
                 </div>
               </div>
 
-              {/* Analysis */}
-              {current.analysis && (
+              {/* Analysis — only for write questions */}
+              {current.analysis && !current.is_choice && (
                 <div>
                   <div className="text-xs font-mono text-slate-500 uppercase mb-2">Análise da IA</div>
                   <div className="space-y-3">
@@ -229,7 +374,6 @@ export default function CompanyCandidateDetail() {
                     })}
                   </div>
 
-                  {/* AI detection per response */}
                   {current.analysis.ai_detection && (
                     <div className={`mt-3 p-3 rounded-lg border ${current.analysis.ai_detection.is_ai_generated ? 'bg-rose-500/5 border-rose-500/30' : 'bg-emerald-500/5 border-emerald-500/20'}`}>
                       <div className="flex items-center gap-2 mb-1">
@@ -249,6 +393,16 @@ export default function CompanyCandidateDetail() {
                       <p className="text-xs text-slate-300">{current.analysis.detailed_feedback}</p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Choice question — no AI analysis note */}
+              {current.is_choice && (
+                <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-800">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <MousePointerClick className="w-3.5 h-3.5" />
+                    Resposta de múltipla escolha — análise de IA aplicada apenas em respostas escritas. Apenas integridade (tela, colar, pesquisar) é monitorada.
+                  </div>
                 </div>
               )}
             </motion.div>

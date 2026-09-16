@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Award, Calendar, Building2, TrendingUp, Bot } from 'lucide-react';
+import { ArrowLeft, Award, Calendar, Building2, TrendingUp, Bot, Briefcase, Clock, CheckCircle2, MessageSquare } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
 import SkillGraph from '@/components/SkillGraph';
+import Logo from '@/components/Logo';
 import { getRecommendation } from '@/lib/skillScoring';
+
+const HIRING_STATUS = {
+  em_analise: { label: 'Em Análise', color: '#64748b' },
+  convocacao_entrevista: { label: 'Convocado', color: '#3b82f6' },
+  entrevista_agendada: { label: 'Entrevista', color: '#8b5cf6' },
+  aprovado: { label: 'Aprovado', color: '#10b981' },
+  reprovado: { label: 'Reprovado', color: '#ef4444' },
+};
 
 export default function CandidatePassport() {
   const navigate = useNavigate();
@@ -18,17 +27,26 @@ export default function CandidatePassport() {
     base44.auth.me().then(u => {
       setUser(u);
       base44.entities.Simulation.filter(
-        { candidate_name: u?.full_name || u?.email || '', status: 'completed' },
+        { candidate_user_id: u?.id || 'none', status: 'completed' },
         '-completed_at', 50
       ).then(s => {
         setSimulations(s || []);
         if (s && s.length > 0) setSelected(s[0]);
         setLoading(false);
-      }).catch(() => setLoading(false));
+      }).catch(() => {
+        // Fallback: try by name
+        base44.entities.Simulation.filter(
+          { candidate_name: u?.full_name || u?.email || '', status: 'completed' },
+          '-completed_at', 50
+        ).then(s => {
+          setSimulations(s || []);
+          if (s && s.length > 0) setSelected(s[0]);
+          setLoading(false);
+        }).catch(() => setLoading(false));
+      });
     }).catch(() => setLoading(false));
   }, []);
 
-  // Aggregate all skill scores across simulations
   const allScores = {};
   simulations.forEach(sim => {
     Object.entries(sim.skill_scores || {}).forEach(([comp, score]) => {
@@ -50,10 +68,7 @@ export default function CandidatePassport() {
           <button onClick={() => navigate('/candidate')} className="p-2 rounded-lg hover:bg-slate-800">
             <ArrowLeft className="w-4 h-4 text-slate-400" />
           </button>
-          <div className="flex-1">
-            <div className="text-sm font-semibold">Skill Passport</div>
-            <div className="text-[10px] text-slate-500 font-mono">Seu portfólio permanente de competências</div>
-          </div>
+          <Logo size="sm" withText />
         </div>
       </header>
 
@@ -63,7 +78,7 @@ export default function CandidatePassport() {
         ) : simulations.length === 0 ? (
           <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl p-16 text-center">
             <Award className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold mb-2">Seu Passport está vazio</h2>
+            <h2 className="text-lg font-semibold mb-2">Seu Talent Passport está vazio</h2>
             <p className="text-slate-400 text-sm mb-6">Complete simulações para construir seu portfólio de competências permanente.</p>
             <button onClick={() => navigate('/candidate')} className="px-6 py-2.5 rounded-lg bg-violet-500 text-white font-semibold text-sm hover:bg-violet-400">
               Explorar Vagas
@@ -75,8 +90,12 @@ export default function CandidatePassport() {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-violet-900/30 to-slate-900/60 border border-violet-500/20 rounded-2xl p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-full bg-violet-500/20 flex items-center justify-center text-xl font-bold text-violet-300">
-                    {(user?.full_name || user?.email || 'U').charAt(0).toUpperCase()}
+                  <div className="w-14 h-14 rounded-full bg-violet-500/20 flex items-center justify-center text-xl font-bold text-violet-300 overflow-hidden">
+                    {user?.profile_photo_url ? (
+                      <img src={user.profile_photo_url} alt={user.full_name} className="w-full h-full object-cover" />
+                    ) : (
+                      (user?.full_name || user?.email || 'U').charAt(0).toUpperCase()
+                    )}
                   </div>
                   <div>
                     <div className="text-lg font-bold">{user?.full_name || user?.email || 'Candidato'}</div>
@@ -122,12 +141,16 @@ export default function CandidatePassport() {
               </div>
             )}
 
-            {/* Simulations history */}
-            <h3 className="text-lg font-semibold mb-4">Histórico de Simulações</h3>
+            {/* Hiring process tracking */}
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Briefcase className="w-4 h-4 text-cyan-400" />
+              Andamento dos Processos
+            </h3>
             <div className="grid lg:grid-cols-3 gap-4">
               <div className="lg:col-span-1 space-y-2">
                 {simulations.map((sim, i) => {
                   const rec = getRecommendation(sim.overall_score || 0);
+                  const hiring = HIRING_STATUS[sim.hiring_status] || HIRING_STATUS.em_analise;
                   return (
                     <button
                       key={sim.id}
@@ -144,7 +167,12 @@ export default function CandidatePassport() {
                         <Building2 className="w-3 h-3" />
                         {sim.company_name}
                       </div>
-                      <div className="text-[10px] text-slate-600 mt-1">{new Date(sim.completed_at).toLocaleDateString('pt-BR')}</div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="px-2 py-0.5 rounded-md text-[10px] font-medium" style={{ background: `${hiring.color}20`, color: hiring.color }}>
+                          {hiring.label}
+                        </div>
+                        <span className="text-[10px] text-slate-600">{new Date(sim.completed_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
                     </button>
                   );
                 })}
@@ -163,6 +191,20 @@ export default function CandidatePassport() {
                         {selected.recommendation}
                       </div>
                     </div>
+
+                    {/* Hiring status */}
+                    {(() => {
+                      const hiring = HIRING_STATUS[selected.hiring_status] || HIRING_STATUS.em_analise;
+                      return (
+                        <div className="mb-4 p-3 rounded-lg flex items-center gap-3" style={{ background: `${hiring.color}10`, border: `1px solid ${hiring.color}30` }}>
+                          <Briefcase className="w-4 h-4" style={{ color: hiring.color }} />
+                          <div>
+                            <div className="text-sm font-medium" style={{ color: hiring.color }}>{hiring.label}</div>
+                            <div className="text-[10px] text-slate-500">Status do processo de contratação</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {Object.keys(selected.skill_scores || {}).length > 0 && (
                       <div className="mb-4">
@@ -199,7 +241,7 @@ export default function CandidatePassport() {
                       onClick={() => navigate(`/candidate/results/${selected.id}`)}
                       className="mt-4 w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm text-slate-300"
                     >
-                      Ver Resultado Completo →
+                      Ver Resultado e Andamento Completo →
                     </button>
                   </motion.div>
                 )}

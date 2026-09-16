@@ -1,4 +1,4 @@
-// SkillOS — Skill Scoring Engine
+// TalentOS — Skill Scoring Engine
 // Defines the Skill Score system: 0-100 per competency, evidence markers, labels, recommendations
 
 export function getEvidenceMarker(score) {

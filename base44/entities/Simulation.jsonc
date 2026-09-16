@@ -14,6 +14,21 @@
     "candidate_name": {
       "type": "string"
     },
+    "candidate_user_id": {
+      "type": "string"
+    },
+    "candidate_email": {
+      "type": "string"
+    },
+    "candidate_phone": {
+      "type": "string"
+    },
+    "candidate_resume_url": {
+      "type": "string"
+    },
+    "candidate_profile_photo": {
+      "type": "string"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -23,6 +38,18 @@
       "default": "in_progress"
     },
     "responses": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "disc_results": {
+      "type": "object"
+    },
+    "disc_profile": {
+      "type": "string"
+    },
+    "disc_answers": {
       "type": "array",
       "items": {
         "type": "object"
@@ -49,6 +76,18 @@
     "summary": {
       "type": "string"
     },
+    "personality_analysis": {
+      "type": "string"
+    },
+    "work_style": {
+      "type": "string"
+    },
+    "strengths_detail": {
+      "type": "string"
+    },
+    "weaknesses_detail": {
+      "type": "string"
+    },
     "ai_flags": {
       "type": "array",
       "items": {
@@ -64,6 +103,23 @@
     "focus_violations": {
       "type": "number",
       "default": 0
+    },
+    "hiring_status": {
+      "type": "string",
+      "enum": [
+        "em_analise",
+        "convocacao_entrevista",
+        "entrevista_agendada",
+        "aprovado",
+        "reprovado"
+      ],
+      "default": "em_analise"
+    },
+    "hiring_notes": {
+      "type": "string"
+    },
+    "total_time_seconds": {
+      "type": "number"
     }
   },
   "required": [

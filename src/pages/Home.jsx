@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Building2, User, ArrowRight, Cpu, ShieldCheck, Activity } from 'lucide-react';
+import { Building2, User, ArrowRight, Cpu, ShieldCheck, Activity, Brain } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import Logo from '@/components/Logo';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -42,15 +43,15 @@ export default function Home() {
       <div className="relative z-10 max-w-5xl mx-auto px-6 pt-16 pb-12">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-14">
+          <div className="flex justify-center mb-6">
+            <Logo size="xl" withText />
+          </div>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 mb-6">
             <Activity className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-cyan-300 text-xs font-mono tracking-wider uppercase">Sistema Operacional de Competências</span>
+            <span className="text-cyan-300 text-xs font-mono tracking-wider uppercase">Sistema Operacional de Talentos</span>
           </div>
-          <h1 className="text-6xl font-bold tracking-tight mb-4">
-            Skill<span className="text-cyan-400">OS</span>
-          </h1>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
-            Não aplicamos testes. Criamos um ambiente de trabalho vivo, gerado por IA, onde cada candidato demonstra competências em situações reais — e cada decisão gera evidências explicáveis.
+            Não aplicamos testes obsoletos. Criamos um ambiente de trabalho vivo, gerado por IA, onde cada candidato demonstra competências em situações reais — com teste comportamental DISC, evidências explicáveis e análise rigorosa de personalidade.
           </p>
         </motion.div>
 
@@ -148,7 +149,7 @@ export default function Home() {
         {/* Feature strip */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="grid grid-cols-3 gap-4 mt-16 max-w-3xl mx-auto">
           {[
-            { icon: Cpu, label: 'IA Rigorosa', desc: 'Análise minuciosa' },
+            { icon: Brain, label: 'Teste DISC', desc: 'Perfil comportamental' },
             { icon: ShieldCheck, label: 'Anti-Trapaça', desc: 'Tela protegida' },
             { icon: Activity, label: 'Evidências', desc: '✓/✗ explicável' },
           ].map((f, i) => (

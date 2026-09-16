@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const BOOT_LINES = [
-  '> Inicializando SkillOS v1.0...',
+  '> Inicializando TalentOS v1.0...',
   '> Carregando módulo de competências...',
   '> Conectando ao motor de simulação IA...',
   '> Gerando perfil da empresa virtual...',
   '> Estruturando cenários de trabalho...',
   '> Calibrando análise de evidências...',
   '> Ativando detecção de IA...',
-  '> SkillOS pronto.',
+  '> TalentOS pronto.',
 ];
 
 export default function BootSequence({ onComplete, label = 'Gerando simulação' }) {
@@ -36,8 +36,8 @@ export default function BootSequence({ onComplete, label = 'Gerando simulação'
             <div className="w-3 h-3 rounded-full bg-cyan-400 animate-pulse" />
             <span className="text-cyan-400 font-mono text-sm tracking-widest uppercase">{label}</span>
           </div>
-          <h2 className="text-2xl font-bold text-white font-mono">SkillOS</h2>
-          <p className="text-slate-500 text-xs mt-1 font-mono">Sistema Operacional de Competências</p>
+          <h2 className="text-2xl font-bold text-white font-mono">TalentOS</h2>
+          <p className="text-slate-500 text-xs mt-1 font-mono">Sistema Operacional de Talentos</p>
         </div>
         <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 font-mono text-xs space-y-1.5 min-h-[200px]">
           <AnimatePresence>

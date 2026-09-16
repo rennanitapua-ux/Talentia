@@ -1,10 +1,10 @@
-// SkillOS — AI Engine v3
+// TalentOS — AI Engine v3
 // Phase-based simulation: choice phases and write phases, each with 2-3 questions
 import { base44 } from '@/api/base44Client';
 
 // Generate simulation phases from a job definition — tailored to company problems
 export async function generateSimulationPhases(job) {
-  const prompt = `Você é o SkillOS, uma IA que cria simulações de trabalho ULTRA-REALISTAS para contratação baseada em competências.
+  const prompt = `Você é o TalentOS, uma IA que cria simulações de trabalho ULTRA-REALISTAS para contratação baseada em competências.
 
 DADOS DA VAGA:
 - Setor: ${job.sector}
@@ -260,7 +260,7 @@ export async function analyzeQuestionResponse(question, answer, isChoice, previo
   const choiceObj = isChoice ? (question.multiple_choice || []).find(c => c.id === answer) : null;
   const choiceText = choiceObj?.text || '';
 
-  const prompt = `Você é o SkillOS, uma IA que analisa RIGOROSAMENTE respostas de candidatos em simulações de trabalho. Sua análise é a evidência que a empresa usa para contratar — seja crítico, justo e específico.
+  const prompt = `Você é o TalentOS, uma IA que analisa RIGOROSAMENTE respostas de candidatos em simulações de trabalho. Sua análise é a evidência que a empresa usa para contratar — seja crítico, justo e específico.
 
 PERGUNTA:
 - Enunciado: ${question.prompt}
@@ -319,50 +319,38 @@ Retorne JSON:
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,
-    response_json_schema: {
-      type: "object",
-      properties: {
-        competency_scores: {
-          type: "object",
-          additionalProperties: {
-            type: "object",
-            properties: {
-              score: { type: "number" },
-              evidence: { type: "string" },
-              justification: { type: "string" },
-              evidence_quote: { type: "string" }
-            }
-          }
-        },
-        ai_detection: {
-          type: "object",
-          properties: {
-            is_ai_generated: { type: "boolean" },
-            confidence: { type: "number" },
-            indicators: { type: "array", items: { type: "string" } },
-            analysis: { type: "string" }
-          }
-        },
-        response_quality: {
-          type: "object",
-          properties: {
-            specificity: { type: "number" },
-            depth: { type: "number" },
-            authenticity: { type: "number" },
-            notes: { type: "string" }
-          }
-        },
-        response_score: { type: "number" },
-        detailed_feedback: { type: "string" }
-      }
-    }
+    model: 'gemini_3_flash',
   });
+
+  if (typeof result === 'string') {
+    try {
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      return JSON.parse(jsonMatch ? jsonMatch[0] : result);
+    } catch (e) {
+      console.error('Failed to parse analysis JSON:', e);
+      return {
+        competency_scores: {},
+        ai_detection: { is_ai_generated: false, confidence: 0, indicators: [], analysis: 'Análise indisponível.' },
+        response_quality: { specificity: 0, depth: 0, authenticity: 0, notes: 'Análise indisponível.' },
+        response_score: 0,
+        detailed_feedback: 'Análise indisponível para esta resposta.',
+      };
+    }
+  }
   return result;
 }
 
-// Generate comprehensive final assessment
-export async function generateFinalAssessment(candidateName, job, allResponses) {
-  const prompt = `Você é o SkillOS, gerando uma avaliação final COMPLETA e RIGOROSA de competências.
+// Generate comprehensive final assessment with personality analysis
+export async function generateFinalAssessment(candidateName, job, allResponses, discResults) {
+  const discInfo = discResults
+    ? `PERFIL COMPORTAMENTAL DISC:
+- Perfil dominante: ${discResults.dominant} (${discResults.scores[discResults.dominant]}%)
+- Perfil secundário: ${discResults.secondary} (${discResults.scores[discResults.secondary]}%)
+- Scores: D=${discResults.scores.D}%, I=${discResults.scores.I}%, S=${discResults.scores.S}%, C=${discResults.scores.C}%
+- Código do perfil: ${discResults.profile_code}`
+    : 'Perfil DISC não disponível.';
+
+  const prompt = `Você é o TalentOS, gerando uma avaliação final COMPLETA, RIGOROSA e DETALHADA de competências e personalidade.
 
 CANDIDATO: ${candidateName}
 VAGA: ${job.title} (${job.role})
@@ -370,14 +358,16 @@ SETOR: ${job.sector}
 PROBLEMAS DA EMPRESA: ${job.company_problems || 'Não especificados'}
 COMPETÊNCIAS AVALIADAS: ${(job.competencies || []).join(", ")}
 
+${discInfo}
+
 RESPOSTAS E ANÁLISES DE CADA PERGUNTA (todas as evidências):
 ${JSON.stringify(allResponses, null, 2)}
 
-Gere uma avaliação final rigorosa e completa:
+Gere uma avaliação final RIGOROSA, COMPLETA e DETALHADA:
 
-1. SCORES FINAIS: Para cada competência, agregue os scores de todas as perguntas. Pondere consistência — uma competência demonstrada em todas deve pontuar mais alto.
+1. SCORES FINAIS: Para cada competência, agregue os scores de todas as perguntas. Pondere consistência.
 
-2. SKILL DNA: Top 3 fortalezas e Top 3 áreas de desenvolvimento, com evidência específica.
+2. SKILL DNA: Top 3 fortalezas e Top 3 áreas de desenvolvimento, com evidência específica citada das respostas.
 
 3. SKILL SCORE GERAL (0-100): média ponderada considerando consistência.
 
@@ -385,9 +375,17 @@ Gere uma avaliação final rigorosa e completa:
 
 5. RECOMENDAÇÃO: Contratação Forte / Contratar / Talvez / Não Recomendado / Não Contratar.
 
-6. RESUMO EXECUTIVO: 3-5 parágrafos detalhados.
+6. RESUMO EXECUTIVO: 3-5 parágrafos detalhados sobre a performance do candidato.
 
-7. Se houve múltiplas detecções de IA, reduza a confiança e mencione explicitamente.
+7. ANÁLISE DE PERSONALIDADE (2-3 parágrafos): Descreva detalhadamente as características da pessoa, seu estilo de trabalho, como se comunica, como lida com pressão, como trabalha em equipe. Use o perfil DISC como base, mas enriqueça com evidências das respostas. Seja específico sobre quem é essa pessoa profissionalmente.
+
+8. PONTOS FORTES DETALHADOS (1-2 parágrafos): Liste e explique os pontos fortes do candidato com exemplos concretos das respostas.
+
+9. PONTOS FRACOS DETALHADOS (1-2 parágrafos): Liste e explique os pontos fracos e áreas de melhoria, com sugestões construtivas.
+
+10. ESTILO DE TRABALHO (1 parágrafo): Como essa pessoa trabalha no dia a dia, que ambiente prefere, como se relaciona com colegas e líderes.
+
+11. Se houve detecções de IA, reduza a confiança e mencione explicitamente.
 
 Retorne JSON:
 {
@@ -399,28 +397,49 @@ Retorne JSON:
   "overall_score": 0-100,
   "recommendation": "Contratação Forte|Contratar|Talvez|Não Recomendado|Não Contratar",
   "summary": "resumo executivo detalhado em 3-5 parágrafos",
-  "skill_graph": { "competencia": 0-100 }
+  "skill_graph": { "competencia": 0-100 },
+  "personality_analysis": "análise detalhada de personalidade em 2-3 parágrafos",
+  "work_style": "estilo de trabalho em 1 parágrafo",
+  "strengths_detail": "pontos fortes detalhados em 1-2 parágrafos",
+  "weaknesses_detail": "pontos fracos detalhados em 1-2 parágrafos"
 }`;
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,
-    response_json_schema: {
-      type: "object",
-      properties: {
-        skill_scores: { type: "object", additionalProperties: { type: "number" } },
-        skill_dna: {
-          type: "object",
-          properties: {
-            strengths: { type: "array" },
-            growth_areas: { type: "array" }
-          }
-        },
-        overall_score: { type: "number" },
-        recommendation: { type: "string" },
-        summary: { type: "string" },
-        skill_graph: { type: "object", additionalProperties: { type: "number" } }
-      }
-    }
+    model: 'gemini_3_flash',
   });
+
+  if (typeof result === 'string') {
+    try {
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : result);
+      return {
+        skill_scores: parsed.skill_scores || {},
+        skill_dna: parsed.skill_dna || { strengths: [], growth_areas: [] },
+        overall_score: parsed.overall_score || 0,
+        recommendation: parsed.recommendation || 'Talvez',
+        summary: parsed.summary || '',
+        skill_graph: parsed.skill_graph || parsed.skill_scores || {},
+        personality_analysis: parsed.personality_analysis || '',
+        work_style: parsed.work_style || '',
+        strengths_detail: parsed.strengths_detail || '',
+        weaknesses_detail: parsed.weaknesses_detail || '',
+      };
+    } catch (e) {
+      console.error('Failed to parse final assessment JSON:', e);
+      return {
+        skill_scores: {},
+        skill_dna: { strengths: [], growth_areas: [] },
+        overall_score: 0,
+        recommendation: 'Talvez',
+        summary: 'Avaliação indisponível.',
+        skill_graph: {},
+        personality_analysis: '',
+        work_style: '',
+        strengths_detail: '',
+        weaknesses_detail: '',
+      };
+    }
+  }
   return result;
 }

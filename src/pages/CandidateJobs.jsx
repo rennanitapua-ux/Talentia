@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Briefcase, Building2, MapPin, ArrowRight, Search, Target } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import Logo from '@/components/Logo';
 
 export default function CandidateJobs() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function CandidateJobs() {
           </button>
           <div className="flex-1">
             <div className="text-sm font-semibold">Vagas Disponíveis</div>
-            <div className="text-[10px] text-slate-500 font-mono">SkillOS / Candidate Portal</div>
+            <div className="text-[10px] text-slate-500 font-mono">TalentOS / Candidate Portal</div>
           </div>
           <button onClick={() => navigate('/candidate/passport')} className="text-xs text-violet-400 hover:text-violet-300">
             Meu Skill Passport →
