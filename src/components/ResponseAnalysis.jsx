@@ -27,20 +27,20 @@ export default function ResponseAnalysis({ analysis }) {
             {Object.entries(competencyScores).map(([comp, data]) => {
               const marker = getEvidenceMarker(data.score);
               const Icon = data.evidence === '✓' ? CheckCircle2 : data.evidence === '✗' ? XCircle : CircleDot;
-              const color = marker.color === 'emerald' ? 'text-[hsl(160,60%,55%)]' : marker.color === 'amber' ? 'text-[hsl(30,80%,60%)]' : 'text-[hsl(0,72%,60%)]';
+              const color = marker.color === 'emerald' ? 'text-emerald-400' : marker.color === 'amber' ? 'text-amber-400' : 'text-rose-400';
               return (
-                <div key={comp} className="p-3.5 rounded-xl bg-[hsl(240,10%,8%)] border border-[hsl(240,8%,14%)]">
+                <div key={comp} className="p-3.5 rounded-xl bg-muted border border-border">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Icon className={`w-4 h-4 ${color}`} />
-                      <span className="text-sm font-medium text-white">{comp}</span>
+                      <span className="text-sm font-medium text-foreground">{comp}</span>
                       <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${color} bg-current/10`}>{data.evidence}</span>
                     </div>
                     <span className={`text-lg font-bold font-mono ${color}`}>{data.score}</span>
                   </div>
-                  <p className="text-xs text-slate-400 leading-relaxed mb-1">{data.justification}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-1">{data.justification}</p>
                   {data.evidence_quote && (
-                    <p className="text-xs text-slate-500 italic mt-1.5 pl-3 border-l-2 border-[hsl(240,8%,16%)]">"{data.evidence_quote}"</p>
+                    <p className="text-xs text-muted-foreground/70 italic mt-1.5 pl-3 border-l-2 border-border">"{data.evidence_quote}"</p>
                   )}
                 </div>
               );
@@ -58,10 +58,10 @@ export default function ResponseAnalysis({ analysis }) {
                 {skillsIdentified.hard_skills.map((s, i) => (
                   <div key={i} className="text-xs">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="w-1 h-1 rounded-full bg-[hsl(190,85%,50%)]" />
-                      <span className="font-medium text-slate-200">{s.name}</span>
+                      <span className="w-1 h-1 rounded-full bg-primary" />
+                      <span className="font-medium text-foreground/90">{s.name}</span>
                     </div>
-                    {s.evidence && <p className="text-slate-500 pl-2.5 leading-relaxed">{s.evidence}</p>}
+                    {s.evidence && <p className="text-muted-foreground/70 pl-2.5 leading-relaxed">{s.evidence}</p>}
                   </div>
                 ))}
               </div>
@@ -73,10 +73,10 @@ export default function ResponseAnalysis({ analysis }) {
                 {skillsIdentified.soft_skills.map((s, i) => (
                   <div key={i} className="text-xs">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="w-1 h-1 rounded-full bg-[hsl(280,65%,60%)]" />
-                      <span className="font-medium text-slate-200">{s.name}</span>
+                      <span className="w-1 h-1 rounded-full bg-brand-violet" />
+                      <span className="font-medium text-foreground/90">{s.name}</span>
                     </div>
-                    {s.evidence && <p className="text-slate-500 pl-2.5 leading-relaxed">{s.evidence}</p>}
+                    {s.evidence && <p className="text-muted-foreground/70 pl-2.5 leading-relaxed">{s.evidence}</p>}
                   </div>
                 ))}
               </div>
@@ -90,14 +90,14 @@ export default function ResponseAnalysis({ analysis }) {
         <Section icon={Link2} title="Cadeia de Evidências" accent="cyan">
           <div className="space-y-3">
             {evidenceChain.map((e, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-[hsl(240,10%,8%)] border border-[hsl(240,8%,14%)]">
-                <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-[hsl(190,85%,45%,0.1)] flex items-center justify-center text-[10px] font-mono text-[hsl(190,85%,55%)]">
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted border border-border">
+                <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-[10px] font-mono text-primary">
                   {i + 1}
                 </span>
                 <div className="flex-1">
-                  <div className="text-xs font-medium text-white mb-1">{e.skill}</div>
-                  <p className="text-xs text-slate-400 italic mb-1">"{e.evidence_quote}"</p>
-                  <p className="text-xs text-slate-500 leading-relaxed">→ {e.interpretation}</p>
+                  <div className="text-xs font-medium text-foreground mb-1">{e.skill}</div>
+                  <p className="text-xs text-muted-foreground italic mb-1">"{e.evidence_quote}"</p>
+                  <p className="text-xs text-muted-foreground/70 leading-relaxed">→ {e.interpretation}</p>
                 </div>
               </div>
             ))}
@@ -111,11 +111,11 @@ export default function ResponseAnalysis({ analysis }) {
           {responseDepth.level && (
             <Section icon={FileText} title="Profundidade" accent="violet" compact>
               <div className="flex items-center gap-2 mb-2">
-                <span className="px-2.5 py-1 rounded-lg bg-[hsl(280,65%,60%,0.1)] border border-[hsl(280,65%,60%,0.25)] text-xs font-medium text-[hsl(280,65%,65%)]">
+                <span className="px-2.5 py-1 rounded-lg bg-brand-violet/10 border border-brand-violet/25 text-xs font-medium text-brand-violet">
                   {depthLabel(responseDepth.level)}
                 </span>
               </div>
-              {responseDepth.reasoning && <p className="text-xs text-slate-400 leading-relaxed">{responseDepth.reasoning}</p>}
+              {responseDepth.reasoning && <p className="text-xs text-muted-foreground leading-relaxed">{responseDepth.reasoning}</p>}
             </Section>
           )}
           {qualityMetrics.clarity != null && (
@@ -127,8 +127,8 @@ export default function ResponseAnalysis({ analysis }) {
                 <Metric label="Resol. Problemas" value={qualityMetrics.problem_solving} />
                 <Metric label="Coerência" value={qualityMetrics.coherence} />
                 <div className="flex items-center gap-1.5 text-xs">
-                  <span className="text-slate-500">Exemplos:</span>
-                  <span className={qualityMetrics.has_concrete_examples ? 'text-[hsl(160,60%,55%)]' : 'text-slate-600'}>
+                  <span className="text-muted-foreground/70">Exemplos:</span>
+                  <span className={qualityMetrics.has_concrete_examples ? 'text-emerald-400' : 'text-muted-foreground/50'}>
                     {qualityMetrics.has_concrete_examples ? 'Sim' : 'Não'}
                   </span>
                 </div>
@@ -145,8 +145,8 @@ export default function ResponseAnalysis({ analysis }) {
             <Section icon={ThumbsUp} title="Pontos Positivos" accent="emerald" compact>
               <ul className="space-y-1.5">
                 {positivePoints.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-300">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[hsl(160,60%,55%)] flex-shrink-0 mt-0.5" />
+                  <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
                     {p}
                   </li>
                 ))}
@@ -157,8 +157,8 @@ export default function ResponseAnalysis({ analysis }) {
             <Section icon={Search} title="A Investigar" accent="amber" compact>
               <ul className="space-y-1.5">
                 {pointsToInvestigate.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-300">
-                    <AlertTriangle className="w-3.5 h-3.5 text-[hsl(30,80%,60%)] flex-shrink-0 mt-0.5" />
+                  <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
                     {p}
                   </li>
                 ))}
@@ -170,30 +170,30 @@ export default function ResponseAnalysis({ analysis }) {
 
       {/* AI Detection */}
       {aiDetection && (
-        <div className={`p-4 rounded-xl border ${aiDetection.is_ai_generated ? 'bg-[hsl(0,72%,51%,0.04)] border-[hsl(0,72%,51%,0.25)]' : 'bg-[hsl(160,60%,45%,0.04)] border-[hsl(160,60%,45%,0.2)]'}`}>
+        <div className={`p-4 rounded-xl border ${aiDetection.is_ai_generated ? 'bg-rose-500/5 border-rose-500/25' : 'bg-emerald-500/5 border-emerald-500/20'}`}>
           <div className="flex items-center gap-2 mb-1.5">
-            <Bot className={`w-4 h-4 ${aiDetection.is_ai_generated ? 'text-[hsl(0,72%,60%)]' : 'text-[hsl(160,60%,55%)]'}`} />
-            <span className="text-sm font-medium text-white">
+            <Bot className={`w-4 h-4 ${aiDetection.is_ai_generated ? 'text-rose-400' : 'text-emerald-400'}`} />
+            <span className="text-sm font-medium text-foreground">
               {aiDetection.is_ai_generated ? 'Possível resposta gerada por IA' : 'Resposta autêntica'}
             </span>
-            <span className="text-xs font-mono text-slate-500">({aiDetection.confidence}%)</span>
+            <span className="text-xs font-mono text-muted-foreground/70">({aiDetection.confidence}%)</span>
           </div>
           {aiDetection.indicators?.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2">
               {aiDetection.indicators.map((ind, i) => (
-                <span key={i} className="px-2 py-0.5 rounded-md bg-[hsl(240,8%,12%)] text-[10px] text-slate-400">{ind}</span>
+                <span key={i} className="px-2 py-0.5 rounded-md bg-accent text-[10px] text-muted-foreground">{ind}</span>
               ))}
             </div>
           )}
-          <p className="text-xs text-slate-400 leading-relaxed">{aiDetection.analysis}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">{aiDetection.analysis}</p>
         </div>
       )}
 
       {/* Detailed Feedback */}
       {detailedFeedback && (
-        <div className="p-4 rounded-xl bg-[hsl(240,10%,8%)] border border-[hsl(240,8%,14%)]">
-          <div className="text-xs font-mono text-slate-500 uppercase tracking-wider mb-2">Feedback Detalhado</div>
-          <p className="text-xs text-slate-300 leading-relaxed">{detailedFeedback}</p>
+        <div className="p-4 rounded-xl bg-muted border border-border">
+          <div className="text-xs font-mono text-muted-foreground/70 uppercase tracking-wider mb-2">Feedback Detalhado</div>
+          <p className="text-xs text-foreground/80 leading-relaxed">{detailedFeedback}</p>
         </div>
       )}
     </div>
@@ -201,16 +201,16 @@ export default function ResponseAnalysis({ analysis }) {
 }
 
 function Section({ icon: Icon, title, accent, compact, children }) {
-  const accentColor = accent === 'cyan' ? 'text-[hsl(190,85%,55%)]'
-    : accent === 'violet' ? 'text-[hsl(280,65%,65%)]'
-    : accent === 'emerald' ? 'text-[hsl(160,60%,55%)]'
-    : accent === 'amber' ? 'text-[hsl(30,80%,60%)]'
-    : 'text-slate-400';
+  const accentColor = accent === 'cyan' ? 'text-primary'
+    : accent === 'violet' ? 'text-brand-violet'
+    : accent === 'emerald' ? 'text-emerald-400'
+    : accent === 'amber' ? 'text-amber-400'
+    : 'text-muted-foreground';
   return (
     <div>
       <div className="flex items-center gap-2 mb-2.5">
         <Icon className={`w-3.5 h-3.5 ${accentColor}`} />
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{title}</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
       </div>
       {children}
     </div>
@@ -220,8 +220,8 @@ function Section({ icon: Icon, title, accent, compact, children }) {
 function Metric({ label, value }) {
   return (
     <div className="flex items-center justify-between text-xs">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-mono font-medium text-slate-300">{value ?? '—'}</span>
+      <span className="text-muted-foreground/70">{label}</span>
+      <span className="font-mono font-medium text-foreground/80">{value ?? '—'}</span>
     </div>
   );
 }

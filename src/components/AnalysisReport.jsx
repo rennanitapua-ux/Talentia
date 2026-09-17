@@ -17,28 +17,24 @@ export default function AnalysisReport({ sim }) {
 
   return (
     <div className="space-y-6">
-      {/* Profile Summary */}
       {profileSummary && (
         <Card icon={Brain} title="Resumo do Perfil" accent="cyan">
-          <p className="text-sm text-slate-300 leading-relaxed">{profileSummary}</p>
+          <p className="text-sm text-foreground/80 leading-relaxed">{profileSummary}</p>
         </Card>
       )}
 
-      {/* Skills Identified */}
       {(hardSkills.length > 0 || softSkills.length > 0) && (
         <div className="grid md:grid-cols-2 gap-6">
           {hardSkills.length > 0 && (
             <Card icon={Wrench} title="Hard Skills" accent="cyan">
               <div className="space-y-3">
                 {hardSkills.map((s, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-[hsl(190,85%,45%,0.04)] border border-[hsl(190,85%,45%,0.15)]">
+                  <div key={i} className="p-3 rounded-xl bg-primary/5 border border-primary/15">
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[hsl(190,85%,50%)]" />
-                      <span className="text-sm font-medium text-white">{s.name}</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      <span className="text-sm font-medium text-foreground">{s.name}</span>
                     </div>
-                    {s.evidence && (
-                      <p className="text-xs text-slate-400 leading-relaxed pl-3.5">{s.evidence}</p>
-                    )}
+                    {s.evidence && <p className="text-xs text-muted-foreground leading-relaxed pl-3.5">{s.evidence}</p>}
                   </div>
                 ))}
               </div>
@@ -48,14 +44,12 @@ export default function AnalysisReport({ sim }) {
             <Card icon={Heart} title="Soft Skills" accent="violet">
               <div className="space-y-3">
                 {softSkills.map((s, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-[hsl(280,65%,60%,0.04)] border border-[hsl(280,65%,60%,0.15)]">
+                  <div key={i} className="p-3 rounded-xl bg-brand-violet/5 border border-brand-violet/15">
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[hsl(280,65%,60%)]" />
-                      <span className="text-sm font-medium text-white">{s.name}</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-violet" />
+                      <span className="text-sm font-medium text-foreground">{s.name}</span>
                     </div>
-                    {s.evidence && (
-                      <p className="text-xs text-slate-400 leading-relaxed pl-3.5">{s.evidence}</p>
-                    )}
+                    {s.evidence && <p className="text-xs text-muted-foreground leading-relaxed pl-3.5">{s.evidence}</p>}
                   </div>
                 ))}
               </div>
@@ -64,7 +58,6 @@ export default function AnalysisReport({ sim }) {
         </div>
       )}
 
-      {/* Job Compatibility */}
       {(jobCompat.demonstrated?.length > 0 || jobCompat.partial?.length > 0 || jobCompat.not_evidenced?.length > 0 || jobCompat.needs_investigation?.length > 0) && (
         <Card icon={Target} title="Compatibilidade com a Vaga" accent="cyan">
           <div className="grid md:grid-cols-2 gap-4">
@@ -84,33 +77,31 @@ export default function AnalysisReport({ sim }) {
         </Card>
       )}
 
-      {/* Consistency Analysis */}
       {consistency && (
         <Card icon={Scale} title="Análise de Consistência" accent="violet">
-          <p className="text-sm text-slate-300 leading-relaxed">{consistency}</p>
+          <p className="text-sm text-foreground/80 leading-relaxed">{consistency}</p>
         </Card>
       )}
 
-      {/* Interview Questions */}
       {interviewQuestions.length > 0 && (
         <Card icon={MessageCircleQuestion} title="Perguntas Recomendadas para Entrevista" accent="cyan">
           <div className="space-y-3">
             {interviewQuestions.map((q, i) => (
-              <div key={i} className="p-4 rounded-xl bg-[hsl(240,10%,8%)] border border-[hsl(240,8%,14%)] hover:border-[hsl(240,8%,18%)] transition-colors">
+              <div key={i} className="p-4 rounded-xl bg-muted border border-border transition-colors">
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-lg bg-[hsl(190,85%,45%,0.1)] border border-[hsl(190,85%,45%,0.25)] flex items-center justify-center text-xs font-mono font-bold text-[hsl(190,85%,55%)]">
+                  <span className="flex-shrink-0 w-7 h-7 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-xs font-mono font-bold text-primary">
                     {i + 1}
                   </span>
                   <div className="flex-1">
-                    <p className="text-sm text-white font-medium leading-relaxed mb-2">{q.question}</p>
+                    <p className="text-sm text-foreground font-medium leading-relaxed mb-2">{q.question}</p>
                     {q.rationale && (
-                      <p className="text-xs text-slate-400 leading-relaxed mb-1.5">
-                        <span className="text-slate-500 font-medium">Por que perguntar: </span>
+                      <p className="text-xs text-muted-foreground leading-relaxed mb-1.5">
+                        <span className="text-muted-foreground/70 font-medium">Por que perguntar: </span>
                         {q.rationale}
                       </p>
                     )}
                     {q.competency && (
-                      <div className="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-md bg-[hsl(240,8%,12%)] text-[10px] font-mono text-slate-400">
+                      <div className="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-md bg-accent text-[10px] font-mono text-muted-foreground">
                         <Link2 className="w-3 h-3" />
                         {q.competency}
                       </div>
@@ -127,16 +118,16 @@ export default function AnalysisReport({ sim }) {
 }
 
 function Card({ icon: Icon, title, accent, children }) {
-  const accentColor = accent === 'cyan' ? 'text-[hsl(190,85%,55%)]' : 'text-[hsl(280,65%,65%)]';
+  const accentColor = accent === 'cyan' ? 'text-primary' : 'text-brand-violet';
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[hsl(240,12%,6%)] border border-[hsl(240,8%,14%)] rounded-2xl p-6 shadow-card"
+      className="glass rounded-2xl p-6 shadow-card"
     >
       <div className="flex items-center gap-2.5 mb-4">
         <Icon className={`w-4 h-4 ${accentColor}`} />
-        <h3 className="text-sm font-semibold text-white tracking-wide">{title}</h3>
+        <h3 className="text-sm font-semibold text-foreground tracking-wide">{title}</h3>
       </div>
       {children}
     </motion.div>
@@ -145,10 +136,10 @@ function Card({ icon: Icon, title, accent, children }) {
 
 function CompatSection({ title, icon: Icon, color, items }) {
   const colors = {
-    emerald: { bg: 'bg-[hsl(160,60%,45%,0.06)]', border: 'border-[hsl(160,60%,45%,0.2)]', text: 'text-[hsl(160,60%,55%)]', dot: 'bg-[hsl(160,60%,50%)]' },
-    amber: { bg: 'bg-[hsl(30,80%,55%,0.06)]', border: 'border-[hsl(30,80%,55%,0.2)]', text: 'text-[hsl(30,80%,60%)]', dot: 'bg-[hsl(30,80%,50%)]' },
-    rose: { bg: 'bg-[hsl(0,72%,51%,0.06)]', border: 'border-[hsl(0,72%,51%,0.2)]', text: 'text-[hsl(0,72%,60%)]', dot: 'bg-[hsl(0,72%,50%)]' },
-    blue: { bg: 'bg-[hsl(220,70%,50%,0.06)]', border: 'border-[hsl(220,70%,50%,0.2)]', text: 'text-[hsl(220,70%,60%)]', dot: 'bg-[hsl(220,70%,50%)]' },
+    emerald: { bg: 'bg-emerald-500/5', border: 'border-emerald-500/20', text: 'text-emerald-400', dot: 'bg-emerald-500' },
+    amber: { bg: 'bg-amber-500/5', border: 'border-amber-500/20', text: 'text-amber-400', dot: 'bg-amber-500' },
+    rose: { bg: 'bg-rose-500/5', border: 'border-rose-500/20', text: 'text-rose-400', dot: 'bg-rose-500' },
+    blue: { bg: 'bg-blue-500/5', border: 'border-blue-500/20', text: 'text-blue-400', dot: 'bg-blue-500' },
   };
   const c = colors[color] || colors.blue;
   return (
@@ -162,9 +153,9 @@ function CompatSection({ title, icon: Icon, color, items }) {
           <div key={i}>
             <div className="flex items-center gap-2 mb-0.5">
               <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-              <span className="text-sm font-medium text-slate-200">{item.label}</span>
+              <span className="text-sm font-medium text-foreground/90">{item.label}</span>
             </div>
-            {item.note && <p className="text-xs text-slate-500 leading-relaxed pl-3.5">{item.note}</p>}
+            {item.note && <p className="text-xs text-muted-foreground/70 leading-relaxed pl-3.5">{item.note}</p>}
           </div>
         ))}
       </div>
