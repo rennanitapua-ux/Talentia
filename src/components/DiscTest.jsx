@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, ArrowRight, Check } from 'lucide-react';
 import { getShuffledQuestions, calculateDiscResults } from '@/lib/discTest';
 import Logo from '@/components/Logo';
+import Background from '@/components/Background';
 
 export default function DiscTest({ onComplete }) {
   const questions = useMemo(() => getShuffledQuestions(), []);
@@ -32,24 +33,26 @@ export default function DiscTest({ onComplete }) {
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(240,15%,3.5%)] text-white flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
+      <Background />
+
       {/* Header */}
-      <header className="border-b border-[hsl(240,8%,14%)] bg-[hsl(240,12%,5%)]/80 backdrop-blur-xl px-6 py-5 sticky top-0 z-30">
+      <header className="border-b border-border bg-card/60 backdrop-blur-xl px-6 py-5 sticky top-0 z-30">
         <div className="max-w-2xl mx-auto w-full">
           <div className="flex items-center justify-between mb-3">
             <Logo size="sm" />
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(190,85%,45%,0.08)] border border-[hsl(190,85%,45%,0.2)]">
-              <Brain className="w-3.5 h-3.5 text-[hsl(190,85%,55%)]" />
-              <span className="text-xs font-medium text-[hsl(190,85%,65%)] tracking-wide">Avaliação Comportamental</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/20">
+              <Brain className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-medium text-primary tracking-wide">Avaliação Comportamental</span>
             </div>
           </div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-slate-400">Questão {idx + 1} de {questions.length}</span>
-            <span className="text-xs font-mono text-slate-500">{Math.round(progress)}%</span>
+            <span className="text-sm text-muted-foreground">Questão {idx + 1} de {questions.length}</span>
+            <span className="text-xs font-mono text-muted-foreground">{Math.round(progress)}%</span>
           </div>
-          <div className="w-full h-1 rounded-full bg-[hsl(240,8%,14%)] overflow-hidden">
+          <div className="w-full h-1 rounded-full bg-muted overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-[hsl(190,85%,45%)] to-[hsl(190,85%,55%)] rounded-full"
+              className="h-full bg-primary rounded-full"
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
             />
@@ -58,7 +61,7 @@ export default function DiscTest({ onComplete }) {
       </header>
 
       {/* Question */}
-      <div className="flex-1 flex items-center justify-center px-6 py-10">
+      <div className="flex-1 flex items-center justify-center px-6 py-10 relative z-10">
         <div className="max-w-2xl w-full">
           <AnimatePresence mode="wait">
             <motion.div
@@ -69,13 +72,13 @@ export default function DiscTest({ onComplete }) {
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="mb-8">
-                <div className="text-xs font-mono text-[hsl(190,85%,55%)] uppercase tracking-[0.2em] mb-3">
+                <div className="text-xs font-mono text-primary uppercase tracking-[0.2em] mb-3">
                   Situação {idx + 1}
                 </div>
-                <h2 className="font-heading text-2xl md:text-3xl leading-snug text-white mb-2">
+                <h2 className="text-2xl md:text-3xl font-bold leading-snug text-foreground mb-2">
                   {current.question}
                 </h2>
-                <p className="text-sm text-slate-500">Escolha a opção que mais se parece com você.</p>
+                <p className="text-sm text-muted-foreground">Escolha a opção que mais se parece com você.</p>
               </div>
 
               <div className="space-y-3">
@@ -87,18 +90,18 @@ export default function DiscTest({ onComplete }) {
                       onClick={() => handleSelect(opt.letter)}
                       className={`w-full text-left p-5 rounded-2xl border transition-all duration-200 flex items-start gap-4 group ${
                         isSelected
-                          ? 'bg-[hsl(190,85%,45%,0.1)] border-[hsl(190,85%,45%,0.5)] shadow-[0_0_0_1px_hsl(190,85%,45%,0.3)]'
-                          : 'bg-[hsl(240,12%,6%)] border-[hsl(240,8%,14%)] hover:border-[hsl(240,8%,22%)] hover:bg-[hsl(240,10%,8%)]'
+                          ? 'bg-primary/10 border-primary/50'
+                          : 'glass hover:border-border'
                       }`}
                     >
                       <span className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0 transition-all ${
                         isSelected
-                          ? 'bg-[hsl(190,85%,45%)] text-[hsl(240,15%,3.5%)]'
-                          : 'bg-[hsl(240,8%,12%)] text-slate-500 group-hover:bg-[hsl(240,8%,16%)] group-hover:text-slate-300'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground group-hover:bg-accent group-hover:text-foreground'
                       }`}>
                         {isSelected ? <Check className="w-4 h-4" /> : opt.displayLabel}
                       </span>
-                      <span className="text-sm leading-relaxed text-slate-200 flex-1 pt-1">{opt.text}</span>
+                      <span className="text-sm leading-relaxed text-foreground flex-1 pt-1">{opt.text}</span>
                     </button>
                   );
                 })}
@@ -108,7 +111,7 @@ export default function DiscTest({ onComplete }) {
                 <button
                   onClick={handleNext}
                   disabled={!selected}
-                  className="flex items-center gap-2 px-7 py-3.5 rounded-xl bg-[hsl(190,85%,45%)] text-[hsl(240,15%,3.5%)] font-semibold text-sm hover:bg-[hsl(190,85%,50%)] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-[hsl(190,85%,45%,0.2)]"
+                  className="flex items-center gap-2 px-7 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   {idx + 1 < questions.length ? 'Próxima questão' : 'Finalizar teste'}
                   <ArrowRight className="w-4 h-4" />

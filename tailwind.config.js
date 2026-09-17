@@ -44,6 +44,11 @@ module.exports = {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
+  			brand: {
+  				blue: 'hsl(var(--primary))',
+  				violet: 'hsl(var(--violet))',
+  				'violet-foreground': 'hsl(var(--violet-foreground))',
+  			},
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',
@@ -63,9 +68,9 @@ module.exports = {
   			}
   		},
   		fontFamily: {
-  			heading: ['DM Serif Display', 'Georgia', 'serif'],
+  			heading: ['Inter', 'system-ui', 'sans-serif'],
   			body: ['Inter', 'system-ui', 'sans-serif'],
-  			display: ['DM Serif Display', 'Georgia', 'serif'],
+  			display: ['Inter', 'system-ui', 'sans-serif'],
   			mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
   		},
   		keyframes: {
