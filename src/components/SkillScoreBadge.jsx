@@ -20,7 +20,7 @@ export default function SkillScoreBadge({ score, size = 'md' }) {
       </div>
       <div className="text-center">
         <div className="text-[10px] font-mono uppercase tracking-wider" style={{ color }}>{tier}</div>
-        <div className="text-[10px] text-slate-400">{label}</div>
+        <div className="text-[10px] text-muted-foreground">{label}</div>
       </div>
     </div>
   );

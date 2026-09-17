@@ -69,12 +69,12 @@ export default function SimulationLock({ onViolation, violationCount, children }
         )}
       </AnimatePresence>
 
-      <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2 bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-1.5">
-        <Lock className="w-3.5 h-3.5 text-cyan-400" />
-        <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Modo Protegido</span>
+      <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2 bg-card/90 border border-border rounded-lg px-3 py-1.5">
+        <Lock className="w-3.5 h-3.5 text-primary" />
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Modo Protegido</span>
         <ClipboardX className="w-3.5 h-3.5 text-rose-400" />
         <span className="text-[10px] font-mono text-rose-400/70 uppercase">Colar Off</span>
-        <Eye className="w-3.5 h-3.5 text-slate-500" />
+        <Eye className="w-3.5 h-3.5 text-muted-foreground/70" />
       </div>
     </div>
   );

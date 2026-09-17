@@ -37,23 +37,23 @@ export default function CompanyCompare() {
   const selectedSims = simulations.filter(s => selected.includes(s.id));
   const allCompetencies = job?.competencies || [];
 
-  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-30">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-3">
-          <button onClick={() => navigate(`/company/jobs/${id}`)} className="p-2 rounded-lg hover:bg-slate-800">
-            <ArrowLeft className="w-4 h-4 text-slate-400" />
+          <button onClick={() => navigate(`/company/jobs/${id}`)} className="p-2 rounded-lg hover:bg-muted">
+            <ArrowLeft className="w-4 h-4 text-muted-foreground" />
           </button>
           <div className="flex-1">
             <div className="text-sm font-semibold flex items-center gap-2">
-              <GitCompare className="w-4 h-4 text-cyan-400" />
+              <GitCompare className="w-4 h-4 text-primary" />
               Comparar Candidatos
             </div>
-            <div className="text-[10px] text-slate-500 font-mono">{job?.title} · {job?.company_name}</div>
+            <div className="text-[10px] text-muted-foreground/70 font-mono">{job?.title} · {job?.company_name}</div>
           </div>
-          <span className="text-xs text-slate-500">{selected.length}/4 selecionados</span>
+          <span className="text-xs text-muted-foreground/70">{selected.length}/4 selecionados</span>
         </div>
       </header>
 
@@ -61,11 +61,11 @@ export default function CompanyCompare() {
         {/* Candidate selector */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Users className="w-4 h-4 text-slate-500" />
-            <span className="text-sm text-slate-400">Selecione até 4 candidatos para comparar</span>
+            <Users className="w-4 h-4 text-muted-foreground/70" />
+            <span className="text-sm text-muted-foreground">Selecione até 4 candidatos para comparar</span>
           </div>
           {simulations.length === 0 ? (
-            <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-xl p-8 text-center text-slate-500 text-sm">
+            <div className="bg-card/40 border border-dashed border-border rounded-xl p-8 text-center text-muted-foreground/70 text-sm">
               Nenhum candidato avaliado ainda para esta vaga.
             </div>
           ) : (
@@ -77,15 +77,15 @@ export default function CompanyCompare() {
                     key={sim.id}
                     onClick={() => toggleSelect(sim.id)}
                     className={`p-4 rounded-xl border text-left transition-all ${
-                      isSelected ? 'bg-cyan-500/10 border-cyan-500/50' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                      isSelected ? 'bg-primary/10 border-cyan-500/50' : 'bg-card/60 border-border hover:border-slate-700'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-sm font-semibold">
+                      <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">
                         {sim.candidate_name?.charAt(0).toUpperCase()}
                       </div>
                       {isSelected ? (
-                        <div className="w-5 h-5 rounded-full bg-cyan-500 flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
                           <Check className="w-3 h-3 text-slate-950" />
                         </div>
                       ) : (
@@ -94,8 +94,8 @@ export default function CompanyCompare() {
                     </div>
                     <div className="text-sm font-medium truncate">{sim.candidate_name}</div>
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-slate-500">{sim.recommendation || '—'}</span>
-                      <span className="text-lg font-bold font-mono text-cyan-400">{sim.overall_score || 0}</span>
+                      <span className="text-xs text-muted-foreground/70">{sim.recommendation || '—'}</span>
+                      <span className="text-lg font-bold font-mono text-primary">{sim.overall_score || 0}</span>
                     </div>
                   </button>
                 );
@@ -112,8 +112,8 @@ export default function CompanyCompare() {
               {selectedSims.map((sim) => {
                 const rec = getRecommendation(sim.overall_score || 0);
                 return (
-                  <div key={sim.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 text-center">
-                    <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-lg font-bold mx-auto mb-3">
+                  <div key={sim.id} className="bg-card/60 border border-border rounded-xl p-5 text-center">
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold mx-auto mb-3">
                       {sim.candidate_name?.charAt(0).toUpperCase()}
                     </div>
                     <div className="text-sm font-semibold mb-1">{sim.candidate_name}</div>
@@ -135,7 +135,7 @@ export default function CompanyCompare() {
                     )}
                     <button
                       onClick={() => navigate(`/company/candidates/${sim.id}`)}
-                      className="mt-3 text-xs text-cyan-400 hover:text-cyan-300"
+                      className="mt-3 text-xs text-primary hover:text-cyan-300"
                     >
                       Ver detalhes →
                     </button>
@@ -145,15 +145,15 @@ export default function CompanyCompare() {
             </div>
 
             {/* Skill scores comparison table */}
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 mb-6 overflow-x-auto">
+            <div className="bg-card/60 border border-border rounded-2xl p-6 mb-6 overflow-x-auto">
               <div className="flex items-center gap-2 mb-4">
-                <Award className="w-4 h-4 text-cyan-400" />
+                <Award className="w-4 h-4 text-primary" />
                 <span className="text-sm font-semibold">Comparação de Competências</span>
               </div>
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-800">
-                    <th className="text-left text-xs font-mono text-slate-500 uppercase pb-3 pr-4">Competência</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left text-xs font-mono text-muted-foreground/70 uppercase pb-3 pr-4">Competência</th>
                     {selectedSims.map(sim => (
                       <th key={sim.id} className="text-center text-xs font-medium pb-3 px-2">
                         {sim.candidate_name?.split(' ')[0]}
@@ -163,8 +163,8 @@ export default function CompanyCompare() {
                 </thead>
                 <tbody>
                   {allCompetencies.map((comp) => (
-                    <tr key={comp} className="border-b border-slate-800/50">
-                      <td className="text-sm text-slate-300 py-3 pr-4">{comp}</td>
+                    <tr key={comp} className="border-b border-border/50">
+                      <td className="text-sm text-foreground/80 py-3 pr-4">{comp}</td>
                       {selectedSims.map(sim => {
                         const score = sim.skill_scores?.[comp] ?? 0;
                         const marker = getEvidenceMarker(score);
@@ -185,8 +185,8 @@ export default function CompanyCompare() {
             {/* Skill graphs side by side */}
             <div className="grid gap-4 mb-6" style={{ gridTemplateColumns: `repeat(${selectedSims.length}, 1fr)` }}>
               {selectedSims.map(sim => (
-                <div key={sim.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-                  <div className="text-xs font-mono text-slate-500 uppercase mb-3 text-center">{sim.candidate_name}</div>
+                <div key={sim.id} className="bg-card/60 border border-border rounded-2xl p-5">
+                  <div className="text-xs font-mono text-muted-foreground/70 uppercase mb-3 text-center">{sim.candidate_name}</div>
                   <SkillGraph
                     scores={sim.skill_scores}
                     competencies={Object.keys(sim.skill_scores || {})}
@@ -199,17 +199,17 @@ export default function CompanyCompare() {
             {/* Summary comparison */}
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${selectedSims.length}, 1fr)` }}>
               {selectedSims.map(sim => (
-                <div key={sim.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-                  <div className="text-xs font-mono text-slate-500 uppercase mb-2">Resumo</div>
-                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-6">{sim.summary || '—'}</p>
-                  <div className="mt-3 pt-3 border-t border-slate-800">
+                <div key={sim.id} className="bg-card/60 border border-border rounded-2xl p-5">
+                  <div className="text-xs font-mono text-muted-foreground/70 uppercase mb-2">Resumo</div>
+                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-6">{sim.summary || '—'}</p>
+                  <div className="mt-3 pt-3 border-t border-border">
                     <div className="text-xs font-mono text-emerald-400 uppercase mb-1">Fortalezas</div>
                     {(sim.skill_dna?.strengths || []).slice(0, 2).map((s, i) => (
-                      <div key={i} className="text-xs text-slate-400 mb-1">• {s.competency} ({s.score})</div>
+                      <div key={i} className="text-xs text-muted-foreground mb-1">• {s.competency} ({s.score})</div>
                     ))}
                     <div className="text-xs font-mono text-amber-400 uppercase mb-1 mt-2">Desenvolver</div>
                     {(sim.skill_dna?.growth_areas || []).slice(0, 2).map((s, i) => (
-                      <div key={i} className="text-xs text-slate-400 mb-1">• {s.competency} ({s.score})</div>
+                      <div key={i} className="text-xs text-muted-foreground mb-1">• {s.competency} ({s.score})</div>
                     ))}
                   </div>
                 </div>
@@ -219,7 +219,7 @@ export default function CompanyCompare() {
         )}
 
         {selectedSims.length === 1 && (
-          <div className="text-center py-12 text-slate-500 text-sm">
+          <div className="text-center py-12 text-muted-foreground/70 text-sm">
             Selecione pelo menos 2 candidatos para comparar
           </div>
         )}

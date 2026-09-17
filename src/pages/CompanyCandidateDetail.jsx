@@ -13,9 +13,9 @@ import { DISC_PROFILES } from '@/lib/discTest';
 import Logo from '@/components/Logo';
 
 const HIRING_STATUS = {
-  em_analise: { label: 'Em Análise', color: '#64748b', bg: 'bg-slate-500/15', text: 'text-muted-foreground' },
+  em_analise: { label: 'Em Análise', color: '#64748b', bg: 'bg-muted', text: 'text-muted-foreground' },
   convocacao_entrevista: { label: 'Convocado para Entrevista', color: '#3b82f6', bg: 'bg-blue-500/15', text: 'text-blue-400' },
-  entrevista_agendada: { label: 'Entrevista Agendada', color: '#8b5cf6', bg: 'bg-violet-500/15', text: 'text-violet-400' },
+  entrevista_agendada: { label: 'Entrevista Agendada', color: '#8b5cf6', bg: 'bg-brand-violet/15', text: 'text-brand-violet' },
   aprovado: { label: 'Aprovado', color: '#10b981', bg: 'bg-emerald-500/15', text: 'text-emerald-400' },
   reprovado: { label: 'Reprovado', color: '#ef4444', bg: 'bg-rose-500/15', text: 'text-rose-400' },
 };

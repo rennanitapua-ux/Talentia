@@ -75,15 +75,15 @@ export default function CompanyJobCreate() {
   if (generating) return <BootSequence onComplete={() => {}} label="Gerando simulação IA" />;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-30">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-30">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">
-          <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/company')} className="p-2 rounded-lg hover:bg-slate-800">
-            <ArrowLeft className="w-4 h-4 text-slate-400" />
+          <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/company')} className="p-2 rounded-lg hover:bg-muted">
+            <ArrowLeft className="w-4 h-4 text-muted-foreground" />
           </button>
           <div>
             <div className="text-sm font-semibold">Criar Nova Vaga</div>
-            <div className="text-[10px] text-slate-500 font-mono">Passo {step} de 4</div>
+            <div className="text-[10px] text-muted-foreground/70 font-mono">Passo {step} de 4</div>
           </div>
         </div>
       </header>
@@ -92,7 +92,7 @@ export default function CompanyJobCreate() {
       <div className="max-w-4xl mx-auto px-6 pt-6">
         <div className="flex gap-2">
           {[1, 2, 3, 4].map(s => (
-            <div key={s} className={`h-1 flex-1 rounded-full transition-colors ${s <= step ? 'bg-cyan-400' : 'bg-slate-800'}`} />
+            <div key={s} className={`h-1 flex-1 rounded-full transition-colors ${s <= step ? 'bg-cyan-400' : 'bg-muted'}`} />
           ))}
         </div>
       </div>
@@ -102,17 +102,17 @@ export default function CompanyJobCreate() {
           {step === 1 && (
             <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <h2 className="text-2xl font-bold mb-1">Informações da vaga</h2>
-              <p className="text-slate-400 text-sm mb-6">Defina o cargo e o setor da posição.</p>
+              <p className="text-muted-foreground text-sm mb-6">Defina o cargo e o setor da posição.</p>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome da empresa</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nome da empresa</label>
                   <input value={form.company_name} onChange={e => update('company_name', e.target.value)} placeholder="Ex: TechNova Solutions"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
+                    className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Título da vaga *</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Título da vaga *</label>
                   <input value={form.title} onChange={e => update('title', e.target.value)} placeholder="Ex: Executivo de Vendas B2B"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
+                    className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <SelectableChips
@@ -132,17 +132,17 @@ export default function CompanyJobCreate() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome do cargo *</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nome do cargo *</label>
                   <input value={form.role} onChange={e => update('role', e.target.value)} placeholder="Ex: Executivo de Vendas"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
+                    className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
                 </div>
                 {form.sector === 'Outra (escrever abaixo)' && (
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Descreva a área <span className="text-cyan-400">(a IA vai analisar)</span></label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">Descreva a área <span className="text-primary">(a IA vai analisar)</span></label>
                     <textarea value={form.area_description} onChange={e => update('area_description', e.target.value)}
                       rows={2} placeholder="Ex: Setor de energia renovável, foco em vendas de painéis solares para residências..."
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none resize-none" />
-                    <p className="text-[10px] text-slate-500 mt-1">Escreva livremente — a IA usa sua descrição para gerar perguntas específicas da área.</p>
+                      className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:outline-none resize-none" />
+                    <p className="text-[10px] text-muted-foreground/70 mt-1">Escreva livremente — a IA usa sua descrição para gerar perguntas específicas da área.</p>
                   </div>
                 )}
               </div>
@@ -152,34 +152,34 @@ export default function CompanyJobCreate() {
           {step === 2 && (
             <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <h2 className="text-2xl font-bold mb-1">Contexto da empresa</h2>
-              <p className="text-slate-400 text-sm mb-6">Quanto mais rico o contexto, mais realista a simulação gerada pela IA.</p>
+              <p className="text-muted-foreground text-sm mb-6">Quanto mais rico o contexto, mais realista a simulação gerada pela IA.</p>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Contexto da empresa *</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Contexto da empresa *</label>
                   <textarea value={form.company_context} onChange={e => update('company_context', e.target.value)}
                     rows={3} placeholder="Ex: Startup SaaS B2B de 80 pessoas, crescendo rápido, cultura data-driven..."
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none resize-none" />
+                    className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:outline-none resize-none" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Produto / Serviço principal *</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">Produto / Serviço principal *</label>
                     <input value={form.product} onChange={e => update('product', e.target.value)} placeholder="Ex: Plataforma de automação de marketing"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
+                      className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Cliente típico *</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">Cliente típico *</label>
                     <input value={form.client} onChange={e => update('client', e.target.value)} placeholder="Ex: Diretores de marketing de médias empresas"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none" />
+                      className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                    Problemas e desafios reais da empresa <span className="text-cyan-400">(a IA gera perguntas a partir disso)</span>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                    Problemas e desafios reais da empresa <span className="text-primary">(a IA gera perguntas a partir disso)</span>
                   </label>
                   <textarea value={form.company_problems} onChange={e => update('company_problems', e.target.value)}
                     rows={3} placeholder="Ex: Alto churn de clientes nos primeiros 90 dias. Equipe de vendas tem dificuldade em fechar contratos anuais. Suporte sobrecarregado com tickets repetitivos..."
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none resize-none" />
-                  <p className="text-[10px] text-slate-500 mt-1">Descreva os problemas reais — a IA criará cenários específicos para testar como o candidato os resolve.</p>
+                    className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:outline-none resize-none" />
+                  <p className="text-[10px] text-muted-foreground/70 mt-1">Descreva os problemas reais — a IA criará cenários específicos para testar como o candidato os resolve.</p>
                 </div>
               </div>
             </motion.div>
@@ -188,30 +188,30 @@ export default function CompanyJobCreate() {
           {step === 3 && (
             <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <h2 className="text-2xl font-bold mb-1">Competências a avaliar</h2>
-              <p className="text-slate-400 text-sm mb-6">Mínimo 2 competências. A IA criará cenários para avaliar cada uma.</p>
+              <p className="text-muted-foreground text-sm mb-6">Mínimo 2 competências. A IA criará cenários para avaliar cada uma.</p>
               <div className="flex gap-2 mb-4">
                 <input
                   value={newCompetency}
                   onChange={e => setNewCompetency(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addCompetency()}
                   placeholder="Ex: Comunicação, Resiliência, Negociação..."
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none"
+                  className="flex-1 bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:outline-none"
                 />
-                <button onClick={addCompetency} className="px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+                <button onClick={addCompetency} className="px-4 rounded-lg bg-muted hover:bg-accent text-foreground/80">
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
                 {form.competencies.map((c, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg px-3 py-1.5">
+                  <div key={i} className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-lg px-3 py-1.5">
                     <span className="text-sm text-cyan-200">{c}</span>
                     <button onClick={() => update('competencies', form.competencies.filter((_, idx) => idx !== i))}>
-                      <X className="w-3.5 h-3.5 text-cyan-400/60 hover:text-cyan-300" />
+                      <X className="w-3.5 h-3.5 text-primary/60 hover:text-primary" />
                     </button>
                   </div>
                 ))}
                 {form.competencies.length === 0 && (
-                  <p className="text-slate-600 text-sm">Nenhuma competência adicionada ainda.</p>
+                  <p className="text-muted-foreground/50 text-sm">Nenhuma competência adicionada ainda.</p>
                 )}
               </div>
             </motion.div>
@@ -220,41 +220,41 @@ export default function CompanyJobCreate() {
           {step === 4 && (
             <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <h2 className="text-2xl font-bold mb-1">Situações reais do dia a dia</h2>
-              <p className="text-slate-400 text-sm mb-6">Descreva situações reais que o candidato vai enfrentar. Mínimo 2.</p>
+              <p className="text-muted-foreground text-sm mb-6">Descreva situações reais que o candidato vai enfrentar. Mínimo 2.</p>
               <div className="flex gap-2 mb-4">
                 <textarea
                   value={newSituation}
                   onChange={e => setNewSituation(e.target.value)}
                   rows={2} placeholder="Ex: Um cliente insatisfeito ameaça cancelar o contrato após um bug crítico..."
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none resize-none"
+                  className="flex-1 bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:outline-none resize-none"
                 />
-                <button onClick={addSituation} className="px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 self-start">
+                <button onClick={addSituation} className="px-4 rounded-lg bg-muted hover:bg-accent text-foreground/80 self-start">
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
               <div className="space-y-2">
                 {form.situations.map((s, i) => (
-                  <div key={i} className="flex items-start gap-3 bg-slate-900/60 border border-slate-800 rounded-lg p-3">
-                    <span className="text-xs font-mono text-cyan-400 mt-0.5">{String(i + 1).padStart(2, '0')}</span>
-                    <span className="flex-1 text-sm text-slate-300">{s}</span>
+                  <div key={i} className="flex items-start gap-3 bg-card/60 border border-border rounded-lg p-3">
+                    <span className="text-xs font-mono text-primary mt-0.5">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="flex-1 text-sm text-foreground/80">{s}</span>
                     <button onClick={() => update('situations', form.situations.filter((_, idx) => idx !== i))}>
-                      <X className="w-3.5 h-3.5 text-slate-500 hover:text-rose-400" />
+                      <X className="w-3.5 h-3.5 text-muted-foreground/70 hover:text-rose-400" />
                     </button>
                   </div>
                 ))}
                 {form.situations.length === 0 && (
-                  <p className="text-slate-600 text-sm">Nenhuma situação adicionada ainda.</p>
+                  <p className="text-muted-foreground/50 text-sm">Nenhuma situação adicionada ainda.</p>
                 )}
               </div>
 
               {canProceed() && form.situations.length >= 2 && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 p-5 bg-cyan-500/5 border border-cyan-500/20 rounded-xl">
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 p-5 bg-primary/5 border border-primary/20 rounded-xl">
                   <div className="flex items-center gap-3 mb-2">
-                    <Sparkles className="w-5 h-5 text-cyan-400" />
+                    <Sparkles className="w-5 h-5 text-primary" />
                     <span className="font-semibold text-cyan-200">Pronto para gerar</span>
                   </div>
-                  <p className="text-xs text-slate-400 mb-4">A IA vai criar o perfil da empresa virtual e transformar cada situação em um cenário de simulação com múltipla escolha e pergunta de aprofundamento.</p>
-                  <button onClick={handleGenerate} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-cyan-500 text-slate-950 font-semibold text-sm hover:bg-cyan-400">
+                  <p className="text-xs text-muted-foreground mb-4">A IA vai criar o perfil da empresa virtual e transformar cada situação em um cenário de simulação com múltipla escolha e pergunta de aprofundamento.</p>
+                  <button onClick={handleGenerate} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-slate-950 font-semibold text-sm hover:bg-cyan-400">
                     <Sparkles className="w-4 h-4" />
                     Gerar Simulação com IA
                   </button>
@@ -270,7 +270,7 @@ export default function CompanyJobCreate() {
             <button
               disabled={!canProceed()}
               onClick={() => setStep(step + 1)}
-              className="px-6 py-2.5 rounded-lg bg-cyan-500 text-slate-950 font-semibold text-sm hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2.5 rounded-lg bg-primary text-slate-950 font-semibold text-sm hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Continuar
             </button>

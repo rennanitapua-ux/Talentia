@@ -62,11 +62,11 @@ export default function CandidatePassport() {
   const avgScore = simulations.length ? Math.round(simulations.reduce((a, s) => a + (s.overall_score || 0), 0) / simulations.length) : 0;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-30">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-3">
-          <button onClick={() => navigate('/candidate')} className="p-2 rounded-lg hover:bg-slate-800">
-            <ArrowLeft className="w-4 h-4 text-slate-400" />
+          <button onClick={() => navigate('/candidate')} className="p-2 rounded-lg hover:bg-muted">
+            <ArrowLeft className="w-4 h-4 text-muted-foreground" />
           </button>
           <Logo size="sm" withText />
         </div>
@@ -76,11 +76,11 @@ export default function CandidatePassport() {
         {loading ? (
           <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" /></div>
         ) : simulations.length === 0 ? (
-          <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl p-16 text-center">
+          <div className="bg-card/40 border border-dashed border-border rounded-2xl p-16 text-center">
             <Award className="w-12 h-12 text-slate-700 mx-auto mb-4" />
             <h2 className="text-lg font-semibold mb-2">Seu Talent Passport está vazio</h2>
-            <p className="text-slate-400 text-sm mb-6">Complete simulações para construir seu portfólio de competências permanente.</p>
-            <button onClick={() => navigate('/candidate')} className="px-6 py-2.5 rounded-lg bg-violet-500 text-white font-semibold text-sm hover:bg-violet-400">
+            <p className="text-muted-foreground text-sm mb-6">Complete simulações para construir seu portfólio de competências permanente.</p>
+            <button onClick={() => navigate('/candidate')} className="px-6 py-2.5 rounded-lg bg-brand-violet text-foreground font-semibold text-sm hover:bg-violet-400">
               Explorar Vagas
             </button>
           </div>
@@ -90,7 +90,7 @@ export default function CandidatePassport() {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-violet-900/30 to-slate-900/60 border border-violet-500/20 rounded-2xl p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-full bg-violet-500/20 flex items-center justify-center text-xl font-bold text-violet-300 overflow-hidden">
+                  <div className="w-14 h-14 rounded-full bg-brand-violet/20 flex items-center justify-center text-xl font-bold text-brand-violet overflow-hidden">
                     {user?.profile_photo_url ? (
                       <img src={user.profile_photo_url} alt={user.full_name} className="w-full h-full object-cover" />
                     ) : (
@@ -99,7 +99,7 @@ export default function CandidatePassport() {
                   </div>
                   <div>
                     <div className="text-lg font-bold">{user?.full_name || user?.email || 'Candidato'}</div>
-                    <div className="text-xs text-slate-400 flex items-center gap-2">
+                    <div className="text-xs text-muted-foreground flex items-center gap-2">
                       <Calendar className="w-3 h-3" />
                       Membro desde {new Date(user?.created_date || Date.now()).toLocaleDateString('pt-BR')}
                     </div>
@@ -107,35 +107,35 @@ export default function CandidatePassport() {
                 </div>
                 <div className="text-right">
                   <SkillScoreBadge score={avgScore} size="lg" />
-                  <div className="text-[10px] text-slate-500 mt-1 font-mono">Score Médio</div>
+                  <div className="text-[10px] text-muted-foreground/70 mt-1 font-mono">Score Médio</div>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold font-mono text-violet-400">{simulations.length}</div>
-                  <div className="text-xs text-slate-500">Simulações</div>
+                  <div className="text-2xl font-bold font-mono text-brand-violet">{simulations.length}</div>
+                  <div className="text-xs text-muted-foreground/70">Simulações</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold font-mono text-cyan-400">{allCompetencies.length}</div>
-                  <div className="text-xs text-slate-500">Competências</div>
+                  <div className="text-2xl font-bold font-mono text-primary">{allCompetencies.length}</div>
+                  <div className="text-xs text-muted-foreground/70">Competências</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold font-mono text-emerald-400">
                     {simulations.filter(s => (s.ai_flags || []).length === 0).length}
                   </div>
-                  <div className="text-xs text-slate-500">Autênticas</div>
+                  <div className="text-xs text-muted-foreground/70">Autênticas</div>
                 </div>
               </div>
             </motion.div>
 
             {/* Aggregated Skill Graph */}
             {allCompetencies.length > 0 && (
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 mb-6">
+              <div className="bg-card/60 border border-border rounded-2xl p-6 mb-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-4 h-4 text-cyan-400" />
+                  <TrendingUp className="w-4 h-4 text-primary" />
                   <span className="text-sm font-semibold">Skill Graph Consolidado</span>
-                  <span className="text-xs text-slate-500">— média de todas as simulações</span>
+                  <span className="text-xs text-muted-foreground/70">— média de todas as simulações</span>
                 </div>
                 <SkillGraph scores={aggregatedScores} competencies={allCompetencies} height={360} />
               </div>
@@ -143,7 +143,7 @@ export default function CandidatePassport() {
 
             {/* Hiring process tracking */}
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-cyan-400" />
+              <Briefcase className="w-4 h-4 text-primary" />
               Andamento dos Processos
             </h3>
             <div className="grid lg:grid-cols-3 gap-4">
@@ -156,14 +156,14 @@ export default function CandidatePassport() {
                       key={sim.id}
                       onClick={() => setSelected(sim)}
                       className={`w-full text-left p-4 rounded-xl border transition-all ${
-                        selected?.id === sim.id ? 'bg-violet-500/10 border-violet-500/40' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                        selected?.id === sim.id ? 'bg-brand-violet/10 border-violet-500/40' : 'bg-card/60 border-border hover:border-slate-700'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm font-medium truncate">{sim.job_title}</div>
                         <SkillScoreBadge score={sim.overall_score || 0} size="sm" />
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground/70">
                         <Building2 className="w-3 h-3" />
                         {sim.company_name}
                       </div>
@@ -171,7 +171,7 @@ export default function CandidatePassport() {
                         <div className="px-2 py-0.5 rounded-md text-[10px] font-medium" style={{ background: `${hiring.color}20`, color: hiring.color }}>
                           {hiring.label}
                         </div>
-                        <span className="text-[10px] text-slate-600">{new Date(sim.completed_at).toLocaleDateString('pt-BR')}</span>
+                        <span className="text-[10px] text-muted-foreground/50">{new Date(sim.completed_at).toLocaleDateString('pt-BR')}</span>
                       </div>
                     </button>
                   );
@@ -181,11 +181,11 @@ export default function CandidatePassport() {
               {/* Selected detail */}
               <div className="lg:col-span-2">
                 {selected && (
-                  <motion.div key={selected.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+                  <motion.div key={selected.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-card/60 border border-border rounded-2xl p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <h4 className="font-semibold">{selected.job_title}</h4>
-                        <div className="text-xs text-slate-500">{selected.company_name}</div>
+                        <div className="text-xs text-muted-foreground/70">{selected.company_name}</div>
                       </div>
                       <div className="px-3 py-1 rounded-lg text-xs font-medium" style={{ background: '#22d3ee15', color: '#22d3ee' }}>
                         {selected.recommendation}
@@ -200,7 +200,7 @@ export default function CandidatePassport() {
                           <Briefcase className="w-4 h-4" style={{ color: hiring.color }} />
                           <div>
                             <div className="text-sm font-medium" style={{ color: hiring.color }}>{hiring.label}</div>
-                            <div className="text-[10px] text-slate-500">Status do processo de contratação</div>
+                            <div className="text-[10px] text-muted-foreground/70">Status do processo de contratação</div>
                           </div>
                         </div>
                       );
@@ -216,7 +216,7 @@ export default function CandidatePassport() {
                       <div className="text-xs font-mono text-emerald-400 uppercase">Fortalezas</div>
                       {(selected.skill_dna?.strengths || []).map((s, i) => (
                         <div key={i} className="text-xs p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-                          <span className="font-medium">{s.competency}</span>: <span className="text-slate-400">{s.evidence}</span>
+                          <span className="font-medium">{s.competency}</span>: <span className="text-muted-foreground">{s.evidence}</span>
                         </div>
                       ))}
                     </div>
@@ -225,7 +225,7 @@ export default function CandidatePassport() {
                       <div className="text-xs font-mono text-amber-400 uppercase">Áreas de Desenvolvimento</div>
                       {(selected.skill_dna?.growth_areas || []).map((s, i) => (
                         <div key={i} className="text-xs p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                          <span className="font-medium">{s.competency}</span>: <span className="text-slate-400">{s.evidence}</span>
+                          <span className="font-medium">{s.competency}</span>: <span className="text-muted-foreground">{s.evidence}</span>
                         </div>
                       ))}
                     </div>
@@ -239,7 +239,7 @@ export default function CandidatePassport() {
 
                     <button
                       onClick={() => navigate(`/candidate/results/${selected.id}`)}
-                      className="mt-4 w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm text-slate-300"
+                      className="mt-4 w-full py-2.5 rounded-lg bg-muted hover:bg-slate-700 text-sm text-foreground/80"
                     >
                       Ver Resultado e Andamento Completo →
                     </button>

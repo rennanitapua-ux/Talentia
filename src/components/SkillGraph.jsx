@@ -12,21 +12,21 @@ export default function SkillGraph({ scores, competencies, height = 320 }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RadarChart data={data} cx="50%" cy="50%" outerRadius="72%">
-        <PolarGrid stroke="#334155" strokeOpacity={0.4} />
+        <PolarGrid stroke="hsl(226 20% 15%)" strokeOpacity={0.4} />
         <PolarAngleAxis
           dataKey="competency"
-          tick={{ fill: '#cbd5e1', fontSize: 11, fontWeight: 500 }}
+          tick={{ fill: 'hsl(220 20% 75%)', fontSize: 11, fontWeight: 500 }}
         />
         <PolarRadiusAxis
           domain={[0, 100]}
-          tick={{ fill: '#64748b', fontSize: 9 }}
-          stroke="#334155"
+          tick={{ fill: 'hsl(220 14% 52%)', fontSize: 9 }}
+          stroke="hsl(226 20% 15%)"
           strokeOpacity={0.3}
         />
         <Tooltip
           contentStyle={{
-            background: '#0f172a',
-            border: '1px solid #334155',
+            background: 'hsl(226 28% 8%)',
+            border: '1px solid hsl(226 20% 15%)',
             borderRadius: '8px',
             fontSize: '12px',
           }}
@@ -36,11 +36,11 @@ export default function SkillGraph({ scores, competencies, height = 320 }) {
         />
         <Radar
           dataKey="score"
-          stroke="#22d3ee"
-          fill="#22d3ee"
+          stroke="hsl(217 91% 60%)"
+          fill="hsl(217 91% 60%)"
           fillOpacity={0.25}
           strokeWidth={2}
-          dot={{ r: 3, fill: '#22d3ee' }}
+          dot={{ r: 3, fill: 'hsl(217 91% 60%)' }}
         />
       </RadarChart>
     </ResponsiveContainer>
