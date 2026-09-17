@@ -20,19 +20,22 @@ SITUAÇÕES REAIS FORNECIDAS PELA EMPRESA:
 ${(job.situations || []).map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
 
 INSTRUÇÕES CRÍTICAS:
-1. Gere EXATAMENTE 4 fases, alternando entre tipo "choice" (múltipla escolha) e "write" (escrita livre):
-   - Fase 1: tipo "choice" com 2 perguntas
-   - Fase 2: tipo "write" com 2 perguntas
-   - Fase 3: tipo "choice" com 1 pergunta
-   - Fase 4: tipo "write" com 2 perguntas
-   TOTAL: 3 perguntas de múltipla escolha + 4 perguntas de escrita = 7 perguntas.
+1. Gere EXATAMENTE 6 fases, alternando entre tipo "choice" (múltipla escolha) e "write" (escrita livre):
+   - Fase 1: tipo "choice" com 3 perguntas
+   - Fase 2: tipo "write" com 3 perguntas
+   - Fase 3: tipo "choice" com 2 perguntas
+   - Fase 4: tipo "write" com 3 perguntas
+   - Fase 5: tipo "choice" com 2 perguntas
+   - Fase 6: tipo "write" com 2 perguntas
+   TOTAL: 7 perguntas de múltipla escolha + 8 perguntas de escrita = 15 perguntas.
 2. Cada pergunta deve ser ÚNICA e específica para ESTA empresa — use o nome do produto, o tipo de cliente e os problemas reais. NUNCA reuse a mesma situação entre perguntas.
 3. As perguntas devem refletir os PROBLEMAS reais da empresa — se tem problema de churn, crie perguntas de retenção; se tem problema de vendas, crie perguntas de negociação. Cada pergunta deve abordar uma SITUAÇÃO DIFERENTE.
 4. Para perguntas "choice": 4 opções plausíveis mas distinguíveis por competência — uma pessoa experiente deve identificar a melhor.
 5. Para perguntas "write": o campo "prompt" DEVE conter a situação/pergunta completa e detalhada que o candidato precisa responder. O campo "write_guidance" DEVE conter instruções claras sobre o que o candidato deve escrever. A pergunta deve exigir pensamento estratégico real, não apenas justificativa.
-6. Varie o tipo de situação: algumas urgentes, algumas de planejamento, algumas interpessoais, algumas técnicas. Cada pergunta = uma situação totalmente diferente.
+6. Varie o tipo de situação: algumas urgentes, algumas de planejamento, algumas interpessoais, algumas técnicas, algumas de crise, algumas de relacionamento. Cada pergunta = uma situação totalmente diferente.
 7. Cada pergunta pode ter um personagem (nome, cargo, tom) que apresenta a situação.
 8. O campo "prompt" é OBRIGATÓRIO e nunca pode ser vazio — é o que o candidato vê na tela.
+9. A progressão deve ser coerente: comece com situações mais simples, avance para cenários mais complexos e termine com um desafio estratégico de alto nível.
 
 Gere também um perfil da empresa virtual que contextualize a cultura, os desafios do mercado e o momento da empresa.
 
@@ -110,36 +113,46 @@ function generateFallbackQuestions(type, job, phaseIdx) {
   const productName = job.product || 'o produto';
   const clientName = job.client || 'o cliente';
 
-  const baseSituation = situations[phaseIdx % situations.length] ||
+  const getSituation = (offset) => situations[(phaseIdx * 3 + offset) % Math.max(situations.length, 1)] ||
     `A empresa enfrenta um desafio com ${productName} envolvendo ${clientName}. ${problems ? 'Contexto: ' + problems : ''}`;
 
   if (type === 'choice') {
-    return [{
-      id: `q_${phaseIdx}_0`,
-      prompt: `Situação: ${baseSituation}\n\nQual seria a melhor abordagem para resolver esta situação?`,
-      context: '',
-      character: null,
-      multiple_choice: [
-        { id: 'a', text: 'Abordar diretamente o problema com o cliente, buscando uma solução imediata.', level: 'high', competencies: [competencies[0]] },
-        { id: 'b', text: 'Encaminhar para a equipe responsável e acompanhar o caso.', level: 'medium_high', competencies: [competencies[0]] },
-        { id: 'c', text: 'Documentar o caso e aguardar orientação da liderança.', level: 'medium_low', competencies: [competencies[0]] },
-        { id: 'd', text: 'Responder com uma solução genérica padronizada.', level: 'low', competencies: [competencies[0]] },
-      ],
-      expected_competencies: competencies,
-      evaluation_criteria: 'Capacidade de identificar a melhor abordagem para a situação.',
-    }];
+    const count = phaseIdx === 0 ? 3 : 2;
+    const questions = [];
+    for (let i = 0; i < count; i++) {
+      questions.push({
+        id: `q_${phaseIdx}_${i}`,
+        prompt: `Situação: ${getSituation(i)}\n\nQual seria a melhor abordagem para resolver esta situação?`,
+        context: '',
+        character: null,
+        multiple_choice: [
+          { id: 'a', text: 'Abordar diretamente o problema com o cliente, buscando uma solução imediata.', level: 'high', competencies: [competencies[0]] },
+          { id: 'b', text: 'Encaminhar para a equipe responsável e acompanhar o caso.', level: 'medium_high', competencies: [competencies[0]] },
+          { id: 'c', text: 'Documentar o caso e aguardar orientação da liderança.', level: 'medium_low', competencies: [competencies[0]] },
+          { id: 'd', text: 'Responder com uma solução genérica padronizada.', level: 'low', competencies: [competencies[0]] },
+        ],
+        expected_competencies: competencies,
+        evaluation_criteria: 'Capacidade de identificar a melhor abordagem para a situação.',
+      });
+    }
+    return questions;
   }
 
-  return [{
-    id: `q_${phaseIdx}_0`,
-    prompt: `Situação: ${baseSituation}\n\nComo você lidaria com esta situação? Explique seu raciocínio passo a passo.`,
-    context: '',
-    write_guidance: `Descreva detalhadamente: 1) Como você analisaria a situação, 2) Que perguntas faria, 3) Que solução proporia, 4) Como mediria o sucesso da sua abordagem.`,
-    character: null,
-    multiple_choice: [],
-    expected_competencies: competencies,
-    evaluation_criteria: 'Profundidade do raciocínio, especificidade da resposta e alinhamento com as competências esperadas.',
-  }];
+  const count = phaseIdx === 0 ? 3 : 2;
+  const questions = [];
+  for (let i = 0; i < count; i++) {
+    questions.push({
+      id: `q_${phaseIdx}_${i}`,
+      prompt: `Situação: ${getSituation(i)}\n\nComo você lidaria com esta situação? Explique seu raciocínio passo a passo.`,
+      context: '',
+      write_guidance: `Descreva detalhadamente: 1) Como você analisaria a situação, 2) Que perguntas faria, 3) Que solução proporia, 4) Como mediria o sucesso da sua abordagem.`,
+      character: null,
+      multiple_choice: [],
+      expected_competencies: competencies,
+      evaluation_criteria: 'Profundidade do raciocínio, especificidade da resposta e alinhamento com as competências esperadas.',
+    });
+  }
+  return questions;
 }
 
 function generateFallbackPhases(job) {
@@ -157,7 +170,7 @@ function generateFallbackPhases(job) {
     allSituations.push(`A empresa enfrenta: ${problems}. Como você abordaria esse desafio no seu primeiro mês?`);
     allSituations.push(`Um cliente relatou insatisfação relacionada a: ${problems}. Como você resolveria?`);
   }
-  while (allSituations.length < 7) {
+  while (allSituations.length < 15) {
     allSituations.push(`Cenário ${allSituations.length + 1}: Uma situação inesperada surge com ${clientName} sobre ${productName}. Como você age?`);
   }
 
@@ -189,30 +202,47 @@ function generateFallbackPhases(job) {
             ],
             expected_competencies: competencies, evaluation_criteria: 'Equilíbrio entre empatia e processo.',
           },
+          {
+            id: 'q1_2', prompt: `Situação: ${allSituations[2]}\n\nQual decisão tomaria primeiro?`,
+            context: '', character: null,
+            multiple_choice: [
+              { id: 'a', text: 'Diagnosticar a causa raiz antes de agir.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Aplicar uma solução conhecida e monitorar.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Pedir orientação a um superior.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Adiar a decisão até ter mais dados.', level: 'low', competencies: [competencies[0]] },
+            ],
+            expected_competencies: competencies, evaluation_criteria: 'Capacidade de priorização e diagnóstico.',
+          },
         ],
       },
       {
         id: 'phase_2', type: 'write', title: 'Resposta Estratégica', subtitle: 'Avalia raciocínio estratégico',
         questions: [
           {
-            id: 'q2_0', prompt: `Situação: ${allSituations[2]}\n\nComo você lidaria com esta situação?`,
+            id: 'q2_0', prompt: `Situação: ${allSituations[3]}\n\nComo você lidaria com esta situação?`,
             context: '', write_guidance: 'Descreva: 1) Sua análise da situação, 2) As ações que tomaria, 3) Como mediria o resultado.',
             character: null, multiple_choice: [],
             expected_competencies: competencies, evaluation_criteria: 'Profundidade do raciocínio.',
           },
           {
-            id: 'q2_1', prompt: `Situação: ${allSituations[3]}\n\nExplique sua abordagem detalhadamente.`,
+            id: 'q2_1', prompt: `Situação: ${allSituations[4]}\n\nExplique sua abordagem detalhadamente.`,
             context: '', write_guidance: 'Detalhe seu plano de ação passo a passo, incluindo como envolveria a equipe.',
             character: null, multiple_choice: [],
             expected_competencies: competencies, evaluation_criteria: 'Clareza e especificidade.',
           },
+          {
+            id: 'q2_2', prompt: `Situação: ${allSituations[5]}\n\nQue estratégia adotaria?`,
+            context: '', write_guidance: 'Apresente sua estratégia: contexto, opções consideradas, decisão e justificativa.',
+            character: null, multiple_choice: [],
+            expected_competencies: competencies, evaluation_criteria: 'Pensamento estratégico e justificativa.',
+          },
         ],
       },
       {
-        id: 'phase_3', type: 'choice', title: 'Cenário Crítico', subtitle: 'Avalia priorização',
+        id: 'phase_3', type: 'choice', title: 'Cenário Crítico', subtitle: 'Avalia priorização sob pressão',
         questions: [
           {
-            id: 'q3_0', prompt: `Situação: ${allSituations[4]}\n\nQual a melhor decisão?`,
+            id: 'q3_0', prompt: `Situação: ${allSituations[6]}\n\nQual a melhor decisão?`,
             context: '', character: null,
             multiple_choice: [
               { id: 'a', text: 'Resolver a causa raiz do problema.', level: 'high', competencies: [competencies[0]] },
@@ -222,22 +252,83 @@ function generateFallbackPhases(job) {
             ],
             expected_competencies: competencies, evaluation_criteria: 'Priorização adequada.',
           },
+          {
+            id: 'q3_1', prompt: `Situação: ${allSituations[7]}\n\nComo priorizaria?`,
+            context: '', character: null,
+            multiple_choice: [
+              { id: 'a', text: 'Avaliar impacto e urgência de cada item.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Resolver o mais rápido primeiro.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Seguir a ordem em que chegaram.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Delegar tudo e supervisionar.', level: 'low', competencies: [competencies[0]] },
+            ],
+            expected_competencies: competencies, evaluation_criteria: 'Capacidade de priorização.',
+          },
         ],
       },
       {
-        id: 'phase_4', type: 'write', title: 'Plano de Ação', subtitle: 'Avalia planejamento',
+        id: 'phase_4', type: 'write', title: 'Plano de Ação', subtitle: 'Avalia planejamento e execução',
         questions: [
           {
-            id: 'q4_0', prompt: `Situação: ${allSituations[5]}\n\nDescreva como você resolveria.`,
+            id: 'q4_0', prompt: `Situação: ${allSituations[8]}\n\nDescreva como você resolveria.`,
             context: '', write_guidance: 'Apresente um plano completo: diagnóstico, ações, prazos e métricas de sucesso.',
             character: null, multiple_choice: [],
             expected_competencies: competencies, evaluation_criteria: 'Capacidade de planejamento.',
           },
           {
-            id: 'q4_1', prompt: `Situação: ${allSituations[6]}\n\nComo você abordaria este desafio?`,
+            id: 'q4_1', prompt: `Situação: ${allSituations[9]}\n\nComo você abordaria este desafio?`,
             context: '', write_guidance: 'Explique sua estratégia, como comunicaria aos stakeholders e que resultados esperaria.',
             character: null, multiple_choice: [],
             expected_competencies: competencies, evaluation_criteria: 'Visão estratégica.',
+          },
+          {
+            id: 'q4_2', prompt: `Situação: ${allSituations[10]}\n\nDetalhe seu plano de ação.`,
+            context: '', write_guidance: 'Inclua: análise de riscos, plano de contingência, marcos de acompanhamento e critérios de sucesso.',
+            character: null, multiple_choice: [],
+            expected_competencies: competencies, evaluation_criteria: 'Planejamento detalhado e gestão de riscos.',
+          },
+        ],
+      },
+      {
+        id: 'phase_5', type: 'choice', title: 'Relações e Comunicação', subtitle: 'Avalia inteligência interpessoal',
+        questions: [
+          {
+            id: 'q5_0', prompt: `Situação: ${allSituations[11]}\n\nComo responderia?`,
+            context: '', character: null,
+            multiple_choice: [
+              { id: 'a', text: 'Ouvir ativamente e buscar uma solução conjunta.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Explicar o lado da empresa com empatia.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Encaminhar para o setor responsável.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Manter posição firme sem ceder.', level: 'low', competencies: [competencies[0]] },
+            ],
+            expected_competencies: competencies, evaluation_criteria: 'Inteligência emocional e comunicação.',
+          },
+          {
+            id: 'q5_1', prompt: `Situação: ${allSituations[12]}\n\nQual abordagem adotaria?`,
+            context: '', character: null,
+            multiple_choice: [
+              { id: 'a', text: 'Construir consenso ouvindo todas as partes.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Apresentar uma proposta e ajustar com feedback.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Seguir a decisão da maioria.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Impor a decisão e seguir adiante.', level: 'low', competencies: [competencies[0]] },
+            ],
+            expected_competencies: competencies, evaluation_criteria: 'Capacidade de construir consenso.',
+          },
+        ],
+      },
+      {
+        id: 'phase_6', type: 'write', title: 'Desafio Final', subtitle: 'Avalia visão estratégica de alto nível',
+        questions: [
+          {
+            id: 'q6_0', prompt: `Situação: ${allSituations[13]}\n\nComo você lideraria esta situação?`,
+            context: '', write_guidance: 'Descreva sua visão estratégica, como alinharia a equipe, e que resultados de longo prazo buscaria.',
+            character: null, multiple_choice: [],
+            expected_competencies: competencies, evaluation_criteria: 'Liderança e visão estratégica.',
+          },
+          {
+            id: 'q6_1', prompt: `Situação: ${allSituations[14]}\n\nApresente sua proposta final.`,
+            context: '', write_guidance: 'Consolide tudo: diagnóstico, estratégia, plano de execução, métricas e visão de futuro.',
+            character: null, multiple_choice: [],
+            expected_competencies: competencies, evaluation_criteria: 'Capacidade de síntese estratégica.',
           },
         ],
       },
