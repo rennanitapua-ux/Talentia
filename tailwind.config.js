@@ -48,6 +48,8 @@ module.exports = {
   				blue: 'hsl(var(--primary))',
   				violet: 'hsl(var(--violet))',
   				'violet-foreground': 'hsl(var(--violet-foreground))',
+  				cyan: 'hsl(var(--cyan))',
+  				'cyan-foreground': 'hsl(var(--cyan-foreground))',
   			},
   			chart: {
   				'1': 'hsl(var(--chart-1))',

@@ -28,6 +28,8 @@
     --ring: 217 91% 60%;
     --violet: 271 91% 65%;          /* #a64eff — purple */
     --violet-foreground: 224 47% 4%;
+    --cyan: 190 90% 55%;            /* #2dd4ee — cyan accent */
+    --cyan-foreground: 224 47% 4%;
     --radius: 0.75rem;
 
     /* Typography — single family, hierarchy through weight */
@@ -76,6 +78,8 @@
     --ring: 217 91% 60%;
     --violet: 271 91% 65%;
     --violet-foreground: 224 47% 4%;
+    --cyan: 190 90% 55%;
+    --cyan-foreground: 224 47% 4%;
     --chart-1: 217 91% 60%;
     --chart-2: 271 91% 65%;
     --chart-3: 190 85% 50%;

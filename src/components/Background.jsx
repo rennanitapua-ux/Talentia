@@ -1,72 +1,76 @@
 import React from 'react';
 
 /**
- * TalentOS — Abstract background with subtle gradient light arcs.
+ * TalentOS — Premium ambient background.
+ * Deep navy base with large, subtle light auras (electric blue top-left,
+ * blue/purple bottom-right) and sweeping luminous arcs.
  * Fixed, pointer-events-none, sits behind all content.
- * Used on landing + auth pages for visual continuity.
  */
 export default function Background() {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-      {/* Base */}
+      {/* Base — deep navy almost black */}
       <div className="absolute inset-0 bg-background" />
 
-      {/* Blue glow — top left */}
+      {/* Electric blue aura — top left, large and soft */}
       <div
-        className="absolute -top-40 -left-40 w-[700px] h-[700px] rounded-full opacity-[0.07] blur-[140px]"
-        style={{ background: 'hsl(217 91% 60%)' }}
+        className="absolute -top-48 -left-48 w-[820px] h-[820px] rounded-full opacity-[0.12] blur-[150px]"
+        style={{ background: 'radial-gradient(circle, hsl(217 91% 60%) 0%, transparent 70%)' }}
       />
 
-      {/* Violet glow — bottom right */}
+      {/* Blue/purple aura — bottom right, large and soft */}
       <div
-        className="absolute -bottom-40 -right-32 w-[700px] h-[700px] rounded-full opacity-[0.05] blur-[140px]"
-        style={{ background: 'hsl(271 91% 65%)' }}
+        className="absolute -bottom-52 -right-40 w-[860px] h-[860px] rounded-full opacity-[0.10] blur-[150px]"
+        style={{ background: 'radial-gradient(circle, hsl(271 91% 65%) 0%, transparent 70%)' }}
       />
 
-      {/* Center subtle glow */}
+      {/* Cyan accent glow — center-top, very subtle */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[500px] rounded-full opacity-[0.04] blur-[160px]"
-        style={{ background: 'hsl(217 91% 55%)' }}
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full opacity-[0.05] blur-[160px]"
+        style={{ background: 'radial-gradient(ellipse, hsl(190 90% 55%) 0%, transparent 70%)' }}
       />
 
-      {/* Sweeping light arcs — more prominent to match reference */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.08]" preserveAspectRatio="none" viewBox="0 0 1440 900">
+      {/* Sweeping luminous arcs */}
+      <svg className="absolute inset-0 w-full h-full opacity-[0.10]" preserveAspectRatio="none" viewBox="0 0 1440 900">
         <defs>
-          <linearGradient id="bg-curve-1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id="bg-arc-blue" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="hsl(217 91% 60%)" stopOpacity="0" />
-            <stop offset="50%" stopColor="hsl(217 91% 60%)" stopOpacity="1" />
+            <stop offset="45%" stopColor="hsl(217 91% 60%)" stopOpacity="1" />
             <stop offset="100%" stopColor="hsl(271 91% 65%)" stopOpacity="0" />
           </linearGradient>
-          <linearGradient id="bg-curve-2" x1="100%" y1="0%" x2="0%" y2="100%">
+          <linearGradient id="bg-arc-violet" x1="100%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="hsl(271 91% 65%)" stopOpacity="0" />
             <stop offset="50%" stopColor="hsl(271 91% 65%)" stopOpacity="1" />
             <stop offset="100%" stopColor="hsl(217 91% 60%)" stopOpacity="0" />
           </linearGradient>
-          <linearGradient id="bg-curve-3" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="hsl(190 85% 50%)" stopOpacity="0" />
-            <stop offset="50%" stopColor="hsl(190 85% 50%)" stopOpacity="0.8" />
+          <linearGradient id="bg-arc-cyan" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="hsl(190 90% 55%)" stopOpacity="0" />
+            <stop offset="50%" stopColor="hsl(190 90% 55%)" stopOpacity="0.7" />
             <stop offset="100%" stopColor="hsl(217 91% 60%)" stopOpacity="0" />
           </linearGradient>
         </defs>
         {/* Main sweeping arcs */}
-        <path d="M-100,200 Q360,40 720,240 T1540,180" stroke="url(#bg-curve-1)" strokeWidth="2" fill="none" />
-        <path d="M-100,340 Q360,180 720,380 T1540,320" stroke="url(#bg-curve-1)" strokeWidth="1.5" fill="none" />
-        <path d="M-100,500 Q360,340 720,540 T1540,480" stroke="url(#bg-curve-2)" strokeWidth="1.5" fill="none" />
-        <path d="M-100,640 Q360,480 720,680 T1540,620" stroke="url(#bg-curve-2)" strokeWidth="1" fill="none" />
-        <path d="M-100,760 Q360,600 720,800 T1540,740" stroke="url(#bg-curve-3)" strokeWidth="0.8" fill="none" />
+        <path d="M-100,180 Q360,20 720,220 T1540,160" stroke="url(#bg-arc-blue)" strokeWidth="2" fill="none" />
+        <path d="M-100,320 Q360,160 720,360 T1540,300" stroke="url(#bg-arc-blue)" strokeWidth="1.5" fill="none" />
+        <path d="M-100,480 Q360,320 720,520 T1540,460" stroke="url(#bg-arc-violet)" strokeWidth="1.5" fill="none" />
+        <path d="M-100,620 Q360,460 720,660 T1540,600" stroke="url(#bg-arc-violet)" strokeWidth="1.2" fill="none" />
+        <path d="M-100,740 Q360,580 720,780 T1540,720" stroke="url(#bg-arc-cyan)" strokeWidth="0.9" fill="none" />
         {/* Thin accent arcs */}
-        <path d="M-100,120 Q480,260 960,100 T1540,140" stroke="url(#bg-curve-3)" strokeWidth="0.6" fill="none" opacity="0.5" />
-        <path d="M-100,820 Q480,680 960,840 T1540,800" stroke="url(#bg-curve-1)" strokeWidth="0.6" fill="none" opacity="0.5" />
+        <path d="M-100,100 Q480,240 960,80 T1540,120" stroke="url(#bg-arc-cyan)" strokeWidth="0.6" fill="none" opacity="0.5" />
+        <path d="M-100,820 Q480,680 960,840 T1540,800" stroke="url(#bg-arc-blue)" strokeWidth="0.6" fill="none" opacity="0.5" />
       </svg>
 
-      {/* Subtle grid overlay for depth */}
+      {/* Very subtle grid for depth */}
       <div
-        className="absolute inset-0 opacity-[0.015]"
+        className="absolute inset-0 opacity-[0.012]"
         style={{
           backgroundImage: `linear-gradient(hsl(220 20% 96%) 1px, transparent 1px), linear-gradient(90deg, hsl(220 20% 96%) 1px, transparent 1px)`,
-          backgroundSize: '64px 64px',
+          backgroundSize: '72px 72px',
         }}
       />
+
+      {/* Top vignette for depth */}
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center top, transparent 40%, hsl(224 47% 4%) 100%)' }} />
     </div>
   );
 }

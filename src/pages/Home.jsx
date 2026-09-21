@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Building2, User, ArrowRight, Sparkles } from 'lucide-react';
+import { Building2, User, ArrowUpRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import Logo from '@/components/Logo';
 import Background from '@/components/Background';
@@ -31,103 +31,101 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 relative">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative">
       <Background />
 
-      <div className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center">
-        {/* Logo */}
+      <div className="relative z-10 w-full max-w-2xl mx-auto flex flex-col items-center">
+        {/* Logo — larger, more presence */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease }}
+          initial={{ opacity: 0, y: 14, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.7, ease }}
         >
           <Logo size="xl" withText />
         </motion.div>
 
-        {/* Badge */}
+        {/* Cyan-outlined capsule badge */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15, ease }}
-          className="mt-6"
+          transition={{ duration: 0.6, delay: 0.2, ease }}
+          className="mt-8"
         >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/25 bg-primary/[0.06] backdrop-blur-sm">
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-primary text-[11px] font-medium tracking-[0.18em] uppercase">Sistema Operacional de Talentos</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-cyan/30 bg-brand-cyan/[0.05] backdrop-blur-sm">
+            <span className="w-1 h-1 rounded-full bg-brand-cyan" />
+            <span className="text-brand-cyan/90 text-[10px] font-medium tracking-[0.22em] uppercase">Sistema Operacional de Talentos</span>
           </div>
         </motion.div>
 
-        {/* Headline */}
+        {/* Headline — large, two-tone: white + blue */}
         <motion.h1
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.25, ease }}
-          className="mt-8 text-center text-4xl md:text-5xl font-bold tracking-tight leading-[1.12]"
+          transition={{ duration: 0.8, delay: 0.3, ease }}
+          className="mt-7 text-center text-4xl md:text-[3.25rem] font-bold tracking-tight leading-[1.1]"
         >
-          Contrate por habilidades,
+          <span className="text-foreground">Contrate por habilidades,</span>
           <br />
-          <span className="text-gradient">não por currículos.</span>
+          <span className="text-primary">não por currículos.</span>
         </motion.h1>
 
-        {/* Subtitle */}
+        {/* Supporting text */}
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.35, ease }}
-          className="mt-5 text-center text-muted-foreground text-base md:text-lg max-w-xl leading-relaxed"
+          transition={{ duration: 0.6, delay: 0.4, ease }}
+          className="mt-6 text-center text-muted-foreground text-base md:text-[17px] max-w-lg leading-relaxed"
         >
           A TalentOS conecta empresas e candidatos com base no que realmente importa: habilidades, potencial e resultado.
         </motion.p>
 
-        {/* Blocks */}
+        {/* Two large premium cards */}
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.45, ease }}
-          className="mt-12 grid sm:grid-cols-2 gap-4 w-full max-w-xl"
+          transition={{ duration: 0.8, delay: 0.5, ease }}
+          className="mt-14 grid sm:grid-cols-2 gap-5 w-full"
         >
+          {/* Empresa card */}
           <motion.button
-            whileHover={{ y: -3 }}
-            transition={{ duration: 0.25, ease }}
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.3, ease }}
             onClick={() => handleEnter('company')}
-            className="group relative flex flex-col p-6 rounded-2xl glass hover:border-primary/40 transition-all duration-300 text-left overflow-hidden"
+            className="group relative flex flex-col p-7 rounded-2xl bg-card/60 backdrop-blur-xl border border-primary/20 hover:border-primary/40 transition-all duration-400 text-left overflow-hidden shadow-float"
           >
-            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-colors duration-500" />
-            <div className="relative flex items-start gap-4">
-              <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                <Building2 className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-foreground">Empresa</h3>
-                <p className="text-[13px] text-muted-foreground mt-1 leading-snug">Encontre talentos com base em habilidades reais.</p>
-              </div>
+            {/* Ambient glow on hover */}
+            <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/8 blur-3xl group-hover:bg-primary/15 transition-colors duration-700" />
+            {/* Icon block */}
+            <div className="relative w-12 h-12 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-5.5 h-5.5 text-primary" style={{ width: '22px', height: '22px' }} />
             </div>
-            <div className="relative flex justify-end mt-4">
-              <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-all duration-300">
-                <ArrowRight className="w-4 h-4 text-primary group-hover:text-primary-foreground group-hover:translate-x-0.5 transition-all duration-300" />
+            {/* Title + description */}
+            <h3 className="relative text-xl font-semibold text-foreground mt-5">Empresa</h3>
+            <p className="relative text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Encontre talentos com base em habilidades reais.</p>
+            {/* Circular arrow button */}
+            <div className="relative flex justify-end mt-6">
+              <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-all duration-300">
+                <ArrowUpRight className="w-4.5 h-4.5 text-primary group-hover:text-primary-foreground transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ width: '18px', height: '18px' }} />
               </div>
             </div>
           </motion.button>
 
+          {/* Candidato card */}
           <motion.button
-            whileHover={{ y: -3 }}
-            transition={{ duration: 0.25, ease }}
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.3, ease }}
             onClick={() => handleEnter('candidate')}
-            className="group relative flex flex-col p-6 rounded-2xl glass hover:border-brand-violet/40 transition-all duration-300 text-left overflow-hidden"
+            className="group relative flex flex-col p-7 rounded-2xl bg-card/60 backdrop-blur-xl border border-brand-violet/20 hover:border-brand-violet/40 transition-all duration-400 text-left overflow-hidden shadow-float"
           >
-            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-brand-violet/5 blur-2xl group-hover:bg-brand-violet/10 transition-colors duration-500" />
-            <div className="relative flex items-start gap-4">
-              <div className="w-11 h-11 rounded-xl bg-brand-violet/10 border border-brand-violet/20 flex items-center justify-center flex-shrink-0">
-                <User className="w-5 h-5 text-brand-violet" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-foreground">Candidato</h3>
-                <p className="text-[13px] text-muted-foreground mt-1 leading-snug">Mostre suas habilidades e conquiste a vaga certa.</p>
-              </div>
+            <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-brand-violet/8 blur-3xl group-hover:bg-brand-violet/15 transition-colors duration-700" />
+            <div className="relative w-12 h-12 rounded-xl bg-brand-violet/10 border border-brand-violet/25 flex items-center justify-center flex-shrink-0">
+              <User className="text-brand-violet" style={{ width: '22px', height: '22px' }} />
             </div>
-            <div className="relative flex justify-end mt-4">
-              <div className="w-9 h-9 rounded-full bg-brand-violet/10 border border-brand-violet/20 flex items-center justify-center group-hover:bg-brand-violet group-hover:border-brand-violet transition-all duration-300">
-                <ArrowRight className="w-4 h-4 text-brand-violet group-hover:text-violet-foreground group-hover:translate-x-0.5 transition-all duration-300" />
+            <h3 className="relative text-xl font-semibold text-foreground mt-5">Candidato</h3>
+            <p className="relative text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Mostre suas habilidades e conquiste a vaga certa.</p>
+            <div className="relative flex justify-end mt-6">
+              <div className="w-10 h-10 rounded-full bg-brand-violet/10 border border-brand-violet/25 flex items-center justify-center group-hover:bg-brand-violet group-hover:border-brand-violet transition-all duration-300">
+                <ArrowUpRight className="text-brand-violet group-hover:text-violet-foreground transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" style={{ width: '18px', height: '18px' }} />
               </div>
             </div>
           </motion.button>
@@ -138,8 +136,8 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-            className="mt-10 flex items-center gap-2 text-xs text-muted-foreground"
+            transition={{ delay: 0.7, duration: 0.5 }}
+            className="mt-12 flex items-center gap-2 text-xs text-muted-foreground"
           >
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Sessão ativa: {user.full_name || user.email}
