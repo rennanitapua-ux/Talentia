@@ -1,72 +1,90 @@
-// TalentOS — AI Engine v4
-// Deep per-response analysis + comprehensive final assessment report
+// TalentOS — AI Engine v5
+// Evidence-based analysis, varied simulation formats, score composition transparency
 import { base44 } from '@/api/base44Client';
 
-// Generate simulation phases from a job definition — tailored to company problems
+// ============================================================================
+// SIMULATION GENERATION
+// Varied formats: contextual choice, open response, prioritization, trade-offs
+// ============================================================================
 export async function generateSimulationPhases(job) {
-  const prompt = `Você é o TalentOS, uma IA que cria simulações de trabalho ULTRA-REALISTAS para contratação baseada em competências.
+  const prompt = `Você é o TalentOS, uma IA que cria simulações de trabalho realistas para contratação baseada em competências. Cada simulação deve parecer um dia de trabalho real, não um teste escolar.
 
 DADOS DA VAGA:
 - Setor: ${job.sector}
-- Área (descrição livre): ${job.area_description || 'Não especificada'}
+- Área: ${job.area_description || 'Não especificada'}
 - Cargo: ${job.role} (nível: ${job.difficulty || 'mid'})
 - Contexto da empresa: ${job.company_context}
 - Produto/Serviço: ${job.product}
 - Cliente típico: ${job.client}
-- PROBLEMAS E DESAFIOS DA EMPRESA: ${job.company_problems || 'Não especificados explicitamente'}
-- Competências a avaliar: ${(job.competencies || []).join(", ")}
+- Problemas e desafios reais: ${job.company_problems || 'Não especificados'}
+- Competências a avaliar: ${(job.competencies || []).join(', ')}
 
 SITUAÇÕES REAIS FORNECIDAS PELA EMPRESA:
-${(job.situations || []).map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
+${(job.situations || []).map((s, i) => `  ${i + 1}. ${s}`).join('\n')}
 
 INSTRUÇÕES CRÍTICAS:
-1. Gere EXATAMENTE 6 fases, alternando entre tipo "choice" (múltipla escolha) e "write" (escrita livre):
-   - Fase 1: tipo "choice" com 3 perguntas
-   - Fase 2: tipo "write" com 3 perguntas
-   - Fase 3: tipo "choice" com 2 perguntas
-   - Fase 4: tipo "write" com 3 perguntas
-   - Fase 5: tipo "choice" com 2 perguntas
-   - Fase 6: tipo "write" com 2 perguntas
-   TOTAL: 7 perguntas de múltipla escolha + 8 perguntas de escrita = 15 perguntas.
-2. Cada pergunta deve ser ÚNICA e específica para ESTA empresa — use o nome do produto, o tipo de cliente e os problemas reais. NUNCA reuse a mesma situação entre perguntas.
-3. As perguntas devem refletir os PROBLEMAS reais da empresa — se tem problema de churn, crie perguntas de retenção; se tem problema de vendas, crie perguntas de negociação. Cada pergunta deve abordar uma SITUAÇÃO DIFERENTE.
-4. Para perguntas "choice": 4 opções plausíveis mas distinguíveis por competência — uma pessoa experiente deve identificar a melhor.
-5. Para perguntas "write": o campo "prompt" DEVE conter a situação/pergunta completa e detalhada que o candidato precisa responder. O campo "write_guidance" DEVE conter instruções claras sobre o que o candidato deve escrever. A pergunta deve exigir pensamento estratégico real, não apenas justificativa.
-6. Varie o tipo de situação: algumas urgentes, algumas de planejamento, algumas interpessoais, algumas técnicas, algumas de crise, algumas de relacionamento. Cada pergunta = uma situação totalmente diferente.
-7. Cada pergunta pode ter um personagem (nome, cargo, tom) que apresenta a situação.
-8. O campo "prompt" é OBRIGATÓRIO e nunca pode ser vazio — é o que o candidato vê na tela.
-9. A progressão deve ser coerente: comece com situações mais simples, avance para cenários mais complexos e termine com um desafio estratégico de alto nível.
 
-Gere também um perfil da empresa virtual que contextualize a cultura, os desafios do mercado e o momento da empresa.
+1. ESTRUTURA: Gere EXATAMENTE 6 fases com 15 perguntas no total:
+   - Fase 1 (choice): 3 perguntas — decisões rápidas com contexto
+   - Fase 2 (write): 3 perguntas — raciocínio estratégico escrito
+   - Fase 3 (choice): 2 perguntas — priorização sob pressão
+   - Fase 4 (write): 3 perguntas — plano de ação e comunicação
+   - Fase 5 (choice): 2 perguntas — decisões com trade-offs
+   - Fase 6 (write): 2 perguntas — desafio estratégico de alto nível
+
+2. CENÁRIOS REAIS: Cada pergunta deve ser uma situação de trabalho específica e plausível para este cargo e setor. Use o nome do produto, tipo de cliente e problemas reais. NUNCA reutilize a mesma situação. Cada pergunta = um cenário completamente diferente.
+
+3. PARA PERGUNTAS "choice" (múltipla escolha):
+   - 4 opções plausíveis e distinguíveis por competência, não por obviedade
+   - As opções devem ter comprimento e estrutura SIMILARES — a correta não deve ser identificável pelo tamanho ou linguagem
+   - Cada opção representa um nível de competência real (high/medium_high/medium_low/low)
+   - A opção "low" não deve ser obviamente ruim — deve ser uma tentação plausível para alguém inexperiente
+   - Inclua contexto suficiente para que a decisão seja real, não adivinhação
+
+4. PARA PERGUNTAS "write" (escrita livre):
+   - O "prompt" DEVE conter a situação completa e detalhada — contexto, informações, o que se pede
+   - O "write_guidance" deve orientar o que escrever sem dar a resposta
+   - Exija pensamento estratégico real: análise, opções consideradas, decisão, justificativa
+   - Não peça justificativas genéricas — peça decisões concretas com consequências
+
+5. VARIEDADE DE CENÁRIOS: alterne entre situações urgentes, de planejamento, interpessoais, técnicas, de crise, de relacionamento com cliente, de gestão de equipe, de priorização, de análise de dados, de comunicação.
+
+6. PROGRESSÃO: comece com situações mais diretas, avance para cenários complexos, termine com um desafio estratégico de alto nível.
+
+7. Cada pergunta PODE ter um personagem (nome, cargo, tom) que apresenta a situação de forma natural.
+
+8. O campo "prompt" é OBRIGATÓRIO e nunca vazio.
+
+Gere também um perfil da empresa virtual que contextualize cultura, desafios de mercado e momento da empresa (2-3 parágrafos).
 
 Retorne JSON com esta estrutura EXATA:
 {
-  "virtual_company_profile": "perfil da empresa virtual (cultura, desafios de mercado, momento) — 2-3 parágrafos ricos",
+  "virtual_company_profile": "perfil da empresa virtual — 2-3 parágrafos ricos",
   "phases": [
     {
       "id": "phase_1",
       "type": "choice",
       "title": "título curto da fase",
-      "subtitle": "descrição breve do que será testado",
+      "subtitle": "descrição breve",
       "questions": [
         {
           "id": "q1",
-          "prompt": "a pergunta ou situação completa e detalhada apresentada ao candidato (OBRIGATÓRIO, nunca vazio)",
-          "context": "contexto adicional que o candidato precisa saber (pode ser vazio)",
-          "write_guidance": "para perguntas write: instruções claras sobre o que escrever (vazio para choice)",
-          "character": { "name": "nome do personagem", "role": "cargo", "tone": "tom de voz" },
+          "prompt": "situação/pergunta completa e detalhada (OBRIGATÓRIO)",
+          "context": "contexto adicional (pode ser vazio)",
+          "write_guidance": "para write: orientação do que escrever (vazio para choice)",
+          "character": { "name": "nome", "role": "cargo", "tone": "tom" },
           "multiple_choice": [
-            { "id": "a", "text": "texto da opção", "level": "high|medium_high|medium_low|low", "competencies": ["competência demonstrada"] }
+            { "id": "a", "text": "texto plausível", "level": "high|medium_high|medium_low|low", "competencies": ["competência"] }
           ],
-          "expected_competencies": ["competências avaliadas nesta pergunta"],
-          "evaluation_criteria": "critérios detalhados de avaliação"
+          "expected_competencies": ["competências avaliadas"],
+          "evaluation_criteria": "critérios detalhados"
         }
       ]
     }
   ]
 }
 
-Para perguntas "write", o campo "multiple_choice" deve ser um array vazio [].`;
+Para perguntas "write", "multiple_choice" deve ser [].`;
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,
@@ -126,10 +144,10 @@ function generateFallbackQuestions(type, job, phaseIdx) {
         context: '',
         character: null,
         multiple_choice: [
-          { id: 'a', text: 'Abordar diretamente o problema com o cliente, buscando uma solução imediata.', level: 'high', competencies: [competencies[0]] },
-          { id: 'b', text: 'Encaminhar para a equipe responsável e acompanhar o caso.', level: 'medium_high', competencies: [competencies[0]] },
-          { id: 'c', text: 'Documentar o caso e aguardar orientação da liderança.', level: 'medium_low', competencies: [competencies[0]] },
-          { id: 'd', text: 'Responder com uma solução genérica padronizada.', level: 'low', competencies: [competencies[0]] },
+          { id: 'a', text: 'Abordar diretamente o problema com o cliente, buscando uma solução imediata e assumindo responsabilidade.', level: 'high', competencies: [competencies[0]] },
+          { id: 'b', text: 'Encaminhar para a equipe responsável e acompanhar o caso até a resolução.', level: 'medium_high', competencies: [competencies[0]] },
+          { id: 'c', text: 'Documentar o caso e aguardar orientação da liderança antes de prosseguir.', level: 'medium_low', competencies: [competencies[0]] },
+          { id: 'd', text: 'Responder com uma solução padronizada já utilizada em situações similares.', level: 'low', competencies: [competencies[0]] },
         ],
         expected_competencies: competencies,
         evaluation_criteria: 'Capacidade de identificar a melhor abordagem para a situação.',
@@ -163,9 +181,7 @@ function generateFallbackPhases(job) {
   const clientName = job.client || 'o cliente';
 
   const allSituations = [];
-  if (situations.length > 0) {
-    situations.forEach(s => allSituations.push(s));
-  }
+  if (situations.length > 0) situations.forEach(s => allSituations.push(s));
   if (problems) {
     allSituations.push(`A empresa enfrenta: ${problems}. Como você abordaria esse desafio no seu primeiro mês?`);
     allSituations.push(`Um cliente relatou insatisfação relacionada a: ${problems}. Como você resolveria?`);
@@ -177,159 +193,85 @@ function generateFallbackPhases(job) {
   return {
     virtual_company_profile: `${job.company_name || 'A empresa'} atua no setor de ${job.sector || 'tecnologia'} oferecendo ${productName} para ${clientName}. ${problems ? 'Enfrenta desafios como: ' + problems + '.' : ''} A cultura valoriza proatividade e resultados.`,
     phases: [
-      {
-        id: 'phase_1', type: 'choice', title: 'Decisões Rápidas', subtitle: 'Avalia tomada de decisão',
+      { id: 'phase_1', type: 'choice', title: 'Decisões Rápidas', subtitle: 'Tomada de decisão com contexto',
         questions: [
-          {
-            id: 'q1_0', prompt: `Situação: ${allSituations[0]}\n\nQual a melhor abordagem?`,
-            context: '', character: null,
+          { id: 'q1_0', prompt: `Situação: ${allSituations[0]}\n\nQual a melhor abordagem?`, context: '', character: null,
             multiple_choice: [
-              { id: 'a', text: 'Agir imediatamente, assumindo responsabilidade.', level: 'high', competencies: [competencies[0]] },
-              { id: 'b', text: 'Consultar a equipe antes de decidir.', level: 'medium_high', competencies: [competencies[0]] },
-              { id: 'c', text: 'Esperar mais informações antes de agir.', level: 'medium_low', competencies: [competencies[0]] },
-              { id: 'd', text: 'Seguir o processo padrão sem adaptação.', level: 'low', competencies: [competencies[0]] },
-            ],
-            expected_competencies: competencies, evaluation_criteria: 'Tomada de decisão adequada ao contexto.',
-          },
-          {
-            id: 'q1_1', prompt: `Situação: ${allSituations[1]}\n\nQual opção escolheria?`,
-            context: '', character: null,
+              { id: 'a', text: 'Agir imediatamente, assumindo responsabilidade pela resolução.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Consultar a equipe antes de decidir e alinhar próximos passos.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Esperar mais informações antes de tomar qualquer decisão.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Seguir o processo padrão sem adaptação para garantir consistência.', level: 'low', competencies: [competencies[0]] },
+            ], expected_competencies: competencies, evaluation_criteria: 'Tomada de decisão adequada ao contexto.' },
+          { id: 'q1_1', prompt: `Situação: ${allSituations[1]}\n\nQual opção escolheria?`, context: '', character: null,
             multiple_choice: [
-              { id: 'a', text: 'Priorizar a relação com o cliente acima de tudo.', level: 'high', competencies: [competencies[0]] },
-              { id: 'b', text: 'Equilibrar relação e processo.', level: 'medium_high', competencies: [competencies[0]] },
-              { id: 'c', text: 'Seguir o processo rigidamente.', level: 'medium_low', competencies: [competencies[0]] },
-              { id: 'd', text: 'Evitar o conflito.', level: 'low', competencies: [competencies[0]] },
-            ],
-            expected_competencies: competencies, evaluation_criteria: 'Equilíbrio entre empatia e processo.',
-          },
-          {
-            id: 'q1_2', prompt: `Situação: ${allSituations[2]}\n\nQual decisão tomaria primeiro?`,
-            context: '', character: null,
+              { id: 'a', text: 'Priorizar a relação com o cliente acima de tudo, buscando manter o contrato.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Equilibrar relação e processo, buscando uma solução de ganho mútuo.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Seguir o processo rigidamente, mesmo que insatisfaça o cliente.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Evitar o conflito e transferir a responsabilidade para outro setor.', level: 'low', competencies: [competencies[0]] },
+            ], expected_competencies: competencies, evaluation_criteria: 'Equilíbrio entre empatia e processo.' },
+          { id: 'q1_2', prompt: `Situação: ${allSituations[2]}\n\nQual decisão tomaria primeiro?`, context: '', character: null,
             multiple_choice: [
-              { id: 'a', text: 'Diagnosticar a causa raiz antes de agir.', level: 'high', competencies: [competencies[0]] },
-              { id: 'b', text: 'Aplicar uma solução conhecida e monitorar.', level: 'medium_high', competencies: [competencies[0]] },
-              { id: 'c', text: 'Pedir orientação a um superior.', level: 'medium_low', competencies: [competencies[0]] },
-              { id: 'd', text: 'Adiar a decisão até ter mais dados.', level: 'low', competencies: [competencies[0]] },
-            ],
-            expected_competencies: competencies, evaluation_criteria: 'Capacidade de priorização e diagnóstico.',
-          },
+              { id: 'a', text: 'Diagnosticar a causa raiz antes de agir, mesmo que demore mais.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Aplicar uma solução conhecida e monitorar os resultados de perto.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Pedir orientação a um superior antes de qualquer ação.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Adiar a decisão até ter mais dados disponíveis no sistema.', level: 'low', competencies: [competencies[0]] },
+            ], expected_competencies: competencies, evaluation_criteria: 'Capacidade de priorização e diagnóstico.' },
         ],
       },
-      {
-        id: 'phase_2', type: 'write', title: 'Resposta Estratégica', subtitle: 'Avalia raciocínio estratégico',
+      { id: 'phase_2', type: 'write', title: 'Raciocínio Estratégico', subtitle: 'Análise e estratégia escrita',
         questions: [
-          {
-            id: 'q2_0', prompt: `Situação: ${allSituations[3]}\n\nComo você lidaria com esta situação?`,
-            context: '', write_guidance: 'Descreva: 1) Sua análise da situação, 2) As ações que tomaria, 3) Como mediria o resultado.',
-            character: null, multiple_choice: [],
-            expected_competencies: competencies, evaluation_criteria: 'Profundidade do raciocínio.',
-          },
-          {
-            id: 'q2_1', prompt: `Situação: ${allSituations[4]}\n\nExplique sua abordagem detalhadamente.`,
-            context: '', write_guidance: 'Detalhe seu plano de ação passo a passo, incluindo como envolveria a equipe.',
-            character: null, multiple_choice: [],
-            expected_competencies: competencies, evaluation_criteria: 'Clareza e especificidade.',
-          },
-          {
-            id: 'q2_2', prompt: `Situação: ${allSituations[5]}\n\nQue estratégia adotaria?`,
-            context: '', write_guidance: 'Apresente sua estratégia: contexto, opções consideradas, decisão e justificativa.',
-            character: null, multiple_choice: [],
-            expected_competencies: competencies, evaluation_criteria: 'Pensamento estratégico e justificativa.',
-          },
+          { id: 'q2_0', prompt: `Situação: ${allSituations[3]}\n\nComo você lidaria com esta situação?`, context: '', write_guidance: 'Descreva: 1) Sua análise da situação, 2) As ações que tomaria, 3) Como mediria o resultado.', character: null, multiple_choice: [], expected_competencies: competencies, evaluation_criteria: 'Profundidade do raciocínio.' },
+          { id: 'q2_1', prompt: `Situação: ${allSituations[4]}\n\nExplique sua abordagem detalhadamente.`, context: '', write_guidance: 'Detalhe seu plano de ação passo a passo, incluindo como envolveria a equipe.', character: null, multiple_choice: [], expected_competencies: competencies, evaluation_criteria: 'Clareza e especificidade.' },
+          { id: 'q2_2', prompt: `Situação: ${allSituations[5]}\n\nQue estratégia adotaria?`, context: '', write_guidance: 'Apresente sua estratégia: contexto, opções consideradas, decisão e justificativa.', character: null, multiple_choice: [], expected_competencies: competencies, evaluation_criteria: 'Pensamento estratégico e justificativa.' },
         ],
       },
-      {
-        id: 'phase_3', type: 'choice', title: 'Cenário Crítico', subtitle: 'Avalia priorização sob pressão',
+      { id: 'phase_3', type: 'choice', title: 'Priorização Sob Pressão', subtitle: 'Decisões de prioridade',
         questions: [
-          {
-            id: 'q3_0', prompt: `Situação: ${allSituations[6]}\n\nQual a melhor decisão?`,
-            context: '', character: null,
+          { id: 'q3_0', prompt: `Situação: ${allSituations[6]}\n\nQual a melhor decisão?`, context: '', character: null,
             multiple_choice: [
-              { id: 'a', text: 'Resolver a causa raiz do problema.', level: 'high', competencies: [competencies[0]] },
-              { id: 'b', text: 'Conter o problema e depois investigar.', level: 'medium_high', competencies: [competencies[0]] },
-              { id: 'c', text: 'Escalar imediatamente para a liderança.', level: 'medium_low', competencies: [competencies[0]] },
-              { id: 'd', text: 'Esperar o problema se resolver sozinho.', level: 'low', competencies: [competencies[0]] },
-            ],
-            expected_competencies: competencies, evaluation_criteria: 'Priorização adequada.',
-          },
-          {
-            id: 'q3_1', prompt: `Situação: ${allSituations[7]}\n\nComo priorizaria?`,
-            context: '', character: null,
+              { id: 'a', text: 'Resolver a causa raiz do problema para evitar recorrência.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Conter o problema imediatamente e investigar depois.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Escalar imediatamente para a liderança sem tentar resolver.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Aguardar o problema se resolver sozinho ou perder força.', level: 'low', competencies: [competencies[0]] },
+            ], expected_competencies: competencies, evaluation_criteria: 'Priorização adequada.' },
+          { id: 'q3_1', prompt: `Situação: ${allSituations[7]}\n\nComo priorizaria?`, context: '', character: null,
             multiple_choice: [
-              { id: 'a', text: 'Avaliar impacto e urgência de cada item.', level: 'high', competencies: [competencies[0]] },
-              { id: 'b', text: 'Resolver o mais rápido primeiro.', level: 'medium_high', competencies: [competencies[0]] },
-              { id: 'c', text: 'Seguir a ordem em que chegaram.', level: 'medium_low', competencies: [competencies[0]] },
-              { id: 'd', text: 'Delegar tudo e supervisionar.', level: 'low', competencies: [competencies[0]] },
-            ],
-            expected_competencies: competencies, evaluation_criteria: 'Capacidade de priorização.',
-          },
+              { id: 'a', text: 'Avaliar impacto e urgência de cada item antes de agir.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Resolver o mais rápido primeiro para ganhar tempo.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Seguir a ordem em que chegaram, sem reordenar.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Delegar tudo e apenas supervisionar o andamento.', level: 'low', competencies: [competencies[0]] },
+            ], expected_competencies: competencies, evaluation_criteria: 'Capacidade de priorização.' },
         ],
       },
-      {
-        id: 'phase_4', type: 'write', title: 'Plano de Ação', subtitle: 'Avalia planejamento e execução',
+      { id: 'phase_4', type: 'write', title: 'Plano de Ação', subtitle: 'Planejamento e execução',
         questions: [
-          {
-            id: 'q4_0', prompt: `Situação: ${allSituations[8]}\n\nDescreva como você resolveria.`,
-            context: '', write_guidance: 'Apresente um plano completo: diagnóstico, ações, prazos e métricas de sucesso.',
-            character: null, multiple_choice: [],
-            expected_competencies: competencies, evaluation_criteria: 'Capacidade de planejamento.',
-          },
-          {
-            id: 'q4_1', prompt: `Situação: ${allSituations[9]}\n\nComo você abordaria este desafio?`,
-            context: '', write_guidance: 'Explique sua estratégia, como comunicaria aos stakeholders e que resultados esperaria.',
-            character: null, multiple_choice: [],
-            expected_competencies: competencies, evaluation_criteria: 'Visão estratégica.',
-          },
-          {
-            id: 'q4_2', prompt: `Situação: ${allSituations[10]}\n\nDetalhe seu plano de ação.`,
-            context: '', write_guidance: 'Inclua: análise de riscos, plano de contingência, marcos de acompanhamento e critérios de sucesso.',
-            character: null, multiple_choice: [],
-            expected_competencies: competencies, evaluation_criteria: 'Planejamento detalhado e gestão de riscos.',
-          },
+          { id: 'q4_0', prompt: `Situação: ${allSituations[8]}\n\nDescreva como você resolveria.`, context: '', write_guidance: 'Apresente um plano completo: diagnóstico, ações, prazos e métricas de sucesso.', character: null, multiple_choice: [], expected_competencies: competencies, evaluation_criteria: 'Capacidade de planejamento.' },
+          { id: 'q4_1', prompt: `Situação: ${allSituations[9]}\n\nComo você abordaria este desafio?`, context: '', write_guidance: 'Explique sua estratégia, como comunicaria aos stakeholders e que resultados esperaria.', character: null, multiple_choice: [], expected_competencies: competencies, evaluation_criteria: 'Visão estratégica.' },
+          { id: 'q4_2', prompt: `Situação: ${allSituations[10]}\n\nDetalhe seu plano de ação.`, context: '', write_guidance: 'Inclua: análise de riscos, plano de contingência, marcos de acompanhamento e critérios de sucesso.', character: null, multiple_choice: [], expected_competencies: competencies, evaluation_criteria: 'Planejamento detalhado e gestão de riscos.' },
         ],
       },
-      {
-        id: 'phase_5', type: 'choice', title: 'Relações e Comunicação', subtitle: 'Avalia inteligência interpessoal',
+      { id: 'phase_5', type: 'choice', title: 'Decisões com Trade-offs', subtitle: 'Escolhas com consequências',
         questions: [
-          {
-            id: 'q5_0', prompt: `Situação: ${allSituations[11]}\n\nComo responderia?`,
-            context: '', character: null,
+          { id: 'q5_0', prompt: `Situação: ${allSituations[11]}\n\nComo responderia?`, context: '', character: null,
             multiple_choice: [
-              { id: 'a', text: 'Ouvir ativamente e buscar uma solução conjunta.', level: 'high', competencies: [competencies[0]] },
-              { id: 'b', text: 'Explicar o lado da empresa com empatia.', level: 'medium_high', competencies: [competencies[0]] },
-              { id: 'c', text: 'Encaminhar para o setor responsável.', level: 'medium_low', competencies: [competencies[0]] },
-              { id: 'd', text: 'Manter posição firme sem ceder.', level: 'low', competencies: [competencies[0]] },
-            ],
-            expected_competencies: competencies, evaluation_criteria: 'Inteligência emocional e comunicação.',
-          },
-          {
-            id: 'q5_1', prompt: `Situação: ${allSituations[12]}\n\nQual abordagem adotaria?`,
-            context: '', character: null,
+              { id: 'a', text: 'Ouvir ativamente e buscar uma solução conjunta com o cliente.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Explicar o lado da empresa com empatia e buscar um meio-termo.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Encaminhar para o setor responsável sem envolvimento direto.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Manter posição firme sem ceder, priorizando a política da empresa.', level: 'low', competencies: [competencies[0]] },
+            ], expected_competencies: competencies, evaluation_criteria: 'Inteligência emocional e comunicação.' },
+          { id: 'q5_1', prompt: `Situação: ${allSituations[12]}\n\nQual abordagem adotaria?`, context: '', character: null,
             multiple_choice: [
-              { id: 'a', text: 'Construir consenso ouvindo todas as partes.', level: 'high', competencies: [competencies[0]] },
-              { id: 'b', text: 'Apresentar uma proposta e ajustar com feedback.', level: 'medium_high', competencies: [competencies[0]] },
-              { id: 'c', text: 'Seguir a decisão da maioria.', level: 'medium_low', competencies: [competencies[0]] },
-              { id: 'd', text: 'Impor a decisão e seguir adiante.', level: 'low', competencies: [competencies[0]] },
-            ],
-            expected_competencies: competencies, evaluation_criteria: 'Capacidade de construir consenso.',
-          },
+              { id: 'a', text: 'Construir consenso ouvindo todas as partes antes de decidir.', level: 'high', competencies: [competencies[0]] },
+              { id: 'b', text: 'Apresentar uma proposta e ajustar com feedback dos envolvidos.', level: 'medium_high', competencies: [competencies[0]] },
+              { id: 'c', text: 'Seguir a decisão da maioria, mesmo sem concordar totalmente.', level: 'medium_low', competencies: [competencies[0]] },
+              { id: 'd', text: 'Impor a decisão e seguir adiante sem consultar.', level: 'low', competencies: [competencies[0]] },
+            ], expected_competencies: competencies, evaluation_criteria: 'Capacidade de construir consenso.' },
         ],
       },
-      {
-        id: 'phase_6', type: 'write', title: 'Desafio Final', subtitle: 'Avalia visão estratégica de alto nível',
+      { id: 'phase_6', type: 'write', title: 'Desafio Estratégico', subtitle: 'Visão de alto nível',
         questions: [
-          {
-            id: 'q6_0', prompt: `Situação: ${allSituations[13]}\n\nComo você lideraria esta situação?`,
-            context: '', write_guidance: 'Descreva sua visão estratégica, como alinharia a equipe, e que resultados de longo prazo buscaria.',
-            character: null, multiple_choice: [],
-            expected_competencies: competencies, evaluation_criteria: 'Liderança e visão estratégica.',
-          },
-          {
-            id: 'q6_1', prompt: `Situação: ${allSituations[14]}\n\nApresente sua proposta final.`,
-            context: '', write_guidance: 'Consolide tudo: diagnóstico, estratégia, plano de execução, métricas e visão de futuro.',
-            character: null, multiple_choice: [],
-            expected_competencies: competencies, evaluation_criteria: 'Capacidade de síntese estratégica.',
-          },
+          { id: 'q6_0', prompt: `Situação: ${allSituations[13]}\n\nComo você lideraria esta situação?`, context: '', write_guidance: 'Descreva sua visão estratégica, como alinharia a equipe, e que resultados de longo prazo buscaria.', character: null, multiple_choice: [], expected_competencies: competencies, evaluation_criteria: 'Liderança e visão estratégica.' },
+          { id: 'q6_1', prompt: `Situação: ${allSituations[14]}\n\nApresente sua proposta final.`, context: '', write_guidance: 'Consolide tudo: diagnóstico, estratégia, plano de execução, métricas e visão de futuro.', character: null, multiple_choice: [], expected_competencies: competencies, evaluation_criteria: 'Capacidade de síntese estratégica.' },
         ],
       },
     ],
@@ -338,67 +280,43 @@ function generateFallbackPhases(job) {
 
 // ============================================================================
 // DEEP PER-RESPONSE ANALYSIS
-// Analyzes each written response with full evidence-based rigor
+// Evidence-based, with confidence levels and observation vs inference separation
 // ============================================================================
 export async function analyzeQuestionResponse(question, answer, isChoice, previousResponses) {
   const choiceObj = isChoice ? (question.multiple_choice || []).find(c => c.id === answer) : null;
   const choiceText = choiceObj?.text || '';
 
-  const prompt = `Você é o TalentOS, uma IA de avaliação de candidatos que faz análise RIGOROSA, EVIDÊNCIADA e TRANSPARENTE de respostas em simulações de trabalho. Sua análise é usada por recrutadores para decisões de contratação.
+  const prompt = `Você é o TalentOS, uma IA de avaliação de candidatos que faz análise RIGOROSA, EVIDÊNCIADA e TRANSPARENTE. Sua análise é usada por recrutadores para decisões de contratação reais.
 
 PERGUNTA AVALIADA:
 - Enunciado: ${question.prompt}
 ${question.context ? `- Contexto: ${question.context}` : ''}
 ${question.character?.name ? `- Personagem: ${question.character.name} (${question.character.role})` : ''}
-- Competências esperadas: ${(question.expected_competencies || []).join(", ")}
+- Competências esperadas: ${(question.expected_competencies || []).join(', ')}
 - Critérios de avaliação: ${question.evaluation_criteria || 'Não especificados'}
 
 RESPOSTA DO CANDIDATO:
-${isChoice ? `- Opção escolhida: ${choiceText} (nível: ${choiceObj?.level || "N/A"})` : `- Resposta escrita: """${answer || "Sem resposta"}"""`}
+${isChoice ? `- Opção escolhida: ${choiceText} (nível: ${choiceObj?.level || 'N/A'})` : `- Resposta escrita: """${answer || 'Sem resposta'}"""`}
 
 RESPOSTAS ANTERIORES (para avaliar consistência):
-${(previousResponses || []).map((r, i) => `  ${i + 1}. ${r}`).join("\n") || "Nenhuma"}
+${(previousResponses || []).map((r, i) => `  ${i + 1}. ${r}`).join('\n') || 'Nenhuma'}
 
 INSTRUÇÕES DE ANÁLISE — seja RIGOROSA, ESPECÍFICA e EVIDÊNCIADA:
 
-1. COMPETÊNCIAS (competency_scores): Para CADA competência esperada, avalie se foi demonstrada. Pontue 0-100. Use evidence: "✓" (demonstrada), "~" (parcial), "✗" (não demonstrada). Cite um trecho EXATO da resposta como evidence_quote. A justification deve explicar o raciocínio.
+REGRAS FUNDAMENTAIS:
+1. NUNCA invente fatos sobre o candidato. Se não há evidência, diga "sem evidência suficiente".
+2. Diferencie claramente: OBSERVAÇÃO (o que está na resposta) vs INTERFERÊNCIA (sua interpretação) vs NÃO COMPROVADO.
+3. Evite adjetivos vazios e frases típicas de IA: "demonstra grande potencial", "perfil excepcional", "excelente comunicação", "demonstra maturidade", etc. Seja específico e concreto.
+4. Uma resposta genérica deve pontuar BAIXO. Respostas com exemplos concretos e raciocínio específico pontuam alto.
+5. Para cada competência, indique o NÍVEL DE CONFIANÇA da sua análise (high/medium/low) baseado em quanta evidência existe.
 
-2. HABILIDADES IDENTIFICADAS (skills_identified): Extraia habilidades REAIS da resposta — não as invente.
-   - hard_skills: conhecimentos técnicos, ferramentas, tecnologias, métodos específicos. Para cada uma, cite o trecho da resposta que evidencia a habilidade.
-   - soft_skills: comunicação, liderança, trabalho em equipe, organização, adaptabilidade, pensamento crítico, etc. Para cada uma, cite o trecho que evidencia.
-   NÃO atribua uma habilidade apenas porque o candidato usou a palavra — procure COMPORTAMENTOS ou SITUAÇÕES que demonstrem a habilidade.
-
-3. CADEIA DE EVIDÊNCIAS (evidence_chain): Para cada habilidade identificada, mostre: Habilidade → Evidência (trecho exato) → Interpretação. Isso torna a análise transparente.
-
-4. PROFUNDIDADE DA RESPOSTA (response_depth): Classifique em um dos níveis:
-   - "superficial": resposta genérica, sem detalhes
-   - "explanation": apresenta alguma explicação
-   - "examples": inclui exemplos concretos
-   - "context_results": traz contexto e resultados
-   - "practical_experience": demonstra experiência prática real
-   Explique o motivo da classificação no campo "reasoning".
-
-5. MÉTRICAS DE QUALIDADE (quality_metrics): Avalie 0-100:
-   - clarity: clareza da comunicação
-   - communication: capacidade de expressar ideias
-   - reasoning: capacidade de raciocínio lógico
-   - problem_solving: capacidade de resolução de problemas
-   - coherence: coerência entre pergunta e resposta (0-100)
-   - has_concrete_examples: true|false
-
-6. PONTOS POSITIVOS (positive_points): Liste 2-4 aspectos positivos específicos da resposta.
-
-7. PONTOS A INVESTIGAR (points_to_investigate): Liste 2-4 aspectos que precisam de mais esclarecimento na entrevista.
-
-8. DETECÇÃO DE IA (ai_detection): Analise se a resposta parece gerada por IA externa:
-   - Linguagem excessivamente formal ou templated
-   - Estrutura perfeita demais
-   - Vocabulário fora do esperado para o cargo/nível
-   - Ausência de voz pessoal
-   - Generalidades sem especificidade
-   Dê confiança 0-100 e liste indicadores.
-
-Seja CRÍTICO. Uma resposta genérica deve pontuar BAIXO. Diferencie claramente: fato observado vs interpretação da IA vs informação não comprovada.
+Para cada competência esperada, avalie:
+- score (0-100): pontuação baseada em evidência concreta
+- evidence ("✓" demonstrada, "~" parcial, "✗" não demonstrada)
+- justification: raciocínio específico, não genérico
+- evidence_quote: trecho EXATO da resposta que evidencia a avaliação
+- confidence: high/medium/low — quanta evidência sustenta esta avaliação
+- level: nível estimado da competência (beginner/intermediate/advanced/expert) — apenas se houver evidência
 
 Retorne JSON:
 {
@@ -406,23 +324,25 @@ Retorne JSON:
     "nome_da_competencia": {
       "score": 0,
       "evidence": "✓|~|✗",
-      "justification": "justificativa detalhada",
-      "evidence_quote": "trecho exato citado da resposta"
+      "justification": "justificativa específica baseada na resposta",
+      "evidence_quote": "trecho exato citado da resposta",
+      "confidence": "high|medium|low",
+      "level": "beginner|intermediate|advanced|expert"
     }
   },
   "skills_identified": {
-    "hard_skills": [{ "name": "nome da habilidade", "evidence": "trecho que evidencia" }],
-    "soft_skills": [{ "name": "nome da habilidade", "evidence": "trecho que evidencia" }]
+    "hard_skills": [{ "name": "nome", "evidence": "trecho que evidencia" }],
+    "soft_skills": [{ "name": "nome", "evidence": "trecho que evidencia" }]
   },
-  "evidence_chain": [{ "skill": "habilidade", "evidence_quote": "trecho", "interpretation": "interpretação" }],
-  "response_depth": { "level": "superficial|explanation|examples|context_results|practical_experience", "reasoning": "motivo da classificação" },
+  "evidence_chain": [{ "skill": "habilidade", "evidence_quote": "trecho", "interpretation": "interpretação (marcada como inferência)" }],
+  "response_depth": { "level": "superficial|explanation|examples|context_results|practical_experience", "reasoning": "motivo específico" },
   "quality_metrics": { "clarity": 0, "communication": 0, "reasoning": 0, "problem_solving": 0, "coherence": 0, "has_concrete_examples": true },
-  "positive_points": ["ponto positivo 1", "ponto positivo 2"],
-  "points_to_investigate": ["ponto a investigar 1", "ponto a investigar 2"],
-  "ai_detection": { "is_ai_generated": false, "confidence": 0, "indicators": [], "analysis": "análise detalhada" },
-  "response_quality": { "specificity": 0, "depth": 0, "authenticity": 0, "notes": "observações" },
+  "positive_points": ["ponto positivo específico 1", "ponto positivo específico 2"],
+  "points_to_investigate": ["ponto a investigar específico 1", "ponto a investigar específico 2"],
+  "ai_detection": { "is_ai_generated": false, "confidence": 0, "indicators": [], "analysis": "análise específica" },
+  "response_quality": { "specificity": 0, "depth": 0, "authenticity": 0, "notes": "observações específicas" },
   "response_score": 0,
-  "detailed_feedback": "feedback construtivo — o que foi bem, o que faltou, como melhorar"
+  "detailed_feedback": "feedback concreto — o que foi bem (específico), o que faltou (específico), como aprofundar"
 }`;
 
   const result = await base44.integrations.Core.InvokeLLM({
@@ -460,88 +380,104 @@ function getFallbackAnalysis() {
 
 // ============================================================================
 // COMPREHENSIVE FINAL ASSESSMENT REPORT
-// Aggregates all responses into a professional intelligence report
+// Uses stronger model for higher quality. Score composition with transparency.
 // ============================================================================
 export async function generateFinalAssessment(candidateName, job, allResponses, discResults) {
   const discInfo = discResults
-    ? `PERFIL COMPORTAMENTAL DISC:
+    ? `PERFIL COMPORTAMENTAL DISC (sinal complementar, NÃO diagnóstico psicológico):
 - Perfil dominante: ${discResults.dominant} (${discResults.scores[discResults.dominant]}%)
 - Perfil secundário: ${discResults.secondary} (${discResults.scores[discResults.secondary]}%)
 - Scores: D=${discResults.scores.D}%, I=${discResults.scores.I}%, S=${discResults.scores.S}%, C=${discResults.scores.C}%
-- Código do perfil: ${discResults.profile_code}`
+- Código do perfil: ${discResults.profile_code}
+IMPORTANTE: O DISC é um sinal complementar de estilo de trabalho. NUNCA use o DISC sozinho para determinar contratação ou Skill Score. Ele apenas contextualiza o estilo de comunicação e trabalho.`
     : 'Perfil DISC não disponível.';
+
+  const competencies = job.competencies || [];
+  const competencyList = competencies.length > 0 ? competencies.join(', ') : 'Não especificadas';
 
   const prompt = `Você é o TalentOS, gerando um RELATÓRIO COMPLETO de inteligência de recrutamento. Este relatório é usado por recrutadores para decidir contratações — seja RIGOROSO, EVIDÊNCIADO, TRANSPARENTE e ESPECÍFICO.
 
 CANDIDATO: ${candidateName}
 VAGA: ${job.title} (${job.role})
 SETOR: ${job.sector}
+NÍVEL: ${job.difficulty || 'mid'}
 PROBLEMAS DA EMPRESA: ${job.company_problems || 'Não especificados'}
-COMPETÊNCIAS EXIGIDAS: ${(job.competencies || []).join(", ")}
+COMPETÊNCIAS EXIGIDAS: ${competencyList}
 
 ${discInfo}
 
 RESPOSTAS E ANÁLISES INDIVIDUAIS DE CADA PERGUNTA (todas as evidências):
 ${JSON.stringify(allResponses, null, 2)}
 
-Gere um RELATÓRIO COMPLETO estruturado:
+REGRAS FUNDAMENTAIS — OBRIGATÓRIAS:
+1. NUNCA invente fatos sobre o candidato. Se não há evidência, diga "sem evidência suficiente".
+2. Diferencie claramente: OBSERVAÇÃO (fato da resposta) vs INTERFERÊNCIA (sua interpretação) vs NÃO COMPROVADO.
+3. EVITE FRASES TÍPICAS DE IA e adjetivos vazios: "demonstra grande potencial", "perfil excepcional", "excelente comunicação", "demonstra maturidade", "perfil promissor", "demonstra visão", etc. Use observações concretas e específicas.
+4. O DISC NÃO determina contratação nem Skill Score. É apenas sinal complementar de estilo.
+5. NÃO emita veredito automático de contratação. Apresente dados para apoiar a decisão humana.
+6. Para cada competência, indique confiança (high/medium/low) baseada em quanta evidência existe.
+7. Se houve detecções de IA, reduza a confiança geral e mencione explicitamente.
 
-1. RESUMO DO PERFIL (profile_summary): Síntese objetiva, 2-3 parágrafos, do que as respostas demonstram sobre o candidato.
+Gere um RELATÓRIO COMPLETO:
+
+1. RESUMO DO PERFIL (profile_summary): Síntese objetiva, 2-3 parágrafos, do que as respostas demonstram. Baseie-se em evidências, não em impressões.
 
 2. HABILIDADES IDENTIFICADAS:
-   - hard_skills: Extraia TODAS as hard skills demonstradas nas respostas. Para cada uma: { name, evidence (trecho da resposta que evidencia) }. NÃO invente habilidades — só inclua as que têm evidência real.
-   - soft_skills: Extraia TODAS as soft skills demonstradas. Para cada uma: { name, evidence }. Baseie-se em comportamentos, não em palavras-chave.
+   - hard_skills: Extraia TODAS as hard skills demonstradas. Para cada: { name, evidence (trecho da resposta) }. NÃO invente — só inclua as que têm evidência real.
+   - soft_skills: Extraia TODAS as soft skills demonstradas. Para cada: { name, evidence }. Baseie-se em comportamentos, não em palavras-chave.
 
-3. SCORES FINAIS (skill_scores): Para cada competência exigida pela vaga, agregue os scores de todas as perguntas. Pondere consistência e profundidade.
+3. SCORES FINAIS (skill_scores): Para cada competência exigida pela vaga, agregue os scores de todas as perguntas que a avaliaram. Pondere por consistência e profundidade. Indique a confiança.
 
-4. SKILL DNA (skill_dna): Top 3 fortalezas e Top 3 áreas de desenvolvimento, cada uma com evidence específica citada das respostas.
+4. COMPOSIÇÃO DO SCORE (score_composition): Mostre como o score geral foi composto. Para cada competência: { competency, score, weight (peso), contribution (contribuição para o score geral) }. Pesos iguais por padrão (cada competência tem peso 1/N onde N é o total de competências).
 
-5. SKILL SCORE GERAL (overall_score): 0-100, média ponderada considerando consistência.
+5. SKILL DNA (skill_dna): Top 3 fortalezas e Top 3 áreas de desenvolvimento, cada uma com evidence específica citada das respostas.
 
-6. SKILL GRAPH (skill_graph): Score final de cada competência.
+6. SKILL SCORE GERAL (overall_score): 0-100, média ponderada das competências. Indique a confiança geral (overall_confidence: high/medium/low).
 
-7. RECOMENDAÇÃO (recommendation): "Contratação Forte" | "Contratar" | "Talvez" | "Não Recomendado" | "Não Contratar".
+7. SKILL GRAPH (skill_graph): Score final de cada competência.
 
-8. RESUMO EXECUTIVO (summary): 3-5 parágrafos detalhados sobre a performance.
+8. RECOMENDAÇÃO (recommendation): "Contratação Forte" | "Contratar" | "Talvez — Investigar" | "Não Recomendado" | "Não Contratar". NÃO é um veredito automático — é um sinal para o recrutador.
 
-9. ANÁLISE DE PERSONALIDADE (personality_analysis): 2-3 parágrafos detalhados. Descreva quem é essa pessoa profissionalmente: características, estilo de comunicação, como lida com pressão, como trabalha em equipe. Use o DISC como base, enriqueça com evidências das respostas.
+9. RESUMO EXECUTIVO (summary): 3-5 parágrafos detalhados sobre a performance. Baseado em evidências.
 
-10. PONTOS FORTES DETALHADOS (strengths_detail): 1-2 parágrafos. Liste e explique os pontos fortes com exemplos concretos das respostas.
+10. ANÁLISE DE PERSONALIDADE (personality_analysis): 2-3 parágrafos. Descreva quem é essa pessoa profissionalmente: características, estilo de comunicação, como lida com pressão, como trabalha em equipe. Use o DISC como base, enriqueça com evidências das respostas. Não faça diagnóstico psicológico.
 
-11. PONTOS A INVESTIGAR (weaknesses_detail): 1-2 parágrafos. Liste áreas de melhoria e pontos que precisam de investigação, com sugestões construtivas.
+11. PONTOS FORTES DETALHADOS (strengths_detail): 1-2 parágrafos. Liste e explique os pontos fortes com exemplos concretos das respostas.
 
-12. ESTILO DE TRABALHO (work_style): 1 parágrafo. Como essa pessoa trabalha no dia a dia, que ambiente prefere.
+12. PONTOS A INVESTIGAR (weaknesses_detail): 1-2 parágrafos. Liste áreas de melhoria e pontos que precisam de investigação, com sugestões construtivas.
 
-13. COMPATIBILIDADE COM A VAGA (job_compatibility): Compare as evidências com os requisitos da vaga:
+13. ESTILO DE TRABALHO (work_style): 1 parágrafo. Como essa pessoa trabalha no dia a dia, que ambiente prefere.
+
+14. COMPATIBILIDADE COM A VAGA (job_compatibility): Compare as evidências com os requisitos da vaga:
    - demonstrated: competências demonstradas com evidência [{ competency, evidence }]
    - partial: competências parcialmente demonstradas [{ competency, evidence }]
    - not_evidenced: competências não evidenciadas [{ competency, note }]
    - needs_investigation: requisitos que precisam investigação na entrevista [{ competency, reason }]
    NÃO invente competências que não aparecem nas respostas.
 
-14. ANÁLISE DE CONSISTÊNCIA (consistency_analysis): Compare as diferentes respostas. Identifique: informações que se complementam, possíveis contradições, evolução de raciocínio, padrões de comportamento, habilidades que aparecem repetidamente. Se não houver evidência suficiente, indique claramente.
+15. ANÁLISE DE CONSISTÊNCIA (consistency_analysis): Compare as diferentes respostas. Identifique: informações que se complementam, possíveis contradições, evolução de raciocínio, padrões de comportamento, habilidades que aparecem repetidamente. Se não houver evidência suficiente, indique claramente.
 
-15. PERGUNTAS INTELIGENTES PARA ENTREVISTA (interview_questions): Gere 5-8 perguntas personalizadas para o recrutador. Cada pergunta deve investigar: pontos pouco esclarecidos, habilidades não comprovadas, experiências sem detalhes, possíveis contradições, competências essenciais. Para cada: { question, rationale (por que perguntar isso), competency (competência investigada) }. Seja específico para este candidato — não perguntas genéricas.
+16. PERGUNTAS INTELIGENTES PARA ENTREVISTA (interview_questions): Gere 5-8 perguntas personalizadas. Cada pergunta deve investigar: pontos pouco esclarecidos, habilidades não comprovadas, experiências sem detalhes, possíveis contradições, competências essenciais. Para cada: { question, rationale (por que perguntar), competency (competência investigada) }. Seja específico para este candidato.
 
-TRANSPARÊNCIA: Diferencie claramente fato observado vs interpretação vs informação não comprovada. Evite julgamentos baseados em características pessoais (aparência, idade, gênero, etc.). Concentre-se exclusivamente em competências profissionais.
-
-Se houve detecções de IA, reduza a confiança e mencione explicitamente no resumo.
+17. CONFIANÇA DA AVALIAÇÃO (assessment_confidence): { level: high/medium/low, reasoning: "por que este nível de confiança", evidence_count: número de respostas analisadas }
 
 Retorne JSON:
 {
   "profile_summary": "síntese objetiva em 2-3 parágrafos",
   "hard_skills": [{ "name": "nome", "evidence": "evidência" }],
   "soft_skills": [{ "name": "nome", "evidence": "evidência" }],
-  "skill_scores": { "competencia": 0 },
+  "skill_scores": { "competencia": { "score": 0, "confidence": "high|medium|low" } },
+  "score_composition": [{ "competency": "nome", "score": 0, "weight": 0.0, "contribution": 0 }],
   "skill_dna": {
     "strengths": [{ "competency": "nome", "score": 0, "evidence": "evidência" }],
     "growth_areas": [{ "competency": "nome", "score": 0, "evidence": "evidência" }]
   },
   "overall_score": 0,
-  "recommendation": "Contratação Forte|Contratar|Talvez|Não Recomendado|Não Contratar",
+  "overall_confidence": "high|medium|low",
+  "recommendation": "Contratação Forte|Contratar|Talvez — Investigar|Não Recomendado|Não Contratar",
   "summary": "resumo executivo em 3-5 parágrafos",
   "skill_graph": { "competencia": 0 },
-  "personality_analysis": "análise de personalidade em 2-3 parágrafos",
+  "personality_analysis": "análise em 2-3 parágrafos",
   "work_style": "estilo de trabalho em 1 parágrafo",
   "strengths_detail": "pontos fortes em 1-2 parágrafos",
   "weaknesses_detail": "pontos a investigar em 1-2 parágrafos",
@@ -552,42 +488,66 @@ Retorne JSON:
     "needs_investigation": [{ "competency": "nome", "reason": "motivo" }]
   },
   "consistency_analysis": "análise de consistência detalhada",
-  "interview_questions": [{ "question": "pergunta", "rationale": "justificativa", "competency": "competência" }]
+  "interview_questions": [{ "question": "pergunta", "rationale": "justificativa", "competency": "competência" }],
+  "assessment_confidence": { "level": "high|medium|low", "reasoning": "motivo", "evidence_count": 0 }
 }`;
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,
-    model: 'gemini_3_flash',
+    model: 'claude-sonnet-5',
   });
 
   if (typeof result === 'string') {
     try {
       const jsonMatch = result.match(/\{[\s\S]*\}/);
       const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : result);
-      return {
-        profile_summary: parsed.profile_summary || '',
-        hard_skills: parsed.hard_skills || [],
-        soft_skills: parsed.soft_skills || [],
-        skill_scores: parsed.skill_scores || {},
-        skill_dna: parsed.skill_dna || { strengths: [], growth_areas: [] },
-        overall_score: parsed.overall_score || 0,
-        recommendation: parsed.recommendation || 'Talvez',
-        summary: parsed.summary || '',
-        skill_graph: parsed.skill_graph || parsed.skill_scores || {},
-        personality_analysis: parsed.personality_analysis || '',
-        work_style: parsed.work_style || '',
-        strengths_detail: parsed.strengths_detail || '',
-        weaknesses_detail: parsed.weaknesses_detail || '',
-        job_compatibility: parsed.job_compatibility || { demonstrated: [], partial: [], not_evidenced: [], needs_investigation: [] },
-        consistency_analysis: parsed.consistency_analysis || '',
-        interview_questions: parsed.interview_questions || [],
-      };
+      return normalizeAssessment(parsed);
     } catch (e) {
       console.error('Failed to parse final assessment JSON:', e);
       return getFallbackAssessment();
     }
   }
-  return result;
+  return normalizeAssessment(result);
+}
+
+// Normalize the assessment to ensure skill_scores is a flat { competency: score } map
+// for compatibility with existing UI components, while preserving confidence in a separate field.
+function normalizeAssessment(parsed) {
+  // Normalize skill_scores: LLM may return { comp: { score, confidence } } or { comp: number }
+  const rawScores = parsed.skill_scores || {};
+  const flatScores = {};
+  const scoreConfidence = {};
+  Object.entries(rawScores).forEach(([comp, val]) => {
+    if (typeof val === 'number') {
+      flatScores[comp] = val;
+    } else if (val && typeof val === 'object') {
+      flatScores[comp] = val.score ?? 0;
+      if (val.confidence) scoreConfidence[comp] = val.confidence;
+    }
+  });
+
+  return {
+    profile_summary: parsed.profile_summary || '',
+    hard_skills: parsed.hard_skills || [],
+    soft_skills: parsed.soft_skills || [],
+    skill_scores: flatScores,
+    score_confidence: scoreConfidence,
+    score_composition: parsed.score_composition || [],
+    skill_dna: parsed.skill_dna || { strengths: [], growth_areas: [] },
+    overall_score: parsed.overall_score || 0,
+    overall_confidence: parsed.overall_confidence || 'medium',
+    recommendation: parsed.recommendation || 'Talvez — Investigar',
+    summary: parsed.summary || '',
+    skill_graph: parsed.skill_graph || flatScores,
+    personality_analysis: parsed.personality_analysis || '',
+    work_style: parsed.work_style || '',
+    strengths_detail: parsed.strengths_detail || '',
+    weaknesses_detail: parsed.weaknesses_detail || '',
+    job_compatibility: parsed.job_compatibility || { demonstrated: [], partial: [], not_evidenced: [], needs_investigation: [] },
+    consistency_analysis: parsed.consistency_analysis || '',
+    interview_questions: parsed.interview_questions || [],
+    assessment_confidence: parsed.assessment_confidence || { level: 'medium', reasoning: '', evidence_count: 0 },
+  };
 }
 
 function getFallbackAssessment() {
@@ -596,9 +556,12 @@ function getFallbackAssessment() {
     hard_skills: [],
     soft_skills: [],
     skill_scores: {},
+    score_confidence: {},
+    score_composition: [],
     skill_dna: { strengths: [], growth_areas: [] },
     overall_score: 0,
-    recommendation: 'Talvez',
+    overall_confidence: 'low',
+    recommendation: 'Talvez — Investigar',
     summary: 'Avaliação indisponível.',
     skill_graph: {},
     personality_analysis: '',
@@ -608,5 +571,6 @@ function getFallbackAssessment() {
     job_compatibility: { demonstrated: [], partial: [], not_evidenced: [], needs_investigation: [] },
     consistency_analysis: '',
     interview_questions: [],
+    assessment_confidence: { level: 'low', reasoning: 'Análise indisponível.', evidence_count: 0 },
   };
 }

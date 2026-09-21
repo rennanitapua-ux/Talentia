@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Award, AlertTriangle, Bot, MessageSquare, CheckCircle2, Play, MousePointerClick, PenLine, Clock, FileText, Phone, Briefcase, Brain, TrendingUp, Download } from 'lucide-react';
+import { ArrowLeft, Award, AlertTriangle, Bot, MessageSquare, CheckCircle2, Play, MousePointerClick, PenLine, Clock, FileText, Phone, Briefcase, Brain, TrendingUp, Download, Printer, Gauge } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillGraph from '@/components/SkillGraph';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
@@ -81,6 +81,13 @@ export default function CompanyCandidateDetail() {
             <div className="text-xs text-muted-foreground/70">{sim.job_title} · {sim.company_name}</div>
           </div>
           <SkillScoreBadge score={sim.overall_score || 0} size="md" />
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-muted border border-border text-foreground/80 hover:bg-accent text-xs font-medium transition-colors"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Exportar</span>
+          </button>
         </div>
       </header>
 
@@ -136,7 +143,7 @@ export default function CompanyCandidateDetail() {
                   className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
                     sim.hiring_status === key
                       ? `${val.bg} ${val.text} border border-current`
-                      : 'bg-muted text-muted-foreground hover:bg-[hsl(240,8%,14%)] border border-transparent'
+                      : 'bg-muted text-muted-foreground hover:bg-accent border border-transparent'
                   }`}
                 >
                   {val.label}
@@ -268,6 +275,55 @@ export default function CompanyCandidateDetail() {
           </div>
         )}
 
+        {/* Score Composition + Assessment Confidence */}
+        {sim.score_composition?.length > 0 && (
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-card mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Gauge className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">Composição do Score</span>
+              <span className="text-xs text-muted-foreground/60 ml-auto">como o score geral foi calculado</span>
+            </div>
+            <div className="space-y-3">
+              {sim.score_composition.map((item, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-foreground">{item.competency}</span>
+                      <span className="text-xs font-mono text-muted-foreground">{item.score}/100 · peso {(item.weight * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full bg-primary rounded-full" style={{ width: `${item.score}%` }} />
+                    </div>
+                  </div>
+                  <div className="text-right w-20">
+                    <div className="text-sm font-mono font-bold text-primary">+{item.contribution?.toFixed(1) || '0.0'}</div>
+                    <div className="text-[10px] text-muted-foreground/60">contribuição</div>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-3 border-t border-border">
+                <span className="text-sm font-semibold text-foreground">Score Geral</span>
+                <span className="text-2xl font-bold font-mono text-primary">{sim.overall_score || 0}</span>
+              </div>
+            </div>
+            {sim.overall_confidence && (
+              <div className="mt-4 flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground/70">Confiança da avaliação:</span>
+                <span className={`font-medium px-2 py-0.5 rounded-md ${
+                  sim.overall_confidence === 'high' ? 'bg-emerald-500/15 text-emerald-400' :
+                  sim.overall_confidence === 'medium' ? 'bg-amber-500/15 text-amber-400' :
+                  'bg-rose-500/15 text-rose-400'
+                }`}>
+                  {sim.overall_confidence === 'high' ? 'Alta' : sim.overall_confidence === 'medium' ? 'Média' : 'Baixa'}
+                </span>
+                {sim.assessment_confidence?.reasoning && (
+                  <span className="text-muted-foreground/60">— {sim.assessment_confidence.reasoning}</span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Response replay */}
         <div>
           <h3 className="font-heading text-xl text-foreground mb-5 flex items-center gap-2.5">
@@ -281,8 +337,8 @@ export default function CompanyCandidateDetail() {
                 onClick={() => setActiveResponse(i)}
                 className={`flex-shrink-0 px-3.5 py-2 rounded-lg text-xs font-mono transition-all ${
                   activeResponse === i
-                    ? 'bg-primary text-[hsl(240,15%,3.5%)] font-semibold'
-                    : 'bg-card text-muted-foreground hover:bg-[hsl(240,10%,10%)] border border-border'
+                    ? 'bg-primary text-primary-foreground font-semibold'
+                    : 'bg-card text-muted-foreground hover:bg-accent border border-border'
                 }`}
               >
                 Q{String(i + 1).padStart(2, '0')}

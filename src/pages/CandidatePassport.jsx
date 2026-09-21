@@ -74,20 +74,20 @@ export default function CandidatePassport() {
 
       <div className="max-w-5xl mx-auto px-6 py-8">
         {loading ? (
-          <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" /></div>
+          <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-brand-violet border-t-transparent rounded-full animate-spin" /></div>
         ) : simulations.length === 0 ? (
           <div className="bg-card/40 border border-dashed border-border rounded-2xl p-16 text-center">
-            <Award className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+            <Award className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
             <h2 className="text-lg font-semibold mb-2">Seu Talent Passport está vazio</h2>
             <p className="text-muted-foreground text-sm mb-6">Complete simulações para construir seu portfólio de competências permanente.</p>
-            <button onClick={() => navigate('/candidate')} className="px-6 py-2.5 rounded-lg bg-brand-violet text-foreground font-semibold text-sm hover:bg-violet-400">
+            <button onClick={() => navigate('/candidate')} className="px-6 py-2.5 rounded-lg bg-brand-violet text-foreground font-semibold text-sm hover:bg-brand-violet/90">
               Explorar Vagas
             </button>
           </div>
         ) : (
           <>
             {/* Passport header */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-violet-900/30 to-slate-900/60 border border-violet-500/20 rounded-2xl p-6 mb-6">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-brand-violet/20 to-card border border-brand-violet/20 rounded-2xl p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-14 h-14 rounded-full bg-brand-violet/20 flex items-center justify-center text-xl font-bold text-brand-violet overflow-hidden">
@@ -156,7 +156,7 @@ export default function CandidatePassport() {
                       key={sim.id}
                       onClick={() => setSelected(sim)}
                       className={`w-full text-left p-4 rounded-xl border transition-all ${
-                        selected?.id === sim.id ? 'bg-brand-violet/10 border-violet-500/40' : 'bg-card/60 border-border hover:border-slate-700'
+                        selected?.id === sim.id ? 'bg-brand-violet/10 border-brand-violet/40' : 'bg-card/60 border-border hover:border-border'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -187,7 +187,7 @@ export default function CandidatePassport() {
                         <h4 className="font-semibold">{selected.job_title}</h4>
                         <div className="text-xs text-muted-foreground/70">{selected.company_name}</div>
                       </div>
-                      <div className="px-3 py-1 rounded-lg text-xs font-medium" style={{ background: '#22d3ee15', color: '#22d3ee' }}>
+                      <div className="px-3 py-1 rounded-lg text-xs font-medium bg-primary/10 text-primary">
                         {selected.recommendation}
                       </div>
                     </div>
@@ -239,7 +239,7 @@ export default function CandidatePassport() {
 
                     <button
                       onClick={() => navigate(`/candidate/results/${selected.id}`)}
-                      className="mt-4 w-full py-2.5 rounded-lg bg-muted hover:bg-slate-700 text-sm text-foreground/80"
+                      className="mt-4 w-full py-2.5 rounded-lg bg-muted hover:bg-accent text-sm text-foreground/80"
                     >
                       Ver Resultado e Andamento Completo →
                     </button>

@@ -168,3 +168,37 @@
     box-shadow: 0 10px 25px -5px hsl(0 0% 0% / 0.3), 0 8px 10px -6px hsl(0 0% 0% / 0.2);
   }
 }
+
+/* Print styles — for report export */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  header, button { display: none !important; }
+  .bg-card, .bg-card\/60, .bg-card\/80, .glass {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  .text-foreground, .text-foreground\/80, .text-foreground\/90 {
+    color: black !important;
+  }
+  .text-muted-foreground, .text-muted-foreground\/70 {
+    color: #555 !important;
+  }
+  .border-border {
+    border-color: #ddd !important;
+  }
+  .bg-muted, .bg-muted\/30, .bg-muted\/40, .bg-muted\/60 {
+    background: #f5f5f5 !important;
+  }
+  .rounded-2xl { border-radius: 8px !important; }
+  .shadow-card, .shadow-float, .shadow-soft { box-shadow: none !important; }
+  .glow-blue, .glow-violet { box-shadow: none !important; }
+  .text-gradient, .text-gradient-blue {
+    -webkit-text-fill-color: black !important;
+    color: black !important;
+  }
+}

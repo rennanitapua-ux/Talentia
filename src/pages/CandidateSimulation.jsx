@@ -32,44 +32,83 @@ export default function CandidateSimulation() {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
-      setUser(u);
-      if (u) {
-        // Check if candidate already completed this simulation
-        base44.entities.Simulation.filter({
-          job_id: id,
-          candidate_user_id: u.id,
-          status: 'completed'
-        }).then(existing => {
-          if (existing && existing.length > 0) {
-            // Already completed — redirect to results
-            navigate(`/candidate/results/${existing[0].id}`);
-            return;
-          }
-          // Also check for in-progress simulation
-          base44.entities.Simulation.filter({
-            job_id: id,
-            candidate_user_id: u.id,
-            status: 'in_progress'
-          }).then(inProgress => {
-            if (inProgress && inProgress.length > 0) {
-              // Has an in-progress simulation — resume it
-              setSim(inProgress[0]);
-              setResponses(inProgress[0].responses || []);
-              setViolations(inProgress[0].focus_violations || 0);
+    let cancelled = false;
+    (async () => {
+      let currentUser = null;
+      try { currentUser = await base44.auth.me(); } catch {}
+      if (cancelled) return;
+      setUser(currentUser);
+
+      let currentJob = null;
+      try { currentJob = await base44.entities.Job.get(id); } catch {}
+      if (cancelled) return;
+      setJob(currentJob);
+      setLoading(false);
+
+      if (!currentUser || !currentJob) return;
+
+      // Check for completed simulation — redirect to results
+      try {
+        const completed = await base44.entities.Simulation.filter({
+          job_id: id, candidate_user_id: currentUser.id, status: 'completed'
+        });
+        if (cancelled) return;
+        if (completed && completed.length > 0) {
+          navigate(`/candidate/results/${completed[0].id}`);
+          return;
+        }
+      } catch {}
+
+      // Load candidate profile
+      try {
+        const profiles = await base44.entities.CandidateProfile.filter({ user_id: currentUser.id });
+        if (cancelled) return;
+        if (profiles && profiles.length > 0) setProfile(profiles[0]);
+      } catch {}
+
+      // Check for in-progress simulation — resume it
+      try {
+        const inProgress = await base44.entities.Simulation.filter({
+          job_id: id, candidate_user_id: currentUser.id, status: 'in_progress'
+        });
+        if (cancelled) return;
+        if (inProgress && inProgress.length > 0) {
+          const existingSim = inProgress[0];
+          const existingResponses = existingSim.responses || [];
+          setSim(existingSim);
+          setResponses(existingResponses);
+          setViolations(existingSim.focus_violations || 0);
+
+          // Calculate resume position from responses count
+          const phases = currentJob.simulation_scenarios || [];
+          let answered = existingResponses.length;
+          let resumePhaseIdx = 0;
+          let resumeQIdx = 0;
+          let allAnswered = true;
+          for (let pi = 0; pi < phases.length; pi++) {
+            const phaseQs = phases[pi].questions || [];
+            if (answered >= phaseQs.length) {
+              answered -= phaseQs.length;
+            } else {
+              resumePhaseIdx = pi;
+              resumeQIdx = answered;
+              allAnswered = false;
+              break;
             }
-            // Get candidate profile
-            base44.entities.CandidateProfile.filter({ user_id: u.id }).then(profiles => {
-              if (profiles && profiles.length > 0) setProfile(profiles[0]);
-            }).catch(() => {});
-          }).catch(() => {});
-        }).catch(() => {});
-      }
-      base44.entities.Job.get(id).then(j => {
-        setJob(j);
-        setLoading(false);
-      }).catch(() => setLoading(false));
-    }).catch(() => setLoading(false));
+          }
+
+          if (allAnswered && existingResponses.length > 0) {
+            // All answered but sim still in_progress — finish it
+            finishSimulation(existingResponses, existingSim);
+          } else if (!allAnswered) {
+            setPhaseIdx(resumePhaseIdx);
+            setQIdx(resumeQIdx);
+            setPhase('simulating');
+          }
+        }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
   }, [id, navigate]);
 
   useEffect(() => {
@@ -227,11 +266,13 @@ export default function CandidateSimulation() {
     }
   };
 
-  const finishSimulation = async (allResponses) => {
+  const finishSimulation = async (allResponses, simArg = null) => {
+    const activeSim = simArg || sim;
+    if (!activeSim) return;
     setPhase('analyzing');
     try {
       const assessment = await generateFinalAssessment(
-        sim.candidate_name, job, allResponses, discResults
+        activeSim.candidate_name, job, allResponses, activeSim.disc_results || discResults
       );
 
       const aiFlags = allResponses
@@ -245,12 +286,15 @@ export default function CandidateSimulation() {
 
       const totalTime = allResponses.reduce((sum, r) => sum + (r.time_spent_seconds || 0), 0);
 
-      await base44.entities.Simulation.update(sim.id, {
+      await base44.entities.Simulation.update(activeSim.id, {
         status: 'completed',
         skill_scores: assessment.skill_scores || {},
+        score_confidence: assessment.score_confidence || {},
+        score_composition: assessment.score_composition || [],
         skill_dna: assessment.skill_dna || { strengths: [], growth_areas: [] },
         skill_graph: assessment.skill_graph || assessment.skill_scores || {},
         overall_score: assessment.overall_score || 0,
+        overall_confidence: assessment.overall_confidence || 'medium',
         recommendation: assessment.recommendation || '',
         summary: assessment.summary || '',
         personality_analysis: assessment.personality_analysis || '',
@@ -263,6 +307,7 @@ export default function CandidateSimulation() {
         job_compatibility: assessment.job_compatibility || {},
         interview_questions: assessment.interview_questions || [],
         consistency_analysis: assessment.consistency_analysis || '',
+        assessment_confidence: assessment.assessment_confidence || {},
         ai_flags: aiFlags,
         completed_at: new Date().toISOString(),
         focus_violations: violations,
@@ -270,7 +315,7 @@ export default function CandidateSimulation() {
       });
 
       setPhase('done');
-      setTimeout(() => navigate(`/candidate/results/${sim.id}`), 800);
+      setTimeout(() => navigate(`/candidate/results/${activeSim.id}`), 800);
     } catch (e) {
       console.error(e);
       alert('Erro ao gerar avaliação final. Tente novamente.');

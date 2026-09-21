@@ -32,7 +32,7 @@ export default function CandidateResults() {
     }).catch(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-[hsl(280,65%,60%)] border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-brand-violet border-t-transparent rounded-full animate-spin" /></div>;
   if (!sim) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Resultado não encontrado</div>;
 
   const competencies = Object.keys(sim.skill_scores || {});
@@ -60,7 +60,7 @@ export default function CandidateResults() {
             <div className="text-sm font-semibold">Seu Resultado</div>
             <div className="text-xs text-muted-foreground/70">{sim.job_title} · {sim.company_name}</div>
           </div>
-          <button onClick={() => navigate('/candidate/passport')} className="text-xs text-brand-violet hover:text-[hsl(280,65%,75%)] transition-colors">
+          <button onClick={() => navigate('/candidate/passport')} className="text-xs text-brand-violet hover:text-brand-violet/80 transition-colors">
             Ver Talent Passport →
           </button>
         </div>
@@ -114,14 +114,14 @@ export default function CandidateResults() {
                   <React.Fragment key={status}>
                     <div className="flex flex-col items-center gap-2 flex-shrink-0">
                       <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
-                        isComplete ? 'bg-primary text-[hsl(240,15%,3.5%)]' : 'bg-muted text-muted-foreground/50 border border-border'
-                      } ${isCurrent ? 'ring-2 ring-[hsl(190,85%,45%,0.4)] ring-offset-2 ring-offset-[hsl(240,12%,6%)]' : ''}`}>
+                        isComplete ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground/50 border border-border'
+                      } ${isCurrent ? 'ring-2 ring-[hsl(190,85%,45%,0.4)] ring-offset-2 ring-offset-background' : ''}`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <span className={`text-[10px] text-center ${isComplete ? 'text-primary' : 'text-muted-foreground/50'}`}>{s.label}</span>
                     </div>
                     {i < HIRING_FLOW.length - 1 && (
-                      <div className={`flex-1 h-0.5 rounded-full ${currentStepIdx > i ? 'bg-primary' : 'bg-[hsl(240,8%,14%)]'}`} />
+                      <div className={`flex-1 h-0.5 rounded-full ${currentStepIdx > i ? 'bg-primary' : 'bg-accent'}`} />
                     )}
                   </React.Fragment>
                 );
@@ -274,11 +274,11 @@ export default function CandidateResults() {
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button onClick={() => navigate('/candidate/passport')} className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-brand-violet text-foreground font-semibold text-sm hover:bg-[hsl(280,65%,65%)] transition-colors shadow-lg shadow-[hsl(280,65%,60%,0.15)]">
+          <button onClick={() => navigate('/candidate/passport')} className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-brand-violet text-foreground font-semibold text-sm hover:bg-brand-violet/90 transition-colors shadow-lg shadow-brand-violet/20">
             <Award className="w-4 h-4" />
             Ver no Talent Passport
           </button>
-          <button onClick={() => navigate('/candidate')} className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-accent border border-border text-foreground/80 font-semibold text-sm hover:bg-[hsl(240,8%,16%)] transition-colors">
+          <button onClick={() => navigate('/candidate')} className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-accent border border-border text-foreground/80 font-semibold text-sm hover:bg-accent transition-colors">
             <TrendingUp className="w-4 h-4" />
             Explorar Mais Vagas
           </button>

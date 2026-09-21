@@ -77,7 +77,7 @@ export default function CompanyCompare() {
                     key={sim.id}
                     onClick={() => toggleSelect(sim.id)}
                     className={`p-4 rounded-xl border text-left transition-all ${
-                      isSelected ? 'bg-primary/10 border-cyan-500/50' : 'bg-card/60 border-border hover:border-slate-700'
+                      isSelected ? 'bg-primary/10 border-primary/50' : 'bg-card/60 border-border hover:border-border'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -86,10 +86,10 @@ export default function CompanyCompare() {
                       </div>
                       {isSelected ? (
                         <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                          <Check className="w-3 h-3 text-slate-950" />
+                          <Check className="w-3 h-3 text-primary-foreground" />
                         </div>
                       ) : (
-                        <div className="w-5 h-5 rounded-full border-2 border-slate-700" />
+                        <div className="w-5 h-5 rounded-full border-2 border-border" />
                       )}
                     </div>
                     <div className="text-sm font-medium truncate">{sim.candidate_name}</div>
@@ -135,7 +135,7 @@ export default function CompanyCompare() {
                     )}
                     <button
                       onClick={() => navigate(`/company/candidates/${sim.id}`)}
-                      className="mt-3 text-xs text-primary hover:text-cyan-300"
+                      className="mt-3 text-xs text-primary hover:text-primary/80"
                     >
                       Ver detalhes →
                     </button>

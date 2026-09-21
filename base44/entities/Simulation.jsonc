@@ -58,6 +58,15 @@
     "skill_scores": {
       "type": "object"
     },
+    "score_confidence": {
+      "type": "object"
+    },
+    "score_composition": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
     "skill_dna": {
       "type": "array",
       "items": {
@@ -69,6 +78,9 @@
     },
     "overall_score": {
       "type": "number"
+    },
+    "overall_confidence": {
+      "type": "string"
     },
     "recommendation": {
       "type": "string"
@@ -114,6 +126,9 @@
     },
     "consistency_analysis": {
       "type": "string"
+    },
+    "assessment_confidence": {
+      "type": "object"
     },
     "ai_flags": {
       "type": "array",

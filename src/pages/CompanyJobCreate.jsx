@@ -92,7 +92,7 @@ export default function CompanyJobCreate() {
       <div className="max-w-4xl mx-auto px-6 pt-6">
         <div className="flex gap-2">
           {[1, 2, 3, 4].map(s => (
-            <div key={s} className={`h-1 flex-1 rounded-full transition-colors ${s <= step ? 'bg-cyan-400' : 'bg-muted'}`} />
+            <div key={s} className={`h-1 flex-1 rounded-full transition-colors ${s <= step ? 'bg-primary' : 'bg-muted'}`} />
           ))}
         </div>
       </div>
@@ -204,7 +204,7 @@ export default function CompanyJobCreate() {
               <div className="flex flex-wrap gap-2">
                 {form.competencies.map((c, i) => (
                   <div key={i} className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-lg px-3 py-1.5">
-                    <span className="text-sm text-cyan-200">{c}</span>
+                    <span className="text-sm text-primary">{c}</span>
                     <button onClick={() => update('competencies', form.competencies.filter((_, idx) => idx !== i))}>
                       <X className="w-3.5 h-3.5 text-primary/60 hover:text-primary" />
                     </button>
@@ -251,10 +251,10 @@ export default function CompanyJobCreate() {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 p-5 bg-primary/5 border border-primary/20 rounded-xl">
                   <div className="flex items-center gap-3 mb-2">
                     <Sparkles className="w-5 h-5 text-primary" />
-                    <span className="font-semibold text-cyan-200">Pronto para gerar</span>
+                    <span className="font-semibold text-primary">Pronto para gerar</span>
                   </div>
                   <p className="text-xs text-muted-foreground mb-4">A IA vai criar o perfil da empresa virtual e transformar cada situação em um cenário de simulação com múltipla escolha e pergunta de aprofundamento.</p>
-                  <button onClick={handleGenerate} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-slate-950 font-semibold text-sm hover:bg-cyan-400">
+                  <button onClick={handleGenerate} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary">
                     <Sparkles className="w-4 h-4" />
                     Gerar Simulação com IA
                   </button>
@@ -270,7 +270,7 @@ export default function CompanyJobCreate() {
             <button
               disabled={!canProceed()}
               onClick={() => setStep(step + 1)}
-              className="px-6 py-2.5 rounded-lg bg-primary text-slate-950 font-semibold text-sm hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Continuar
             </button>

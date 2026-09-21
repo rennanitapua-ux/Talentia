@@ -11,7 +11,7 @@ export default function SelectableChips({ label, options, value, onChange, colum
 
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-400 mb-1.5">{label}</label>
+      <label className="block text-xs font-medium text-muted-foreground mb-1.5">{label}</label>
       <AnimatePresence mode="wait">
         {collapsed && value ? (
           <motion.div
@@ -19,14 +19,14 @@ export default function SelectableChips({ label, options, value, onChange, colum
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg px-3 py-2.5"
+            className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-lg px-3 py-2.5"
           >
-            <Check className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-            <span className="text-sm text-cyan-200 flex-1 truncate">{selectedLabel}</span>
+            <Check className="w-4 h-4 text-primary flex-shrink-0" />
+            <span className="text-sm text-primary flex-1 truncate">{selectedLabel}</span>
             <button
               type="button"
               onClick={() => setCollapsed(false)}
-              className="flex items-center gap-1 text-[10px] font-mono text-slate-500 hover:text-cyan-300 uppercase tracking-wider"
+              className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground/60 hover:text-primary/80 uppercase tracking-wider"
             >
               <Pencil className="w-3 h-3" />
               Trocar
@@ -54,8 +54,8 @@ export default function SelectableChips({ label, options, value, onChange, colum
                     onClick={() => { onChange(val); setCollapsed(true); }}
                     className={`text-left px-3 py-2.5 rounded-lg border text-sm transition-colors ${
                       active
-                        ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-200'
-                        : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/50'
+                        ? 'bg-primary/15 border-primary/40 text-primary'
+                        : 'bg-card border-border text-foreground/80 hover:border-primary/30 hover:bg-accent'
                     }`}
                   >
                     {lbl}
@@ -63,7 +63,7 @@ export default function SelectableChips({ label, options, value, onChange, colum
                 );
               })}
             </div>
-            {note && <p className="text-[10px] text-slate-500 mt-1.5">{note}</p>}
+            {note && <p className="text-[10px] text-muted-foreground/60 mt-1.5">{note}</p>}
           </motion.div>
         )}
       </AnimatePresence>
