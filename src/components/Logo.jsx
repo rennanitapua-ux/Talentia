@@ -19,10 +19,10 @@ export default function Logo({ size = 'md', withText = false, className = '' }) 
   };
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
-      <img src={LOGO_URL} alt="TalentOS" className={`${sizes[size]} rounded-lg object-cover ring-1 ring-white/10`} />
+      <img src={LOGO_URL} alt="TalentIA" className={`${sizes[size]} rounded-lg object-cover ring-1 ring-white/10`} />
       {withText && (
         <span className={`font-bold ${textSizes[size]} text-white tracking-tight leading-none`}>
-          Talent<span className="text-gradient">OS</span>
+          Talent<span className="text-gradient">IA</span>
         </span>
       )}
     </div>

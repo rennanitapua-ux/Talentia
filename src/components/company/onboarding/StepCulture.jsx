@@ -52,7 +52,7 @@ export default function StepCulture({ form, update }) {
     <div className="space-y-6">
       <div>
         <h3 className="font-heading text-lg text-foreground mb-1">Como sua empresa funciona?</h3>
-        <p className="text-sm text-muted-foreground">Isto ajuda o TalentOS a entender o contexto real e criar avaliações alinhadas à sua cultura.</p>
+        <p className="text-sm text-muted-foreground">Isto ajuda o TalentIA a entender o contexto real e criar avaliações alinhadas à sua cultura.</p>
       </div>
 
       <Section title="O que é mais valorizado na empresa? (selecione múltiplos)">

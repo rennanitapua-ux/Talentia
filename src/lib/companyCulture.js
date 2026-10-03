@@ -1,4 +1,4 @@
-// TalentOS — Opções de cultura organizacional para o onboarding da empresa
+// TalentIA — Opções de cultura organizacional para o onboarding da empresa
 // Usadas nos seletores múltiplos do onboarding de cultura.
 
 export const VALUED_OPTIONS = [

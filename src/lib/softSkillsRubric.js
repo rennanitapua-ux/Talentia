@@ -1,4 +1,4 @@
-// TalentOS — Rubrica formal de Soft Skills
+// TalentIA — Rubrica formal de Soft Skills
 // O score nasce da evidência. Sem evidência → "não foi possível avaliar" (confiança baixa).
 // Nunca transformar inferência em fato. Nunca atribuir competência sem evidência.
 

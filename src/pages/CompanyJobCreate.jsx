@@ -70,7 +70,7 @@ export default function CompanyJobCreate() {
       <AppHeader area="company" />
       <main className="relative max-w-3xl mx-auto px-5 sm:px-6 py-10">
         <h1 className="font-display text-3xl font-bold">Nova vaga</h1>
-        <p className="text-muted-foreground mt-1.5 text-sm">Conte o problema real e as situações do dia a dia — a TalentOS cria a simulação.</p>
+        <p className="text-muted-foreground mt-1.5 text-sm">Conte o problema real e as situações do dia a dia — a TalentIA cria a simulação.</p>
 
         <ol className="mt-8 mb-6 grid grid-cols-4 gap-2">
           {STEPS.map((label, i) => (

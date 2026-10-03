@@ -182,7 +182,7 @@ export async function generateFinalAssessment({ candidateName, job, responses, d
 
   const localSoft = localSoftSkillsDetail(responses, targetSkills);
 
-  const prompt = `Você é o TalentOS gerando o RELATÓRIO FINAL de um candidato para recrutadores. Seja rigoroso, específico e baseado em EVIDÊNCIAS de soft skills. Português do Brasil.
+  const prompt = `Você é o TalentIA gerando o RELATÓRIO FINAL de um candidato para recrutadores. Seja rigoroso, específico e baseado em EVIDÊNCIAS de soft skills. Português do Brasil.
 
 CANDIDATO: ${candidateName}
 VAGA: ${job.title} · ${job.sector || ''} · nível de domínio: ${job.seniority_level != null ? `${job.seniority_level}/10` : '—'} · problema real: ${job.company_problems || '—'}

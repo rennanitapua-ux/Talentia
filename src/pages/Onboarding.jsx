@@ -55,7 +55,7 @@ export default function Onboarding() {
   }
 
   return (
-    <AuthLayout title="Complete seu acesso" subtitle="Só mais um passo para entrar na TalentOS">
+    <AuthLayout title="Complete seu acesso" subtitle="Só mais um passo para entrar na TalentIA">
       {error && <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
       <form onSubmit={submit} className="space-y-4">
         <RoleToggle value={role} onChange={setRole} />

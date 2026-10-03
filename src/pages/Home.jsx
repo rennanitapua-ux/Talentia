@@ -42,7 +42,7 @@ export default function Home() {
         </motion.h1>
 
         <motion.p {...fade(0.25)} className="mt-7 max-w-xl text-center text-base md:text-lg text-muted-foreground leading-relaxed">
-          A TalentOS conecta empresas e candidatos com base no que realmente importa: habilidades, potencial e resultado.
+          A TalentIA conecta empresas e candidatos com base no que realmente importa: habilidades, potencial e resultado.
         </motion.p>
 
         <motion.div {...fade(0.4)} className="mt-14 grid sm:grid-cols-2 gap-5 w-full max-w-4xl">

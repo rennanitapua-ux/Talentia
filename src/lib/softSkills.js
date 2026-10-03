@@ -1,4 +1,4 @@
-// TalentOS — Biblioteca estruturada de Soft Skills
+// TalentIA — Biblioteca estruturada de Soft Skills
 // Competências comportamentais avaliadas através de situações profissionais reais.
 // A IA usa esta biblioteca para (1) gerar situações que miram sub-dimensões específicas
 // e (2) analisar respostas extraindo EVIDÊNCIAS observáveis — nunca adjetivos vazios.

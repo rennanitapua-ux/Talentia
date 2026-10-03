@@ -95,7 +95,7 @@ export async function analyzeSituationResponse({ job, situation, option, justifi
     return `- ${skill?.label || ss.skill} → ${dim?.label || ss.dimension} (procurar: ${dim?.look_for || '—'})`;
   }).join('\n');
 
-  const prompt = `Você é o avaliador do TalentOS. Avalie com RIGOR uma resposta de simulação de trabalho, extraindo EVIDÊNCIAS de soft skills. Português do Brasil.
+  const prompt = `Você é o avaliador do TalentIA. Avalie com RIGOR uma resposta de simulação de trabalho, extraindo EVIDÊNCIAS de soft skills. Português do Brasil.
 
 VAGA: ${job?.title || ''} (${job?.sector || ''}). Competências da vaga: ${(job?.competencies || []).join(', ')}
 SITUAÇÃO: ${situation.title}

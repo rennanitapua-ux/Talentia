@@ -36,7 +36,7 @@ export async function generateAssessment(job, count = 12) {
   const targetSkills = inferSoftSkills(job);
   const skillsBlock = softSkillsForPrompt(targetSkills);
 
-  const prompt = `Você é o motor de simulações do TalentOS. Crie uma simulação de trabalho REAL para avaliar SOFT SKILLS de candidatos a esta vaga. Escreva em português do Brasil.
+  const prompt = `Você é o motor de simulações do TalentIA. Crie uma simulação de trabalho REAL para avaliar SOFT SKILLS de candidatos a esta vaga. Escreva em português do Brasil.
 
 VAGA
 - Empresa: ${job.company_name || 'Não informada'}

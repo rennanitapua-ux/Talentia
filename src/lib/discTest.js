@@ -1,4 +1,4 @@
-// DISC Behavioral Test — TalentOS
+// DISC Behavioral Test — TalentIA
 // D = Dominance, I = Influence, S = Steadiness, C = Conscientiousness
 // Internal letters stay D/I/S/C; display letters (A/B/C/D) are shuffled per question
 // with CONTROLLED distribution — no dimension is fixed to a position, no detectable pattern.

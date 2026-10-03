@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * TalentOS — Premium ambient background.
+ * TalentIA — Premium ambient background.
  * Deep navy base with large, subtle light auras (electric blue top-left,
  * blue/purple bottom-right) and sweeping luminous arcs.
  * Fixed, pointer-events-none, sits behind all content.

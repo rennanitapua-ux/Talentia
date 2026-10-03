@@ -1,4 +1,4 @@
-// CPF and CEP utilities for TalentOS
+// CPF and CEP utilities for TalentIA
 
 export function maskCPF(value) {
   const digits = value.replace(/\D/g, '').slice(0, 11);

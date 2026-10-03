@@ -22,7 +22,7 @@ export default function StepValues({ form, update }) {
     <div className="space-y-6">
       <div>
         <h3 className="font-heading text-lg text-foreground mb-1">Propósito, valores e expectativas</h3>
-        <p className="text-sm text-muted-foreground">O TalentOS transforma valor em comportamento esperado — isto alimenta a avaliação de aderência.</p>
+        <p className="text-sm text-muted-foreground">O TalentIA transforma valor em comportamento esperado — isto alimenta a avaliação de aderência.</p>
       </div>
 
       <div className="grid sm:grid-cols-3 gap-4">
