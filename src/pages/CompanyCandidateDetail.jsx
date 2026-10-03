@@ -95,7 +95,10 @@ export default function CompanyCandidateDetail() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-accent transition-colors">
+          <button
+            onClick={() => (sim?.job_id ? navigate(`/company/jobs/${sim.job_id}`) : navigate('/company'))}
+            className="p-2 rounded-lg hover:bg-accent transition-colors"
+          >
             <ArrowLeft className="w-4 h-4 text-muted-foreground" />
           </button>
           <div className="flex-1 min-w-0">
