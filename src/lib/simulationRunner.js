@@ -60,9 +60,19 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
   const finalIntegrity = { ...integrity, ai_suspicions: ai_flags.length };
 
   onStep?.(2);
+  // Carrega o perfil cultural da empresa para análise contextual
+  let companyProfile = null;
+  try {
+    if (job?.created_by_id) {
+      const profiles = await base44.entities.CompanyProfile.filter({ user_id: job.created_by_id }, '-created_date', 5);
+      companyProfile = profiles?.[0] || null;
+    }
+  } catch (e) {
+    console.warn('Failed to load company profile for assessment', e?.message);
+  }
   const assessment = await generateFinalAssessment({
     candidateName: sim.candidate_name, job, responses: analyzed,
-    disc: sim.disc_results, discAnswers: sim.disc_answers, integrity: finalIntegrity,
+    disc: sim.disc_results, discAnswers: sim.disc_answers, integrity: finalIntegrity, companyProfile,
   });
 
   onStep?.(3);

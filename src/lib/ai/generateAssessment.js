@@ -1,5 +1,6 @@
 import { askJSON, shuffle } from '@/lib/ai/llm';
 import { QUALITY_SCORE, LEVELS } from '@/lib/situations';
+import { SENIORITY_LABELS } from '@/lib/jobOptions';
 import { inferSoftSkills, softSkillsForPrompt } from '@/lib/softSkills';
 
 const LETTERS = ['a', 'b', 'c', 'd'];
@@ -41,7 +42,7 @@ VAGA
 - Empresa: ${job.company_name || 'Não informada'}
 - Cargo: ${job.title}
 - Área: ${job.sector || 'Não informada'}
-- Senioridade: ${LEVELS[job.difficulty] || 'Pleno'}
+- Nível de domínio exigido: ${job.seniority_level != null ? `${job.seniority_level}/10 (${SENIORITY_LABELS[job.seniority_level] || 'Pleno'})` : (LEVELS[job.difficulty] || 'Pleno')}
 - Problema real que a pessoa vai resolver: ${job.company_problems || 'Não informado'}
 - Contexto: ${job.company_context || '—'} | Produto/serviço: ${job.product || '—'} | Cliente: ${job.client || '—'}
 - Competências declaradas: ${competencies.join(', ')}

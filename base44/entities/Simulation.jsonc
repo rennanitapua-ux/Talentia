@@ -90,6 +90,14 @@
       "type": "object",
       "description": "Observa\u00e7\u00f5es de comportamento durante a simula\u00e7\u00e3o"
     },
+    "company_analysis": {
+      "type": "object",
+      "description": "An\u00e1lise contextual da empresa: cultura declarada, observada, contexto da opera\u00e7\u00e3o, comportamentos necess\u00e1rios"
+    },
+    "evidence_categories": {
+      "type": "object",
+      "description": "Evid\u00eancias fortes, de suporte, pontos a validar, dados insuficientes, pontos de aten\u00e7\u00e3o"
+    },
     "overall_score": {
       "type": "number"
     },

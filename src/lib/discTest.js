@@ -1,126 +1,127 @@
 // DISC Behavioral Test — TalentOS
 // D = Dominance, I = Influence, S = Steadiness, C = Conscientiousness
-// Internal letters stay D/I/S/C; display letters (A/B/C/D) are shuffled per question.
+// Internal letters stay D/I/S/C; display letters (A/B/C/D) are shuffled per question
+// with CONTROLLED distribution — no dimension is fixed to a position, no detectable pattern.
 
 export const DISC_QUESTIONS = [
   {
     id: 1,
-    question: 'Em uma situação de pressão no trabalho, eu tendo a:',
+    question: 'Uma prioridade muda de última hora e o prazo aperta. Qual reação mais se aproxima da sua?',
     options: [
-      { letter: 'D', text: 'Assumir o controle e decidir rapidamente' },
-      { letter: 'I', text: 'Conversar com colegas para encontrar uma solução juntos' },
-      { letter: 'S', text: 'Manter a calma e seguir um processo estruturado' },
-      { letter: 'C', text: 'Analisar todos os dados antes de decidir' },
+      { letter: 'D', text: 'Reorganizo tudo rapidamente, assumo a frente e sigo executando' },
+      { letter: 'I', text: 'Converso com a equipe para alinhar o novo rumo e manter o clima' },
+      { letter: 'S', text: 'Mantenho a calma, sigo o processo e ajusto o ritmo com cuidado' },
+      { letter: 'C', text: 'Paro para entender o impacto e os riscos antes de mudar o plano' },
     ],
   },
   {
     id: 2,
-    question: 'Quando trabalho em equipe, eu:',
+    question: 'Um colega discorda da sua abordagem em uma reunião. O que você costuma fazer?',
     options: [
-      { letter: 'D', text: 'Lidero e defino a direção do grupo' },
-      { letter: 'I', text: 'Motivo o grupo e mantenho o clima positivo' },
-      { letter: 'S', text: 'Apoio os colegas e garanto que todos se sintam incluídos' },
-      { letter: 'C', text: 'Garanto que os detalhes e a qualidade estejam corretos' },
+      { letter: 'D', text: 'Defendo meu ponto com firmeza e sigo adiante se confio na ideia' },
+      { letter: 'I', text: 'Busco entender o lado dele e encontrar um meio-termo bom para todos' },
+      { letter: 'S', text: 'Oço com atenção e procuro manter a harmonia do grupo' },
+      { letter: 'C', text: 'Peço dados e exemplos concretos para decidir quem tem razão' },
     ],
   },
   {
     id: 3,
-    question: 'Diante de uma mudança inesperada, eu:',
+    question: 'Você recebe uma tarefa nova e complexa sem instruções detalhadas. Como prefere agir?',
     options: [
-      { letter: 'D', text: 'Vejo como uma oportunidade de agir rapidamente' },
-      { letter: 'I', text: 'Fico animado com a novidade e compartilho com todos' },
-      { letter: 'S', text: 'Prefiro a estabilidade, mas me adapto gradualmente' },
-      { letter: 'C', text: 'Analiso os impactos e riscos antes de aceitar' },
+      { letter: 'D', text: 'Pego a frente, defino o caminho e começo a executar logo' },
+      { letter: 'I', text: 'Reúno pessoas que possam ajudar e construo a solução junto' },
+      { letter: 'S', text: 'Peço orientação e prefiro um ambiente estável para começar' },
+      { letter: 'C', text: 'Mapeio os requisitos e padrões antes de colocar a mão na massa' },
     ],
   },
   {
     id: 4,
-    question: 'Em conflitos com colegas, eu:',
+    question: 'Um cliente está visivelmente irritado por um erro da equipe. Qual sua primeira reação?',
     options: [
-      { letter: 'D', text: 'Enfrento diretamente e busco resolver na hora' },
-      { letter: 'I', text: 'Uso humor e diplomacia para suavizar a situação' },
-      { letter: 'S', text: 'Busco harmonia e evito o confronto direto' },
-      { letter: 'C', text: 'Baseio minha posição em fatos e dados concretos' },
+      { letter: 'D', text: 'Assumo o controle da situação e decido o que fazer na hora' },
+      { letter: 'I', text: 'Uso empatia e conversa para acalmar e reconstruir o clima' },
+      { letter: 'S', text: 'Ouço com paciência e trabalho para estabilizar a situação' },
+      { letter: 'C', text: 'Investigo o que causou o erro e apresento os fatos com clareza' },
     ],
   },
   {
     id: 5,
-    question: 'Quando preciso comunicar uma ideia importante, eu:',
+    question: 'Preciso comunicar uma decisão impopular para a equipe. Como faço?',
     options: [
-      { letter: 'D', text: 'Vou direto ao ponto, sem rodeios' },
-      { letter: 'I', text: 'Faço de forma entusiasmada e envolvente' },
-      { letter: 'S', text: 'Comunico de forma calma, paciente e clara' },
-      { letter: 'C', text: 'Apresento dados, evidências e detalhes técnicos' },
+      { letter: 'D', text: 'Vou direto ao ponto, com clareza e sem rodeios' },
+      { letter: 'I', text: 'Busco engajar e mostrar o lado positivo para amenizar' },
+      { letter: 'S', text: 'Comunico com calma e me disponho a ouvir as preocupações' },
+      { letter: 'C', text: 'Apresento os critérios e dados que sustentam a decisão' },
     ],
   },
   {
     id: 6,
-    question: 'Meu maior medo no ambiente profissional é:',
+    question: 'Quando tudo está estável e sem urgência, como você se sente?',
     options: [
-      { letter: 'D', text: 'Perder o controle ou ser dominado por outros' },
-      { letter: 'I', text: 'Ser rejeitado ou não ser ouvido pelo grupo' },
-      { letter: 'S', text: 'Mudanças bruscas que quebrem a estabilidade' },
-      { letter: 'C', text: 'Cometer erros e ser criticado pela qualidade' },
+      { letter: 'D', text: 'Inquieto — procuro um novo desafio ou objetivo para atacar' },
+      { letter: 'I', text: 'Aproveito para conectar pessoas e fortalecer relacionamentos' },
+      { letter: 'S', text: 'Confortável — valorizo a previsibilidade e a rotina' },
+      { letter: 'C', text: 'Aproveito para organizar processos e revisar detalhes' },
     ],
   },
   {
     id: 7,
-    question: 'Quando tomo decisões importantes, eu:',
+    question: 'Você tem dados incompletos e precisa decidir agora. O que faz?',
     options: [
-      { letter: 'D', text: 'Decido rápido e com confiança, depois ajusto se preciso' },
-      { letter: 'I', text: 'Decido com base em intuição e no impacto nas pessoas' },
-      { letter: 'S', text: 'Decido com cuidado, consultando pessoas de confiança' },
-      { letter: 'C', text: 'Decido com base em análise detalhada e dados' },
+      { letter: 'D', text: 'Decido com confiança e ajusto depois se necessário' },
+      { letter: 'I', text: 'Consulto pessoas de confiança e decido com o impacto em mente' },
+      { letter: 'S', text: 'Sigo com cuidado, ouvindo quem já passou por algo parecido' },
+      { letter: 'C', text: 'Reúno o máximo de informação possível antes de decidir' },
     ],
   },
   {
     id: 8,
-    question: 'Em reuniões de trabalho, eu costumo:',
+    question: 'Em um projeto com várias áreas envolvidas, qual papel você costuma assumir?',
     options: [
-      { letter: 'D', text: 'Liderar a discussão e pautar os próximos passos' },
-      { letter: 'I', text: 'Participar ativamente e animar o grupo' },
-      { letter: 'S', text: 'Ouvir mais e falar quando necessário' },
-      { letter: 'C', text: 'Tomar notas e questionar detalhes importantes' },
+      { letter: 'D', text: 'Lidero e defino a direção e os próximos passos' },
+      { letter: 'I', text: 'Conecto as áreas e mantenho o grupo engajado' },
+      { letter: 'S', text: 'Apoio a execução e garanto que ninguém fique para trás' },
+      { letter: 'C', text: 'Cuido dos detalhes, prazos e padrões de qualidade' },
     ],
   },
   {
     id: 9,
-    question: 'Quando recebo uma tarefa nova e complexa, eu:',
+    question: 'Você cometeu um erro que impactou o time. Como lida com isso?',
     options: [
-      { letter: 'D', text: 'Quero autonomia e foco em resultados rápidos' },
-      { letter: 'I', text: 'Quero trabalhar com pessoas e ter liberdade criativa' },
-      { letter: 'S', text: 'Quero instruções claras e um ambiente estável' },
-      { letter: 'C', text: 'Quero entender os requisitos e padrões de qualidade' },
+      { letter: 'D', text: 'Assumo, corrijo rápido e sigo em frente sem me deter' },
+      { letter: 'I', text: 'Falo abertamente com a equipe e busco resolver juntos' },
+      { letter: 'S', text: 'Reconheço com calma e trabalho para reconstruir a confiança' },
+      { letter: 'C', text: 'Analiso a causa raiz e crio um plano para não repetir' },
     ],
   },
   {
     id: 10,
-    question: 'Meu estilo de liderança natural é:',
+    question: 'Quando precisa convencer alguém de uma ideia, sua estratégia é:',
     options: [
-      { letter: 'D', text: 'Direto, exigente e orientado a resultados' },
-      { letter: 'I', text: 'Inspirador, motivador e carismático' },
-      { letter: 'S', text: 'Apoiador, paciente e democrático' },
-      { letter: 'C', text: 'Preciso, organizado e orientado a processos' },
+      { letter: 'D', text: 'Ir direto ao ponto e mostrar o resultado que vai gerar' },
+      { letter: 'I', text: 'Usar entusiasmo e histórias para engajar a pessoa' },
+      { letter: 'S', text: 'Conversar com paciência e construir confiança aos poucos' },
+      { letter: 'C', text: 'Apresentar dados, evidências e uma lógica clara' },
     ],
   },
   {
     id: 11,
-    question: 'Em situações sociais do trabalho, eu:',
+    question: 'Surge um conflito entre duas áreas da empresa. Qual sua tendência?',
     options: [
-      { letter: 'D', text: 'Gosto de estar no centro da ação e das decisões' },
-      { letter: 'I', text: 'Converso com todos e faço amigos facilmente' },
-      { letter: 'S', text: 'Prefiro grupos menores e pessoas já conhecidas' },
-      { letter: 'C', text: 'Observo e analiso antes de participar' },
+      { letter: 'D', text: 'Tomo a frente e decido para desbloquear a situação' },
+      { letter: 'I', text: 'Faço a ponte entre as partes e busco um acordo bom para todos' },
+      { letter: 'S', text: 'Procuro apaziguar e manter a paz entre as áreas' },
+      { letter: 'C', text: 'Reúno os fatos de cada lado para encontrar a solução correta' },
     ],
   },
   {
     id: 12,
-    question: 'O que mais valorizo em um colega de trabalho:',
+    question: 'O que mais te motiva no dia a dia de trabalho?',
     options: [
-      { letter: 'D', text: 'Competência, autonomia e foco em resultados' },
-      { letter: 'I', text: 'Entusiasmo, espírito de equipe e energia positiva' },
-      { letter: 'S', text: 'Lealdade, estabilidade e apoio mútuo' },
-      { letter: 'C', text: 'Precisão, qualidade e organização' },
+      { letter: 'D', text: 'Resultados claros, autonomia e desafios para superar' },
+      { letter: 'I', text: 'Reconhecimento, pessoas e um ambiente animado' },
+      { letter: 'S', text: 'Estabilidade, cooperação e um time que confia um no outro' },
+      { letter: 'C', text: 'Qualidade, aprendizado e dominar o que faz com precisão' },
     ],
   },
 ];
@@ -172,7 +173,7 @@ export const DISC_PROFILES = {
   },
 };
 
-// Shuffle array (Fisher-Yates) — returns a new array
+// Fisher-Yates shuffle — returns a new array
 function shuffle(array) {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -182,19 +183,51 @@ function shuffle(array) {
   return arr;
 }
 
-// Build shuffled questions: each question gets a random display order for its options.
-// Each option keeps its internal `letter` (D/I/S/C) but gets a display label (A/B/C/D).
-// This prevents the user from associating a letter with a DISC profile.
+// Valida a distribuição das dimensões DISC pelas posições de exibição (A/B/C/D).
+// Regras: nenhuma dimensão pode aparecer numa mesma posição mais que o tolerável,
+// e não pode haver duas questões consecutivas com a mesma dimensão na mesma posição.
+function validateDistribution(questions) {
+  const positions = ['A', 'B', 'C', 'D'];
+  const maxPerPosition = Math.ceil(questions.length / 4) + 1;
+  const counts = { A: {}, B: {}, C: {}, D: {} };
+  let lastPosA = null;
+
+  for (const q of questions) {
+    q.options.forEach((opt, i) => {
+      const pos = positions[i];
+      counts[pos][opt.letter] = (counts[pos][opt.letter] || 0) + 1;
+    });
+    const posA = q.options[0]?.letter;
+    if (lastPosA && posA === lastPosA) return false; // padrão consecutivo
+    lastPosA = posA;
+  }
+  for (const pos of positions) {
+    for (const dim of ['D', 'I', 'S', 'C']) {
+      if (counts[pos][dim] > maxPerPosition) return false;
+    }
+  }
+  return true;
+}
+
+// Randomização controlada: embaralha as alternativas de cada questão e valida a distribuição.
+// Regenera até encontrar uma configuração sem padrão perceptível.
 export function getShuffledQuestions() {
   const displayLabels = ['A', 'B', 'C', 'D'];
-  return DISC_QUESTIONS.map((q) => {
-    const shuffledOptions = shuffle(q.options);
-    const options = shuffledOptions.map((opt, i) => ({
-      ...opt,
-      displayLabel: displayLabels[i],
-    }));
-    return { ...q, options };
-  });
+  let best = null;
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const questions = DISC_QUESTIONS.map((q) => {
+      const shuffledOptions = shuffle(q.options);
+      const options = shuffledOptions.map((opt, i) => ({ ...opt, displayLabel: displayLabels[i] }));
+      return { ...q, options };
+    });
+    if (validateDistribution(questions)) return questions;
+    if (!best) best = questions;
+  }
+  // Fallback: última tentativa válida o suficiente (posição embaralhada, mesmo sem distribuição perfeita)
+  return best || DISC_QUESTIONS.map((q) => ({
+    ...q,
+    options: shuffle(q.options).map((opt, i) => ({ ...opt, displayLabel: displayLabels[i] })),
+  }));
 }
 
 export function calculateDiscResults(answers) {

@@ -130,10 +130,32 @@ function discText(disc, answers) {
   return `D=${disc.scores.D}% I=${disc.scores.I}% S=${disc.scores.S}% C=${disc.scores.C}% · perfil ${disc.profile_code}\n${lines.join('\n')}`;
 }
 
-export async function generateFinalAssessment({ candidateName, job, responses, disc, discAnswers, integrity }) {
+export async function generateFinalAssessment({ candidateName, job, responses, disc, discAnswers, integrity, companyProfile }) {
   const competencies = job.competencies?.length ? job.competencies : ['Resolução de problemas'];
   const targetSkills = inferSoftSkills(job);
   const skillsBlock = targetSkills.map((s) => `${s.label} (${s.key}): ${s.dimensions.map((d) => d.key).join(', ')}`).join('; ');
+
+  // Perfil cultural da empresa para análise contextual profunda
+  const cp = companyProfile || {};
+  const companyCultureBlock = [
+    `Empresa: ${cp.company_name || job.company_name || '—'}`,
+    `Segmento: ${cp.sector || job.sector || '—'} · Tamanho: ${cp.employee_count || '—'}`,
+    `Missão: ${cp.mission || '—'}`,
+    `Visão: ${cp.vision || '—'}`,
+    `Valores declarados: ${(cp.values || []).map((v) => `${v.name}: ${v.expected_behavior || v.description || ''}`).join('; ') || '—'}`,
+    `O que valoriza: ${(cp.valued || []).join(', ') || '—'}`,
+    `Tomada de decisão: ${(cp.decision_making || []).join(', ') || '—'}`,
+    `Autonomia: ${cp.autonomy_level || '—'} — ${cp.autonomy_description || ''}`,
+    `Estilo de gestão: ${(cp.management_style || []).join(', ') || '—'}`,
+    `Tolerância a erros: ${(cp.error_handling || []).join(', ') || '—'} — ${cp.error_description || ''}`,
+    `Colaboração: ${(cp.collaboration || []).join(', ') || '—'}`,
+    `Comunicação: ${(cp.communication || []).join(', ') || '—'}`,
+    `Ritmo: ${cp.work_rhythm || '—'} — ${cp.rhythm_description || ''}`,
+    `Ambiente: ${(cp.work_environment || []).join(', ') || '—'}`,
+    `O que faz dar certo: ${cp.what_succeeds || '—'}`,
+    `O que gera dificuldades: ${cp.what_doesnt_work || '—'}`,
+    `Propósito: ${cp.purpose || '—'}`,
+  ].join('\n');
 
   const items = responses.map((r, i) => ({
     n: i + 1,
@@ -163,15 +185,18 @@ export async function generateFinalAssessment({ candidateName, job, responses, d
   const prompt = `Você é o TalentOS gerando o RELATÓRIO FINAL de um candidato para recrutadores. Seja rigoroso, específico e baseado em EVIDÊNCIAS de soft skills. Português do Brasil.
 
 CANDIDATO: ${candidateName}
-VAGA: ${job.title} · ${job.sector || ''} · problema real: ${job.company_problems || '—'}
+VAGA: ${job.title} · ${job.sector || ''} · nível de domínio: ${job.seniority_level != null ? `${job.seniority_level}/10` : '—'} · problema real: ${job.company_problems || '—'}
 COMPETÊNCIAS: ${competencies.join(', ')}
 SOFT SKILLS AVALIADAS: ${skillsBlock}
 INTEGRIDADE: saídas de aba ${integrity?.tab_switches || 0}, perdas de foco ${integrity?.focus_losses || 0}, tentativas de colar ${integrity?.paste_attempts || 0}, suspeitas de IA ${integrity?.ai_suspicions || 0}
 
-DISC (complementar, NUNCA decide sozinho, NUNCA diagnóstico):
+PERFIL CULTURAL DA EMPRESA (use para análise contextual — NUNCA invente, separe declarado de observado):
+${companyCultureBlock}
+
+DISC (complementar, NUNCA decide sozinho, NUNCA diagnóstico, NUNCA preconceito — nenhum fator é universalmente melhor):
 ${discText(disc, discAnswers)}
 
-RESPOSTAS (escolha + justificativa + nota individual + soft skills medidas com observado/inferido):
+RESPOSTAS (escolha + comentário opcional + nota individual + soft skills medidas com observado/inferido):
 ${JSON.stringify(items)}
 
 REGRAS (EVIDÊNCIA — não adjetivos):
@@ -187,12 +212,28 @@ REGRAS (EVIDÊNCIA — não adjetivos):
 - interview_questions: gere perguntas personalizadas a partir das LACUNAS de evidência — competências exigidas pela vaga com pouca ou nenhuma evidência. Cada pergunta deve referenciar uma evidência real (ou a ausência dela).
 - job_compatibility: para cada competência da vaga, classifique: demonstrated / partial / not_evidenced / needs_investigation, sempre com evidence citando situações.
 
+ANÁLISE CONTEXTUAL DA EMPRESA (company_analysis):
+- Separe CLARAMENTE: cultura_declarada (o que a empresa afirma), cultura_observada (padrões inferidos das informações — marque como inferência), contexto_operacao (condições reais do trabalho), comportamentos_necessarios (para a função naquele contexto), evidencias (informações concretas usadas).
+- Quando não houver informação suficiente, use "dados insuficientes" ou "necessita validação". NUNCA invente características.
+- A importância de cada competência depende do CONTEXTO da vaga e da empresa, não de valor genérico.
+
+CATEGORIZAÇÃO DE EVIDÊNCIAS (evidence_categories):
+- fortes: evidências concretas e consistentes — cada item com {item, evidence, source, confidence}.
+- suporte: sinais positivos, mas com menor profundidade de evidência.
+- validar: dúvidas que precisam ser investigadas (possíveis inconsistências — NÃO acuse mentira, sugira pergunta de entrevista).
+- insuficientes: não há informação suficiente para concluir — NUNCA interprete ausência como negativa.
+- atencao: aspectos que merecem investigação, sem transformar em deficiência.
+- Para cada item: o que foi identificado, qual evidência sustenta, de onde veio, nível de confiança.
+- Diferencie OPINIÃO (autodeclaração) de EVIDÊNCIA (comportamento observável). Dê mais valor à evidência concreta.
+- Texto longo ≠ evidência forte. Considere especificidade, concretude, contexto, coerência.
+- O comentário opcional do candidato é EVIDÊNCIA ADICIONAL — não substitui a alternativa marcada, não penalize ausência de comentário.
+
 Gere também:
 - behavioral_profile: como a pessoa AGE, com base nas escolhas e justificativas. Para cada eixo, position 0-100 (0 = traço da esquerda, 100 = traço da direita) e evidência citando situações. Eixos: ${BEHAVIOR_AXES.map((a) => `${a.key} (${a.left} ↔ ${a.right})`).join('; ')}.
 - disc_interpretation: leitura detalhada do DISC combinada com o comportamento observado. NUNCA usar DISC como diagnóstico.
 
 Responda SOMENTE com JSON válido:
-{"profile_summary":"","summary":"","soft_skills_narrative":"","soft_skills_detail":{"comunicacao":{"score":0,"confidence":"high|medium|low","dimensions":{"clareza":{"score":0,"observed":"","inferred":"","evidence":"","growth":""}}}},"skill_scores":{"competência":{"score":0,"confidence":"high|medium|low"}},"skill_dna":{"strengths":[{"competency":"","score":0,"evidence":""}],"growth_areas":[{"competency":"","score":0,"evidence":""}]},"hard_skills":[{"name":"","evidence":""}],"soft_skills":[{"name":"","score":0,"evidence":""}],"behavioral_profile":{"summary":"","decision_style":"","under_pressure":"","axes":{"impulsividade":{"position":50,"evidence":""}},"dominant_traits":[""],"risks":[""]},"disc_interpretation":{"headline":"","description":"","under_pressure":"","communication":"","motivators":[""],"fears":[""],"how_to_manage":[""],"fit_with_role":"","interview_tips":[""]},"personality_analysis":"","work_style":"","strengths_detail":"","weaknesses_detail":"","job_compatibility":{"demonstrated":[{"competency":"","evidence":""}],"partial":[{"competency":"","evidence":""}],"not_evidenced":[{"competency":"","note":""}],"needs_investigation":[{"competency":"","reason":""}]},"consistency_analysis":"","interview_questions":[{"question":"","rationale":"","competency":""}],"overall_confidence":"high|medium|low","assessment_confidence":{"level":"high|medium|low","reasoning":"","evidence_count":0}}`;
+{"profile_summary":"","summary":"","soft_skills_narrative":"","soft_skills_detail":{"comunicacao":{"score":0,"confidence":"high|medium|low","dimensions":{"clareza":{"score":0,"observed":"","inferred":"","evidence":"","growth":""}}}},"skill_scores":{"competência":{"score":0,"confidence":"high|medium|low"}},"skill_dna":{"strengths":[{"competency":"","score":0,"evidence":""}],"growth_areas":[{"competency":"","score":0,"evidence":""}]},"hard_skills":[{"name":"","evidence":""}],"soft_skills":[{"name":"","score":0,"evidence":""}],"behavioral_profile":{"summary":"","decision_style":"","under_pressure":"","axes":{"impulsividade":{"position":50,"evidence":""}},"dominant_traits":[""],"risks":[""]},"disc_interpretation":{"headline":"","description":"","under_pressure":"","communication":"","motivators":[""],"fears":[""],"how_to_manage":[""],"fit_with_role":"","interview_tips":[""]},"personality_analysis":"","work_style":"","strengths_detail":"","weaknesses_detail":"","job_compatibility":{"demonstrated":[{"competency":"","evidence":""}],"partial":[{"competency":"","evidence":""}],"not_evidenced":[{"competency":"","note":""}],"needs_investigation":[{"competency":"","reason":""}]},"consistency_analysis":"","interview_questions":[{"question":"","rationale":"","competency":""}],"company_analysis":{"cultura_declarada":[""],"cultura_observada":[""],"contexto_operacao":[""],"comportamentos_necessarios":[""],"evidencias":[""]},"evidence_categories":{"fortes":[{"item":"","evidence":"","source":"","confidence":"high|medium|low"}],"suporte":[{"item":"","evidence":"","source":"","confidence":"high|medium|low"}],"validar":[{"item":"","reason":"","interview_question":""}],"insuficientes":[{"item":"","note":""}],"atencao":[{"item":"","note":"","interview_question":""}]},"overall_confidence":"high|medium|low","assessment_confidence":{"level":"high|medium|low","reasoning":"","evidence_count":0}}`;
 
   const ai = (await askJSON(prompt, { models: ['claude-sonnet-5', 'gemini_3_flash'], validate: (p) => p.summary || p.skill_scores })) || {};
 
@@ -337,6 +378,8 @@ Responda SOMENTE com JSON válido:
     weaknesses_detail: ai.weaknesses_detail || '',
     job_compatibility: ai.job_compatibility || {},
     consistency_analysis: ai.consistency_analysis || '',
+    company_analysis: ai.company_analysis || null,
+    evidence_categories: ai.evidence_categories || null,
     interview_questions,
     overall_score,
     overall_confidence: ai.overall_confidence || 'medium',

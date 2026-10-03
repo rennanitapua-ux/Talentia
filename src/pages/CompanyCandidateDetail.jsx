@@ -12,6 +12,7 @@ import BehaviorProfile from '@/components/company/BehaviorProfile';
 import SoftSkillsDetail from '@/components/company/SoftSkillsDetail';
 import CompetencyLevels from '@/components/company/CompetencyLevels';
 import BehaviorObservations from '@/components/company/BehaviorObservations';
+import EvidenceCategories from '@/components/company/EvidenceCategories';
 import SituationReplay from '@/components/company/SituationReplay';
 import { getRecommendation } from '@/lib/skillScoring';
 import { getSituations } from '@/lib/situations';
@@ -192,6 +193,9 @@ export default function CompanyCandidateDetail() {
 
         {/* Required vs demonstrated levels */}
         <CompetencyLevels sim={sim} />
+
+        {/* Categorized evidence + company analysis */}
+        <EvidenceCategories sim={sim} />
 
         {/* Behavioral observations during assessment */}
         <BehaviorObservations sim={sim} />

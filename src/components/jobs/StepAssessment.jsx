@@ -1,12 +1,14 @@
-import React from 'react';
-import { Loader2, RefreshCw, Sparkles, AlertTriangle, Send } from 'lucide-react';
+import React, { useState } from 'react';
+import { Loader2, RefreshCw, Sparkles, AlertTriangle, Send, Plus } from 'lucide-react';
 import SituationPreview from '@/components/jobs/SituationPreview';
+import CustomQuestionForm from '@/components/jobs/CustomQuestionForm';
 import { SITUATION_COUNTS } from '@/lib/jobOptions';
 import { estimateMinutes } from '@/lib/situations';
 
-export default function StepAssessment({ state, setCount, onGenerate, onFallback, onRemove, onPublish, publishing, competencyCount }) {
+export default function StepAssessment({ state, setCount, onGenerate, onFallback, onRemove, onAddCustom, onPublish, publishing, competencyCount }) {
   const { status, count, data } = state;
   const situations = data?.situations || [];
+  const [showCustom, setShowCustom] = useState(false);
 
   if (status === 'generating') {
     return (
@@ -31,6 +33,16 @@ export default function StepAssessment({ state, setCount, onGenerate, onFallback
         <div className="space-y-3">
           {situations.map((s, i) => <SituationPreview key={s.id} situation={s} index={i} onRemove={situations.length > 4 ? () => onRemove(i) : null} />)}
         </div>
+        {showCustom ? (
+          <CustomQuestionForm
+            onAdd={(s) => { onAddCustom(s); setShowCustom(false); }}
+            onCancel={() => setShowCustom(false)}
+          />
+        ) : (
+          <button onClick={() => setShowCustom(true)} className="w-full h-11 rounded-xl border-2 border-dashed border-border text-sm text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center gap-2 transition-colors">
+            <Plus className="w-4 h-4" /> Adicionar minha própria pergunta
+          </button>
+        )}
         <button onClick={onPublish} disabled={publishing || situations.length < 4}
           className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-50">
           {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Publicar vaga
@@ -61,7 +73,7 @@ export default function StepAssessment({ state, setCount, onGenerate, onFallback
             </button>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground mt-2">Cada situação tem múltipla escolha (com alternativas boas e ruins) + justificativa escrita. ~{estimateMinutes(count)} min.</p>
+        <p className="text-xs text-muted-foreground mt-2">Cada situação tem múltipla escolha (4 alternativas) + comentário opcional. Você também pode adicionar suas próprias perguntas depois. ~{estimateMinutes(count)} min.</p>
       </div>
       <button onClick={onGenerate} className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90">
         <Sparkles className="w-4 h-4" /> {status === 'error' ? 'Tentar novamente' : 'Gerar simulação com IA'}

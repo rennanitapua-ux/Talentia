@@ -11,7 +11,9 @@ export default function SituationCard({ situation, index, total, onSubmit, onPas
   const options = situation.options || [];
   const hasOptions = options.length > 0;
   const minChars = hasOptions ? 20 : 40;
-  const ready = (!hasOptions || choice) && text.trim().length >= minChars;
+  // Para questões de marcar: o comentário é OPCIONAL — avança só com a escolha.
+  // Para questões abertas (sem opções): o texto continua obrigatório.
+  const ready = (!hasOptions || choice) && (hasOptions ? true : text.trim().length >= minChars);
 
   const handleChange = (value) => {
     const delta = value.length - text.length;
@@ -59,12 +61,13 @@ export default function SituationCard({ situation, index, total, onSubmit, onPas
       {hasOptions && <OptionList options={options} value={choice} onChange={setChoice} />}
 
       <JustificationBox
-        label={hasOptions ? 'Justifique sua escolha' : 'Sua resposta'}
-        prompt={situation.justification_prompt || 'Explique seu raciocínio em poucas frases.'}
+        label={hasOptions ? 'Quer explicar melhor sua resposta?' : 'Sua resposta'}
+        prompt={hasOptions ? 'Se quiser, conte um pouco mais sobre sua escolha (opcional).' : (situation.justification_prompt || 'Explique seu raciocínio em poucas frases.')}
         value={text}
         onChange={handleChange}
         minChars={minChars}
         onBlocked={handleBlocked}
+        optional={hasOptions}
       />
 
       <button

@@ -5,6 +5,10 @@ export const DIFFICULTY_OPTIONS = [
   { value: 'lead', label: 'Liderança' },
 ];
 
+export const SENIORITY_LABELS = [
+  'Estágio', 'Estágio', 'Júnior', 'Júnior+', 'Operacional', 'Pleno', 'Pleno+', 'Sênior', 'Especialista', 'Referência', 'Topo do mercado',
+];
+
 export const COMPETENCY_LIBRARY = [
   'Comunicação', 'Resolução de problemas', 'Tomada de decisão', 'Priorização', 'Organização',
   'Negociação', 'Atendimento ao cliente', 'Liderança', 'Trabalho em equipe', 'Adaptabilidade',

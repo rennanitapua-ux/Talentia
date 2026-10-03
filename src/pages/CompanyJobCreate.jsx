@@ -16,7 +16,7 @@ export default function CompanyJobCreate() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
-    company_name: '', title: '', sector: '', difficulty: 'mid', openings: 1,
+    company_name: '', title: '', sector: '', difficulty: 'mid', seniority_level: 6, openings: 1,
     company_problems: '', situations: [], company_context: '', product: '', client: '', competencies: [],
   });
   const [assessment, setAssessment] = useState({ status: 'idle', count: 12, data: null });
@@ -42,6 +42,9 @@ export default function CompanyJobCreate() {
 
   const removeSituation = (idx) =>
     setAssessment((a) => ({ ...a, data: { ...a.data, situations: a.data.situations.filter((_, i) => i !== idx) } }));
+
+  const addCustomSituation = (s) =>
+    setAssessment((a) => ({ ...a, data: { ...a.data, situations: [...(a.data?.situations || []), s] } }));
 
   const publish = async () => {
     setPublishing(true);
@@ -92,6 +95,7 @@ export default function CompanyJobCreate() {
               onGenerate={() => generate(false)}
               onFallback={() => generate(true)}
               onRemove={removeSituation}
+              onAddCustom={addCustomSituation}
               onPublish={publish}
               publishing={publishing}
               competencyCount={form.competencies.length}

@@ -99,7 +99,15 @@
         "senior",
         "lead"
       ],
-      "default": "mid"
+      "default": "mid",
+      "description": "Legado \u2014 mantido para compatibilidade"
+    },
+    "seniority_level": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "default": 6,
+      "description": "N\u00edvel de dom\u00ednio exigido (0-10) \u2014 substitui a senioridade fixa"
     }
   },
   "required": [
