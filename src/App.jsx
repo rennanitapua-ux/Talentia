@@ -22,6 +22,7 @@ import CandidateResults from '@/pages/CandidateResults';
 import CandidatePassport from '@/pages/CandidatePassport';
 import CandidateProfile from '@/pages/CandidateProfile';
 import CompanyCompare from '@/pages/CompanyCompare';
+import CompanyIntelligence from '@/pages/CompanyIntelligence';
 import CompanyOnboarding from '@/pages/CompanyOnboarding';
 import CompanyProfilePage from '@/pages/CompanyProfilePage';
 import Onboarding from '@/pages/Onboarding';
@@ -68,6 +69,7 @@ const AuthenticatedApp = () => {
         <Route path="/company/jobs/:id" element={<CompanyJobDetail />} />
         <Route path="/company/candidates/:id" element={<CompanyCandidateDetail />} />
         <Route path="/company/jobs/:id/compare" element={<CompanyCompare />} />
+        <Route path="/company/intelligence" element={<CompanyIntelligence />} />
         <Route path="/candidate" element={<CandidatePassport />} />
         <Route path="/candidate/profile" element={<CandidateProfile />} />
         <Route path="/candidate/simulate/:id" element={<CandidateSimulation />} />
