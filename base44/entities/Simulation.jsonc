@@ -82,6 +82,10 @@
     "skill_graph": {
       "type": "object"
     },
+    "demonstrated_levels": {
+      "type": "object",
+      "description": "N\u00edvel 0-10 demonstrado vs. exigido por compet\u00eancia"
+    },
     "overall_score": {
       "type": "number"
     },

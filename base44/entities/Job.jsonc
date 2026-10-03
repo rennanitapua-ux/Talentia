@@ -33,6 +33,24 @@
         "type": "string"
       }
     },
+    "competency_requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "required_level": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10,
+            "default": 7
+          }
+        }
+      },
+      "description": "N\u00edvel exigido (0-10) por compet\u00eancia para a vaga"
+    },
     "situations": {
       "type": "array",
       "items": {

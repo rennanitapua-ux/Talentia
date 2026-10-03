@@ -6,8 +6,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SECTORS } from '@/lib/companyCulture';
 
+const maskDoc = (raw, type) => {
+  const d = raw.replace(/\D/g, '');
+  if (type === 'cpf') return d.slice(0, 11).replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_, a, b, c, e) => `${a}.${b}.${c}${e ? '-' + e : ''}`);
+  return d.slice(0, 14).replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, (_, a, b, c, d2, e) => `${a}.${b}.${c}/${d2}${e ? '-' + e : ''}`);
+};
+
 export default function StepBasics({ form, update }) {
   const [cepLoading, setCepLoading] = useState(false);
+  const docType = form.document_type || 'cnpj';
 
   const lookupCep = async (cepRaw) => {
     const cep = cepRaw.replace(/\D/g, '');
@@ -49,8 +56,15 @@ export default function StepBasics({ form, update }) {
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="cnpj">CNPJ</Label>
-          <Input id="cnpj" value={form.cnpj || ''} onChange={(e) => update('cnpj', e.target.value)} placeholder="00.000.000/0000-00" className="h-11 bg-background/60" />
+          <Label>Documento (CPF ou CNPJ)</Label>
+          <div className="flex gap-2">
+            <div className="flex rounded-lg border border-border overflow-hidden flex-shrink-0">
+              <button type="button" onClick={() => { update('document_type', 'cpf'); update('cnpj', ''); }} className={`px-3 h-11 text-sm font-medium transition-colors ${docType === 'cpf' ? 'bg-primary text-primary-foreground' : 'bg-background/60 text-muted-foreground'}`}>CPF</button>
+              <button type="button" onClick={() => { update('document_type', 'cnpj'); update('cnpj', ''); }} className={`px-3 h-11 text-sm font-medium transition-colors ${docType === 'cnpj' ? 'bg-primary text-primary-foreground' : 'bg-background/60 text-muted-foreground'}`}>CNPJ</button>
+            </div>
+            <Input value={form.cnpj || ''} onChange={(e) => update('cnpj', maskDoc(e.target.value, docType))} placeholder={docType === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'} className="h-11 bg-background/60 flex-1" />
+          </div>
+          <p className="text-xs text-muted-foreground/60">Empresa nova sem CNPJ? Use o CPF do responsável.</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="sector">Setor</Label>
@@ -88,7 +102,7 @@ export default function StepBasics({ form, update }) {
         <h4 className="font-medium text-sm text-foreground mb-3 flex items-center gap-2"><Globe className="w-4 h-4 text-primary" /> Presença digital</h4>
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2"><Label htmlFor="website">Site</Label><Input id="website" value={form.website || ''} onChange={(e) => update('website', e.target.value)} placeholder="www.empresa.com.br" className="h-11 bg-background/60" /></div>
-          <div className="space-y-2"><Label htmlFor="linkedin">LinkedIn</Label><Input id="linkedin" value={form.linkedin || ''} onChange={(e) => update('linkedin', e.target.value)} placeholder="linkedin.com/company/..." className="h-11 bg-background/60" /></div>
+          <div className="space-y-2"><Label htmlFor="instagram">Instagram</Label><Input id="instagram" value={form.instagram || ''} onChange={(e) => update('instagram', e.target.value)} placeholder="@empresa" className="h-11 bg-background/60" /></div>
         </div>
         <div className="grid sm:grid-cols-2 gap-4 mt-4">
           <div className="space-y-2">

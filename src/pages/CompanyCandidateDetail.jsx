@@ -10,6 +10,7 @@ import DiscSummaryCard from '@/components/company/DiscSummaryCard';
 import IntegrityCard from '@/components/company/IntegrityCard';
 import BehaviorProfile from '@/components/company/BehaviorProfile';
 import SoftSkillsDetail from '@/components/company/SoftSkillsDetail';
+import CompetencyLevels from '@/components/company/CompetencyLevels';
 import SituationReplay from '@/components/company/SituationReplay';
 import { getRecommendation } from '@/lib/skillScoring';
 import { getSituations } from '@/lib/situations';
@@ -168,6 +169,9 @@ export default function CompanyCandidateDetail() {
 
         {/* Soft Skills deep analysis */}
         <SoftSkillsDetail sim={sim} />
+
+        {/* Required vs demonstrated levels */}
+        <CompetencyLevels sim={sim} />
 
         {/* Summary */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">

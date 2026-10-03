@@ -211,6 +211,22 @@ Responda SOMENTE com JSON válido:
   const overall_score = Math.round(responseAvg * 0.6 + skillAvg * 0.4);
   const weight = 1 / competencies.length;
 
+  // Níveis 0-10: exigido pela vaga vs. demonstrado pelo candidato
+  const reqMap = {};
+  (job.competency_requirements || []).forEach((r) => { reqMap[r.name] = r.required_level; });
+  const demonstrated_levels = {};
+  competencies.forEach((c) => {
+    const demonstrated = Math.round((skill_scores[c] || 0) / 10);
+    const required = reqMap[c] != null ? reqMap[c] : null;
+    const gap = required !== null ? demonstrated - required : null;
+    demonstrated_levels[c] = {
+      demonstrated,
+      required,
+      gap,
+      status: required === null ? 'no_target' : gap >= 0 ? 'meets' : gap >= -1 ? 'close' : 'below',
+    };
+  });
+
   const behavior = ai.behavioral_profile?.axes ? ai.behavioral_profile : localBehaviorProfile(responses);
 
   // Merge AI soft_skills_detail with local; AI takes priority but local fills gaps.
@@ -279,6 +295,7 @@ Responda SOMENTE com JSON válido:
     skill_scores,
     score_confidence,
     skill_graph: skill_scores,
+    demonstrated_levels,
     score_composition: competencies.map((c) => ({ competency: c, score: skill_scores[c], weight, contribution: skill_scores[c] * weight * 0.4 })),
     skill_dna: ai.skill_dna || { strengths: [], growth_areas: [] },
     hard_skills: ai.hard_skills || [],
