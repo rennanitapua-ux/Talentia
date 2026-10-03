@@ -60,7 +60,7 @@ export default function CandidateResults() {
             <div className="text-sm font-semibold">Seu Resultado</div>
             <div className="text-xs text-muted-foreground/70">{sim.job_title} · {sim.company_name}</div>
           </div>
-          <button onClick={() => navigate('/candidate/passport')} className="text-xs text-brand-violet hover:text-brand-violet/80 transition-colors">
+          <button onClick={() => navigate('/candidate')} className="text-xs text-brand-violet hover:text-brand-violet/80 transition-colors">
             Ver Talent Passport →
           </button>
         </div>
@@ -254,7 +254,7 @@ export default function CandidateResults() {
                       r.is_choice ? 'bg-primary/10 text-primary' : 'bg-brand-violet/10 text-brand-violet'
                     }`}>
                       {r.is_choice ? <MousePointerClick className="w-3 h-3" /> : <PenLine className="w-3 h-3" />}
-                      {r.is_choice ? 'Escolha' : 'Escrita'}
+                      {r.is_choice && r.justification ? 'Escolha + justificativa' : r.is_choice ? 'Escolha' : 'Escrita'}
                     </span>
                     <span className="text-xs text-muted-foreground/70">Q{i + 1} · {r.phase_title || `Fase ${r.phase_index + 1}`}</span>
                     {r.time_spent_seconds != null && (
@@ -266,6 +266,9 @@ export default function CandidateResults() {
                   </div>
                   <p className="text-xs text-muted-foreground/70 italic mb-2.5 leading-relaxed">"{r.question_prompt}"</p>
                   <p className="text-sm text-foreground/90 leading-relaxed">{r.answer || '—'}</p>
+                  {r.justification && r.justification !== r.answer && (
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-2 pl-3 border-l-2 border-primary/30">{r.justification}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -274,7 +277,7 @@ export default function CandidateResults() {
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button onClick={() => navigate('/candidate/passport')} className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-brand-violet text-foreground font-semibold text-sm hover:bg-brand-violet/90 transition-colors shadow-lg shadow-brand-violet/20">
+          <button onClick={() => navigate('/candidate')} className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-brand-violet text-foreground font-semibold text-sm hover:bg-brand-violet/90 transition-colors shadow-lg shadow-brand-violet/20">
             <Award className="w-4 h-4" />
             Ver no Talent Passport
           </button>

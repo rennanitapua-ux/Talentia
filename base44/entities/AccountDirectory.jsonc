@@ -1,0 +1,21 @@
+{
+  "name": "AccountDirectory",
+  "type": "object",
+  "properties": {
+    "email_hash": {
+      "type": "string",
+      "description": "SHA-256 do e-mail em min\u00fasculas \u2014 usado no login \u00fanico para saber se a conta existe"
+    },
+    "account_type": {
+      "type": "string",
+      "enum": [
+        "company",
+        "candidate"
+      ]
+    }
+  },
+  "required": [
+    "email_hash",
+    "account_type"
+  ]
+}

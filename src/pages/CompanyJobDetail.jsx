@@ -5,6 +5,8 @@ import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layer
 import { base44 } from '@/api/base44Client';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
 import { getEvidenceMarker } from '@/lib/skillScoring';
+import { getSituations } from '@/lib/situations';
+import SituationPreview from '@/components/jobs/SituationPreview';
 
 const HIRING_STATUS = {
   em_analise: { label: 'Em Análise', color: 'text-muted-foreground', bg: 'bg-muted', dot: 'bg-muted-foreground' },
@@ -157,8 +159,8 @@ export default function CompanyJobDetail() {
           </div>
           <div className="bg-card/60 border border-border rounded-xl p-4">
             <Layers className="w-4 h-4 text-amber-400 mb-2" />
-            <div className="text-2xl font-bold font-mono">{(job.simulation_scenarios || []).length}</div>
-            <div className="text-xs text-muted-foreground/70">Fases</div>
+            <div className="text-2xl font-bold font-mono">{getSituations(job).length}</div>
+            <div className="text-xs text-muted-foreground/70">Situações · {job.openings || 1} {(job.openings || 1) > 1 ? 'vagas' : 'vaga'}</div>
           </div>
         </div>
 
@@ -167,7 +169,7 @@ export default function CompanyJobDetail() {
           {[
             { id: 'candidates', label: 'Candidatos', icon: Users },
             { id: 'pipeline', label: 'Pipeline', icon: Filter },
-            { id: 'scenarios', label: 'Cenários', icon: Layers },
+            { id: 'scenarios', label: 'Situações', icon: Layers },
             { id: 'competencies', label: 'Competências', icon: Target },
           ].map(t => (
             <button
@@ -358,40 +360,9 @@ export default function CompanyJobDetail() {
         )}
 
         {tab === 'scenarios' && (
-          <div className="space-y-4">
-            {(job.simulation_scenarios || []).map((ph, i) => (
-              <div key={i} className="bg-card/60 border border-border rounded-xl p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-mono text-primary">FASE {String(i + 1).padStart(2, '0')}</span>
-                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${
-                    ph.type === 'choice' ? 'bg-primary/15 text-primary' : 'bg-brand-violet/15 text-brand-violet'
-                  }`}>
-                    {ph.type === 'choice' ? 'Múltipla Escolha' : 'Resposta Escrita'}
-                  </span>
-                  <span className="text-xs text-muted-foreground/70">· {ph.questions?.length || 0} perguntas</span>
-                </div>
-                <div className="text-sm font-medium mb-3">{ph.title}</div>
-                <div className="space-y-2">
-                  {(ph.questions || []).map((q, j) => (
-                    <div key={j} className="bg-muted/30 rounded-lg p-3 border border-border">
-                      <div className="flex items-start gap-2 mb-1">
-                        <span className="text-xs font-mono text-muted-foreground/50 mt-0.5">Q{j + 1}.</span>
-                        <span className="text-xs text-foreground/80 flex-1">{q.prompt}</span>
-                      </div>
-                      {q.multiple_choice?.length > 0 && (
-                        <div className="mt-2 pl-5 space-y-1">
-                          {q.multiple_choice.map((opt, k) => (
-                            <div key={k} className="flex items-start gap-1.5 text-[11px]">
-                              <span className="font-mono text-muted-foreground/50">{opt.id.toUpperCase()}.</span>
-                              <span className="text-muted-foreground/70">{opt.text}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <div className="space-y-3">
+            {getSituations(job).map((s, i) => (
+              <SituationPreview key={s.id || i} situation={s} index={i} />
             ))}
           </div>
         )}

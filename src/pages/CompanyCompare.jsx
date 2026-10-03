@@ -37,7 +37,7 @@ export default function CompanyCompare() {
   const selectedSims = simulations.filter(s => selected.includes(s.id));
   const allCompetencies = job?.competencies || [];
 
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
     <div className="min-h-screen bg-background text-foreground">

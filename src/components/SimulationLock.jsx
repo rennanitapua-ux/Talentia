@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, Eye, Lock, ClipboardX } from 'lucide-react';
 
@@ -7,20 +7,28 @@ export default function SimulationLock({ onViolation, violationCount, children }
   const [warning, setWarning] = useState(false);
   const [warningMsg, setWarningMsg] = useState('');
 
-  const triggerViolation = (msg) => {
+  const lastAt = useRef(0);
+
+  // type: 'tab' | 'blur' | 'fullscreen'. Events fired together (e.g. tab switch + blur) count once.
+  const triggerViolation = (type, msg) => {
+    const now = Date.now();
+    if (now - lastAt.current < 1500) return;
+    lastAt.current = now;
     setWarningMsg(msg);
     setWarning(true);
-    onViolation?.(msg);
+    onViolation?.(type, msg);
     setTimeout(() => setWarning(false), 4000);
   };
 
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.hidden) triggerViolation('Saída da aba detectada — tentativa de consulta registrada.');
+      if (document.hidden) triggerViolation('tab', 'Saída da aba detectada — registrada para a empresa.');
     };
-    const handleBlur = () => triggerViolation('Janela perdeu foco — comportamento registrado.');
+    const handleBlur = () => {
+      if (!document.hidden) triggerViolation('blur', 'A janela perdeu o foco — registrado para a empresa.');
+    };
     const handleFullscreen = () => {
-      if (!document.fullscreenElement) triggerViolation('Tela cheia abandonada — simulação comprometida.');
+      if (!document.fullscreenElement) triggerViolation('fullscreen', 'Você saiu da tela cheia — registrado para a empresa.');
     };
     const handleBeforeUnload = (e) => {
       e.preventDefault();
@@ -61,7 +69,7 @@ export default function SimulationLock({ onViolation, violationCount, children }
                 <div className="text-rose-300 font-semibold text-sm">Violação de Integridade</div>
                 <div className="text-rose-200/80 text-xs mt-0.5">{warningMsg}</div>
                 <div className="text-rose-400/60 text-[10px] mt-1 font-mono">
-                  Violações registradas: {violationCount + 1}
+                  Ocorrências registradas: {violationCount}
                 </div>
               </div>
             </div>

@@ -17,12 +17,13 @@ import CompanyDashboard from '@/pages/CompanyDashboard';
 import CompanyJobCreate from '@/pages/CompanyJobCreate';
 import CompanyJobDetail from '@/pages/CompanyJobDetail';
 import CompanyCandidateDetail from '@/pages/CompanyCandidateDetail';
-import CandidateJobs from '@/pages/CandidateJobs';
 import CandidateSimulation from '@/pages/CandidateSimulation';
 import CandidateResults from '@/pages/CandidateResults';
 import CandidatePassport from '@/pages/CandidatePassport';
 import CandidateProfile from '@/pages/CandidateProfile';
 import CompanyCompare from '@/pages/CompanyCompare';
+import Onboarding from '@/pages/Onboarding';
+import LoginRedirect from '@/components/LoginRedirect';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -55,18 +56,19 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/" element={<Home />} />
+      <Route path="/" element={<Home />} />
+      <Route element={<ProtectedRoute unauthenticatedElement={<LoginRedirect />} />}>
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/company" element={<CompanyDashboard />} />
         <Route path="/company/jobs/new" element={<CompanyJobCreate />} />
         <Route path="/company/jobs/:id" element={<CompanyJobDetail />} />
         <Route path="/company/candidates/:id" element={<CompanyCandidateDetail />} />
         <Route path="/company/jobs/:id/compare" element={<CompanyCompare />} />
-        <Route path="/candidate" element={<CandidateJobs />} />
+        <Route path="/candidate" element={<CandidatePassport />} />
         <Route path="/candidate/profile" element={<CandidateProfile />} />
         <Route path="/candidate/simulate/:id" element={<CandidateSimulation />} />
         <Route path="/candidate/results/:id" element={<CandidateResults />} />
-        <Route path="/candidate/passport" element={<CandidatePassport />} />
+        <Route path="/candidate/passport" element={<Navigate to="/candidate" replace />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

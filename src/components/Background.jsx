@@ -12,10 +12,10 @@ export default function Background() {
       {/* Base — deep navy almost black */}
       <div className="absolute inset-0 bg-background" />
 
-      {/* Electric blue aura — top left, large and soft */}
+      {/* Cyan / teal aura — top left, large and soft */}
       <div
-        className="absolute -top-48 -left-48 w-[820px] h-[820px] rounded-full opacity-[0.12] blur-[150px]"
-        style={{ background: 'radial-gradient(circle, hsl(217 91% 60%) 0%, transparent 70%)' }}
+        className="absolute -top-56 -left-56 w-[860px] h-[860px] rounded-full opacity-[0.16] blur-[150px]"
+        style={{ background: 'radial-gradient(circle, hsl(190 90% 45%) 0%, transparent 70%)' }}
       />
 
       {/* Blue/purple aura — bottom right, large and soft */}
@@ -31,7 +31,7 @@ export default function Background() {
       />
 
       {/* Sweeping luminous arcs */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.10]" preserveAspectRatio="none" viewBox="0 0 1440 900">
+      <svg className="absolute inset-0 w-full h-full opacity-[0.06]" preserveAspectRatio="none" viewBox="0 0 1440 900">
         <defs>
           <linearGradient id="bg-arc-blue" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="hsl(217 91% 60%)" stopOpacity="0" />
