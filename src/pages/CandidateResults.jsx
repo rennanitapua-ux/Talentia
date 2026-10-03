@@ -7,6 +7,7 @@ import SkillGraph from '@/components/SkillGraph';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
 import DiscResults from '@/components/DiscResults';
 import AnalysisReport from '@/components/AnalysisReport';
+import SoftSkillsDetail from '@/components/company/SoftSkillsDetail';
 import { getRecommendation } from '@/lib/skillScoring';
 
 const HIRING_STATUS = {
@@ -146,6 +147,9 @@ export default function CandidateResults() {
         <div className="mb-8">
           <AnalysisReport sim={sim} />
         </div>
+
+        {/* Soft Skills deep analysis */}
+        <SoftSkillsDetail sim={sim} />
 
         {/* Personality Analysis */}
         {sim.personality_analysis && (

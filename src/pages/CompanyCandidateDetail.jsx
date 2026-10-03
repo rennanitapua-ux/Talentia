@@ -9,6 +9,7 @@ import AnalysisReport from '@/components/AnalysisReport';
 import DiscSummaryCard from '@/components/company/DiscSummaryCard';
 import IntegrityCard from '@/components/company/IntegrityCard';
 import BehaviorProfile from '@/components/company/BehaviorProfile';
+import SoftSkillsDetail from '@/components/company/SoftSkillsDetail';
 import SituationReplay from '@/components/company/SituationReplay';
 import { getRecommendation } from '@/lib/skillScoring';
 import { getSituations } from '@/lib/situations';
@@ -164,6 +165,9 @@ export default function CompanyCandidateDetail() {
             <BehaviorProfile profile={sim.behavioral_profile} />
           </div>
         )}
+
+        {/* Soft Skills deep analysis */}
+        <SoftSkillsDetail sim={sim} />
 
         {/* Summary */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">

@@ -121,6 +121,14 @@
         "type": "object"
       }
     },
+    "soft_skills_detail": {
+      "type": "object",
+      "description": "Detalhamento por soft skill e sub-dimens\u00e3o com scores e evid\u00eancias"
+    },
+    "soft_skills_narrative": {
+      "type": "string",
+      "description": "Par\u00e1grafo narrativo conectando as evid\u00eancias de soft skills"
+    },
     "job_compatibility": {
       "type": "object"
     },

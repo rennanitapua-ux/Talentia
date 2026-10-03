@@ -70,9 +70,9 @@ module.exports = {
   			}
   		},
   		fontFamily: {
-  			heading: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
-  			body: ['Inter', 'system-ui', 'sans-serif'],
-  			display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+  			heading: ['Space Grotesk', 'system-ui', 'sans-serif'],
+  			body: ['DM Sans', 'system-ui', 'sans-serif'],
+  			display: ['Space Grotesk', 'system-ui', 'sans-serif'],
   			mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
   		},
   		keyframes: {

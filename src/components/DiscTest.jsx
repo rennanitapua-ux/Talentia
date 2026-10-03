@@ -47,7 +47,7 @@ export default function DiscTest({ onComplete }) {
             </div>
           </div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Questão {idx + 1} de {questions.length}</span>
+            <span className="text-sm text-muted-foreground">Pergunta {idx + 1} de {questions.length}</span>
             <span className="text-xs font-mono text-muted-foreground">{Math.round(progress)}%</span>
           </div>
           <div className="w-full h-1 rounded-full bg-muted overflow-hidden">
@@ -72,13 +72,16 @@ export default function DiscTest({ onComplete }) {
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="mb-8">
-                <div className="text-xs font-mono text-primary uppercase tracking-[0.2em] mb-3">
-                  Situação {idx + 1}
+                <div className="text-xs font-mono text-muted-foreground uppercase tracking-[0.2em] mb-3">
+                  Antes da simulação
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold leading-snug text-foreground mb-2">
-                  {current.question}
+                  Descubra como você trabalha
                 </h2>
-                <p className="text-sm text-muted-foreground">Escolha a opção que mais se parece com você.</p>
+                <p className="text-sm text-muted-foreground mb-6">Responda rápido, com o que você realmente faria. Não há respostas certas ou erradas.</p>
+                <div className="rounded-2xl border border-border bg-card/60 p-5 mb-1">
+                  <p className="text-base leading-relaxed text-foreground">{current.question}</p>
+                </div>
               </div>
 
               <div className="space-y-3">
