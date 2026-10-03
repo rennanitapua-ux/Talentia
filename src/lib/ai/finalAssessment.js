@@ -3,6 +3,7 @@ import { BEHAVIOR_AXES, localBehaviorProfile } from '@/lib/ai/behavior';
 import { getRecommendation } from '@/lib/skillScoring';
 import { DISC_QUESTIONS } from '@/lib/discTest';
 import { SOFT_SKILLS, SKILL_BY_KEY, inferSoftSkills } from '@/lib/softSkills';
+import { confidenceFor, interviewQuestionsFromGaps } from '@/lib/softSkillsRubric';
 
 const avg = (list) => (list.length ? Math.round(list.reduce((a, b) => a + b, 0) / list.length) : 0);
 
@@ -19,17 +20,27 @@ function localSkillScores(responses, competencies) {
 }
 
 // Aggregates per-response soft_skill_evidence into a structured per-skill, per-dimension breakdown.
+// Aplica a rubrica: sem evidência → not_assessable (score null, confiança low). Nunca inventa score.
 function localSoftSkillsDetail(responses, targetSkills) {
   const detail = {};
-  (targetSkills.length ? targetSkills : SOFT_SKILLS.slice(0, 4)).forEach((skill) => {
+  (targetSkills.length ? targetSkills : SOFT_SKILLS.slice(0, 5)).forEach((skill) => {
     detail[skill.key] = {
       label: skill.label,
-      score: 0,
+      score: null,
+      not_assessable: true,
       confidence: 'low',
       dimensions: {},
     };
     skill.dimensions.forEach((dim) => {
-      detail[skill.key].dimensions[dim.key] = { label: dim.label, score: 0, evidence: [], count: 0 };
+      detail[skill.key].dimensions[dim.key] = {
+        label: dim.label,
+        score: null,
+        not_assessable: true,
+        evidence: [],
+        count: 0,
+        observed: null,
+        inferred: null,
+      };
     });
   });
 
@@ -41,31 +52,68 @@ function localSoftSkillsDetail(responses, targetSkills) {
         if (!skill) return;
         detail[e.skill] = {
           label: skill.label,
-          score: 0,
+          score: null,
+          not_assessable: true,
           confidence: 'low',
           dimensions: {},
         };
         skill.dimensions.forEach((dim) => {
-          detail[e.skill].dimensions[dim.key] = { label: dim.label, score: 0, evidence: [], count: 0 };
+          detail[e.skill].dimensions[dim.key] = {
+            label: dim.label,
+            score: null,
+            not_assessable: true,
+            evidence: [],
+            count: 0,
+            observed: null,
+            inferred: null,
+          };
         });
       }
       const dimEntry = detail[e.skill].dimensions[e.dimension];
       if (!dimEntry) {
-        detail[e.skill].dimensions[e.dimension] = { label: e.dimension_label || e.dimension, score: 0, evidence: [], count: 0 };
+        detail[e.skill].dimensions[e.dimension] = {
+          label: e.dimension_label || e.dimension,
+          score: null,
+          not_assessable: true,
+          evidence: [],
+          count: 0,
+          observed: null,
+          inferred: null,
+        };
       }
       const de = detail[e.skill].dimensions[e.dimension];
-      de.evidence.push({ situation: r.phase_title, score: e.score, quote: e.evidence_quote, note: e.evidence });
       de.count++;
-      de.score = Math.round((de.score * (de.count - 1) + e.score) / de.count);
+      de.not_assessable = false;
+      // Preserve observed/inferred from per-response analysis
+      if (e.observed) de.observed = de.observed ? `${de.observed}; ${e.observed}` : e.observed;
+      if (e.inferred) de.inferred = de.inferred ? `${de.inferred}; ${e.inferred}` : e.inferred;
+      de.evidence.push({
+        situation: r.phase_title,
+        situation_index: r.phase_index,
+        score: e.score,
+        quote: e.evidence_quote,
+        note: e.observed || e.evidence,
+        inferred: e.inferred,
+      });
+      // Running average only when there's a real score
+      if (typeof e.score === 'number') {
+        de.score = de.score === null ? e.score : Math.round((de.score * (de.count - 1) + e.score) / de.count);
+      }
     });
   });
 
-  // Compute per-skill score = avg of dimension scores
+  // Compute per-skill score = avg of assessed dimension scores; confidence by evidence count
   Object.values(detail).forEach((skill) => {
-    const dimScores = Object.values(skill.dimensions).filter((d) => d.count > 0).map((d) => d.score);
-    if (dimScores.length) {
-      skill.score = avg(dimScores);
-      skill.confidence = dimScores.length >= 3 ? 'medium' : 'low';
+    const assessedDims = Object.values(skill.dimensions).filter((d) => !d.not_assessable && typeof d.score === 'number');
+    if (assessedDims.length) {
+      skill.score = avg(assessedDims.map((d) => d.score));
+      skill.not_assessable = false;
+      const totalEvidence = assessedDims.reduce((sum, d) => sum + d.count, 0);
+      skill.confidence = confidenceFor(Math.floor(totalEvidence / Math.max(assessedDims.length, 1)));
+    } else {
+      skill.score = null;
+      skill.not_assessable = true;
+      skill.confidence = 'low';
     }
   });
 
@@ -99,8 +147,10 @@ export async function generateFinalAssessment({ candidateName, job, responses, d
     soft_skills_medidas: (r.analysis?.soft_skill_evidence || []).map((e) => ({
       skill: e.skill_label,
       dimension: e.dimension_label,
+      observed: e.observed || null,
+      inferred: e.inferred || null,
       score: e.score,
-      evidence: e.evidence,
+      not_assessable: e.not_assessable || false,
       quote: e.evidence_quote,
     })),
     sinais: (r.analysis?.behavior_signals || []).map((b) => b.trait).join(', '),
@@ -118,27 +168,31 @@ COMPETÊNCIAS: ${competencies.join(', ')}
 SOFT SKILLS AVALIADAS: ${skillsBlock}
 INTEGRIDADE: saídas de aba ${integrity?.tab_switches || 0}, perdas de foco ${integrity?.focus_losses || 0}, tentativas de colar ${integrity?.paste_attempts || 0}, suspeitas de IA ${integrity?.ai_suspicions || 0}
 
-DISC (complementar, nunca decide sozinho):
+DISC (complementar, NUNCA decide sozinho, NUNCA diagnóstico):
 ${discText(disc, discAnswers)}
 
-RESPOSTAS (escolha + justificativa + nota individual + soft skills medidas com evidência):
+RESPOSTAS (escolha + justificativa + nota individual + soft skills medidas com observado/inferido):
 ${JSON.stringify(items)}
 
-REGRAS: 
-- NUNCA invente; cite situações pelo número.
-- NUNCA use adjetivos vazios ("excelente", "grande potencial", "bom profissional"). Cada afirmação deve ter evidência: qual situação, o que o candidato fez/dis.
-- Diferencie fato observado de interpretação.
+REGRAS (EVIDÊNCIA — não adjetivos):
+- NUNCA invente; cite situações pelo número (ex.: "na situação 3, o candidato...").
+- NUNCA use adjetivos vazios ("excelente", "grande potencial", "bom profissional"). Cada afirmação deve ter evidência: qual situação, o que o candidato fez/disse.
+- NUNCA atribua uma competência só porque o candidato escreveu "sou líder/organizado/comunicativo". Exija comportamento demonstrado.
+- Diferencie OBSERVADO (fato que apareceu na resposta) de INFERIDO (interpretação possível). Nunca transforme inferência em fato.
+- Se não houver evidência suficiente para uma skill/dimensão, marque score null e not_assessable=true. É melhor "não foi possível avaliar" do que inventar.
 - Alternativas "bad" e "weak" devem pesar negativamente.
-- soft_skills_detail: para CADA soft skill avaliada, dê score 0-100, confidence (high/medium/low) e para cada sub-dimensão: score, evidence (citando situações por número) e growth (se aplicável).
-- O score da sub-dimensão deve refletir o que o candidato DEMONSTROU nas respostas, não potencial.
-- soft_skills_narrative: parágrafo que conecta as evidências — como a pessoa pensa, decide, comunica, reage a problemas e trabalha com outros. Cite situações específicas.
+- soft_skills_detail: para CADA soft skill, dê score 0-100 (ou null se não avaliável), confidence (high/medium/low) e para cada sub-dimensão: score, observed, inferred, evidence (citando situações por número) e growth (se aplicável).
+- soft_skills_narrative: parágrafo que conecta as evidências — como a pessoa pensa, decide, comunica, reage a problemas e trabalha com outros. Cite situações específicas. Responda "o que essa pessoa demonstrou?", não "qual personalidade ela possui?".
+- consistency_analysis: compare as respostas. Procure padrões, contradições, mudanças de estratégia. NÃO acuse o candidato de mentir — mostre "ponto para investigação" quando houver divergência.
+- interview_questions: gere perguntas personalizadas a partir das LACUNAS de evidência — competências exigidas pela vaga com pouca ou nenhuma evidência. Cada pergunta deve referenciar uma evidência real (ou a ausência dela).
+- job_compatibility: para cada competência da vaga, classifique: demonstrated / partial / not_evidenced / needs_investigation, sempre com evidence citando situações.
 
 Gere também:
 - behavioral_profile: como a pessoa AGE, com base nas escolhas e justificativas. Para cada eixo, position 0-100 (0 = traço da esquerda, 100 = traço da direita) e evidência citando situações. Eixos: ${BEHAVIOR_AXES.map((a) => `${a.key} (${a.left} ↔ ${a.right})`).join('; ')}.
-- disc_interpretation: leitura detalhada do DISC combinada com o comportamento observado.
+- disc_interpretation: leitura detalhada do DISC combinada com o comportamento observado. NUNCA usar DISC como diagnóstico.
 
 Responda SOMENTE com JSON válido:
-{"profile_summary":"","summary":"","soft_skills_narrative":"","soft_skills_detail":{"comunicacao":{"score":0,"confidence":"high|medium|low","dimensions":{"clareza":{"score":0,"evidence":"","growth":""}}}},"skill_scores":{"competência":{"score":0,"confidence":"high|medium|low"}},"skill_dna":{"strengths":[{"competency":"","score":0,"evidence":""}],"growth_areas":[{"competency":"","score":0,"evidence":""}]},"hard_skills":[{"name":"","evidence":""}],"soft_skills":[{"name":"","score":0,"evidence":""}],"behavioral_profile":{"summary":"","decision_style":"","under_pressure":"","axes":{"impulsividade":{"position":50,"evidence":""}},"dominant_traits":[""],"risks":[""]},"disc_interpretation":{"headline":"","description":"","under_pressure":"","communication":"","motivators":[""],"fears":[""],"how_to_manage":[""],"fit_with_role":"","interview_tips":[""]},"personality_analysis":"","work_style":"","strengths_detail":"","weaknesses_detail":"","job_compatibility":{"demonstrated":[{"competency":"","evidence":""}],"partial":[{"competency":"","evidence":""}],"not_evidenced":[{"competency":"","note":""}],"needs_investigation":[{"competency":"","reason":""}]},"consistency_analysis":"","interview_questions":[{"question":"","rationale":"","competency":""}],"overall_confidence":"high|medium|low","assessment_confidence":{"level":"high|medium|low","reasoning":"","evidence_count":0}}`;
+{"profile_summary":"","summary":"","soft_skills_narrative":"","soft_skills_detail":{"comunicacao":{"score":0,"confidence":"high|medium|low","dimensions":{"clareza":{"score":0,"observed":"","inferred":"","evidence":"","growth":""}}}},"skill_scores":{"competência":{"score":0,"confidence":"high|medium|low"}},"skill_dna":{"strengths":[{"competency":"","score":0,"evidence":""}],"growth_areas":[{"competency":"","score":0,"evidence":""}]},"hard_skills":[{"name":"","evidence":""}],"soft_skills":[{"name":"","score":0,"evidence":""}],"behavioral_profile":{"summary":"","decision_style":"","under_pressure":"","axes":{"impulsividade":{"position":50,"evidence":""}},"dominant_traits":[""],"risks":[""]},"disc_interpretation":{"headline":"","description":"","under_pressure":"","communication":"","motivators":[""],"fears":[""],"how_to_manage":[""],"fit_with_role":"","interview_tips":[""]},"personality_analysis":"","work_style":"","strengths_detail":"","weaknesses_detail":"","job_compatibility":{"demonstrated":[{"competency":"","evidence":""}],"partial":[{"competency":"","evidence":""}],"not_evidenced":[{"competency":"","note":""}],"needs_investigation":[{"competency":"","reason":""}]},"consistency_analysis":"","interview_questions":[{"question":"","rationale":"","competency":""}],"overall_confidence":"high|medium|low","assessment_confidence":{"level":"high|medium|low","reasoning":"","evidence_count":0}}`;
 
   const ai = (await askJSON(prompt, { models: ['claude-sonnet-5', 'gemini_3_flash'], validate: (p) => p.summary || p.skill_scores })) || {};
 
@@ -159,7 +213,8 @@ Responda SOMENTE com JSON válido:
 
   const behavior = ai.behavioral_profile?.axes ? ai.behavioral_profile : localBehaviorProfile(responses);
 
-  // Merge AI soft_skills_detail with local; AI takes priority but local fills gaps
+  // Merge AI soft_skills_detail with local; AI takes priority but local fills gaps.
+  // Preserves not_assessable when neither has evidence.
   const soft_skills_detail = { ...localSoft };
   if (ai.soft_skills_detail) {
     Object.entries(ai.soft_skills_detail).forEach(([key, val]) => {
@@ -167,26 +222,39 @@ Responda SOMENTE com JSON válido:
         const skill = SKILL_BY_KEY[key];
         soft_skills_detail[key] = {
           label: skill?.label || key,
-          score: clamp(val.score),
+          score: val.score == null ? null : clamp(val.score),
+          not_assessable: val.score == null,
           confidence: val.confidence || 'low',
           dimensions: {},
         };
       }
-      soft_skills_detail[key].score = clamp(val.score ?? soft_skills_detail[key].score);
-      soft_skills_detail[key].confidence = val.confidence || soft_skills_detail[key].confidence;
+      const entry = soft_skills_detail[key];
+      if (val.score != null) {
+        entry.score = clamp(val.score ?? entry.score);
+        entry.not_assessable = false;
+      }
+      entry.confidence = val.confidence || entry.confidence;
       if (val.dimensions) {
         Object.entries(val.dimensions).forEach(([dimKey, dimVal]) => {
-          const localDim = soft_skills_detail[key].dimensions[dimKey];
+          const localDim = entry.dimensions[dimKey];
           if (localDim) {
-            localDim.score = clamp(dimVal.score ?? localDim.score);
+            if (dimVal.score != null) {
+              localDim.score = clamp(dimVal.score ?? localDim.score);
+              localDim.not_assessable = false;
+            }
+            if (dimVal.observed) localDim.observed = dimVal.observed;
+            if (dimVal.inferred) localDim.inferred = dimVal.inferred;
             if (dimVal.evidence) localDim.ai_evidence = dimVal.evidence;
             if (dimVal.growth) localDim.growth = dimVal.growth;
           } else {
-            soft_skills_detail[key].dimensions[dimKey] = {
+            entry.dimensions[dimKey] = {
               label: dimVal.label || dimKey,
-              score: clamp(dimVal.score),
+              score: dimVal.score == null ? null : clamp(dimVal.score),
+              not_assessable: dimVal.score == null,
               evidence: [],
-              count: 1,
+              count: dimVal.score != null ? 1 : 0,
+              observed: dimVal.observed || null,
+              inferred: dimVal.inferred || null,
               ai_evidence: dimVal.evidence,
               growth: dimVal.growth,
             };
@@ -195,6 +263,13 @@ Responda SOMENTE com JSON válido:
       }
     });
   }
+
+  // Interview questions: merge AI's with gap-generated ones (gaps fill first if AI didn't cover them)
+  const aiQuestions = ai.interview_questions || [];
+  const gapQuestions = interviewQuestionsFromGaps({ targetSkills, softSkillsDetail: soft_skills_detail, job });
+  const coveredCompetencies = new Set(aiQuestions.map((q) => q.competency?.split(' → ')[0]));
+  const missingGaps = gapQuestions.filter((q) => !coveredCompetencies.has(q.competency));
+  const interview_questions = [...aiQuestions, ...missingGaps].slice(0, 8);
 
   return {
     profile_summary: ai.profile_summary || '',
@@ -216,7 +291,7 @@ Responda SOMENTE com JSON válido:
     weaknesses_detail: ai.weaknesses_detail || '',
     job_compatibility: ai.job_compatibility || {},
     consistency_analysis: ai.consistency_analysis || '',
-    interview_questions: ai.interview_questions || [],
+    interview_questions,
     overall_score,
     overall_confidence: ai.overall_confidence || 'medium',
     assessment_confidence: ai.assessment_confidence || { level: 'low', reasoning: 'Relatório gerado sem a análise completa da IA.', evidence_count: responses.length },

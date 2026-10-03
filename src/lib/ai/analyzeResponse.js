@@ -1,6 +1,7 @@
 import { askJSON, clamp } from '@/lib/ai/llm';
 import { QUALITY_META } from '@/lib/situations';
 import { SKILL_BY_KEY } from '@/lib/softSkills';
+import { buildEvidenceRecord } from '@/lib/softSkillsRubric';
 
 const DECISION_RANGE = { best: [80, 100], good: [55, 75], weak: [25, 45], bad: [0, 20] };
 
@@ -20,14 +21,18 @@ function localAnalysis({ option, justification, typing, situation }) {
   const softSkillEvidence = (situation?.soft_skills || []).map((ss) => {
     const skill = SKILL_BY_KEY[ss.skill];
     const dim = skill?.dimensions.find((d) => d.key === ss.dimension);
+    const hasJust = len > 15;
     return {
       skill: ss.skill,
       skill_label: skill?.label || ss.skill,
       dimension: ss.dimension,
       dimension_label: dim?.label || ss.dimension,
-      score: option ? Math.round(decision * 0.7 + just * 0.3) : just,
-      evidence: `Escolheu: "${option?.text || '—'}"`,
+      score: hasJust ? Math.round(decision * 0.6 + just * 0.4) : null,
+      not_assessable: !hasJust,
+      observed: hasJust ? `Escolheu "${option?.text || '—'}" e justificou.` : 'Escolheu uma alternativa sem justificativa.',
+      inferred: hasJust ? `A escolha e a justificativa sugerem comportamento relacionado a ${dim?.label || ss.dimension}.` : null,
       evidence_quote: (justification || '').slice(0, 200) || null,
+      confidence: hasJust ? 'low' : 'low',
     };
   });
   return {
@@ -63,10 +68,10 @@ function finalize(a, { option, typing, situation }) {
     ai.confidence = Math.max(clamp(ai.confidence), 70);
     ai.indicators = [...(ai.indicators || []), 'Texto inserido sem digitação correspondente'];
   }
-  // Normalize soft_skill_evidence: ensure each entry has score clamped
+  // Normalize soft_skill_evidence: clamp scores, preserve not_assessable
   const softSkillEvidence = (a.soft_skill_evidence || []).map((e) => ({
     ...e,
-    score: clamp(e.score),
+    score: e.not_assessable ? null : clamp(e.score ?? 0),
   }));
   return {
     ...a,
@@ -105,18 +110,23 @@ COMPETÊNCIAS DESTA SITUAÇÃO: ${(situation.competencies || []).join(', ')}
 SOFT SKILLS QUE ESTA SITUAÇÃO MIRA:
 ${targetSkills || '—'}
 
-REGRAS:
+REGRAS (EVIDÊNCIA, NÃO ADJETIVOS):
 - A escolha pesa muito: "bad" → decision_score 0-20; "weak" → 25-45; "good" → 55-75; "best" → 80-100. Ajuste dentro da faixa conforme a justificativa.
 - justification_score (0-100): clareza, raciocínio, coerência com a escolha e uso dos fatos da situação. Texto vazio, sem sentido ou genérico → 0-15. Justificativa que contradiz a escolha → no máximo 30.
-- soft_skill_evidence: para CADA sub-dimensão que esta situação mira, avalie 0-100 e cite a evidência. O score deve refletir o que o candidato DEMONSTROU, não o que a alternativa sugere. Se a justificativa contradiz a escolha, reduza o score. Se não há evidência suficiente, score baixo e evidence explicando.
-- evidence_quote: trecho REAL da justificativa que sustenta a evidência (máx 200 chars). Se não houver, null.
-- Nunca invente. Cite trechos reais da justificativa.
+- NÃO identificar uma soft skill só porque o candidato ESCREVEU "sou organizado" ou "tenho boa comunicação". Procure COMPORTAMENTO DEMONSTRADO: o que ele descreveu que faria, com que critérios, em que ordem.
+- soft_skill_evidence: para CADA sub-dimensão que esta situação mira, produza:
+  - "observed": o que EFETIVAMENTE apareceu na resposta (fato — ex.: "descreveu 3 etapas antes de decidir").
+  - "inferred": interpretação possível do observado (inferência — ex.: "sugere análise de alternativas").
+  - "evidence_quote": trecho REAL da justificativa que sustenta (máx 200 chars). Se não houver, null.
+  - "score": 0-100 refletindo o DEMONSTRADO, ou null se "not_assessable".
+  - "not_assessable": true quando NÃO há evidência suficiente para avaliar esta sub-dimensão (justificativa vazia, genérica ou que não toca o comportamento). Neste caso score=null.
+  - "confidence": high/medium/low.
 - behavior_signals: como a pessoa age nesta situação (impulsiva, calma, ansiosa, ponderada, evasiva, assertiva, colaborativa, autoritária, analítica, passiva...), sempre com a evidência.
-- ai_detection: sinais de texto gerado por IA (linguagem genérica e polida demais, estrutura perfeita em tópicos, ausência de voz própria, muitos caracteres para poucas teclas). confidence 0-100.
-- Evite elogios vazios. Seja específico.
+- ai_detection: sinais de texto gerado por IA (linguagem genérica e polida demais, estrutura perfeita em tópicos, ausência de voz própria, muitos caracteres para poucas teclas). confidence 0-100. Trate como INDÍCIO, nunca como fato provado.
+- Evite elogios vazios. Seja específico. Cite trechos reais.
 
 Responda SOMENTE com JSON válido:
-{"decision_score":0,"justification_score":0,"coherence":"coerente|parcial|incoerente","competency_scores":{"competência":{"score":0,"evidence":"✓|~|✗","justification":"","evidence_quote":""}},"soft_skill_evidence":[{"skill":"key_da_skill","skill_label":"Comunicação","dimension":"clareza","dimension_label":"Clareza e objetividade","score":0,"evidence":"","evidence_quote":""}],"behavior_signals":[{"trait":"","evidence":""}],"quality_metrics":{"clarity":0,"reasoning":0,"coherence":0,"problem_solving":0,"communication":0,"has_concrete_examples":false},"response_depth":{"level":"superficial|explanation|examples|context_results|practical_experience","reasoning":""},"positive_points":[""],"points_to_investigate":[""],"ai_detection":{"is_ai_generated":false,"confidence":0,"indicators":[],"analysis":""},"detailed_feedback":""}`;
+{"decision_score":0,"justification_score":0,"coherence":"coerente|parcial|incoerente","competency_scores":{"competência":{"score":0,"evidence":"✓|~|✗","justification":"","evidence_quote":""}},"soft_skill_evidence":[{"skill":"key_da_skill","skill_label":"Comunicação","dimension":"clareza","dimension_label":"Clareza e objetividade","observed":"","inferred":"","evidence_quote":"","score":0,"not_assessable":false,"confidence":"high|medium|low"}],"behavior_signals":[{"trait":"","evidence":""}],"quality_metrics":{"clarity":0,"reasoning":0,"coherence":0,"problem_solving":0,"communication":0,"has_concrete_examples":false},"response_depth":{"level":"superficial|explanation|examples|context_results|practical_experience","reasoning":""},"positive_points":[""],"points_to_investigate":[""],"ai_detection":{"is_ai_generated":false,"confidence":0,"indicators":[],"analysis":""},"detailed_feedback":""}`;
 
   const parsed = await askJSON(prompt, { validate: (p) => p.decision_score !== undefined || p.justification_score !== undefined });
   return finalize(parsed || localAnalysis({ option, justification, typing, situation }), { option, typing, situation });
