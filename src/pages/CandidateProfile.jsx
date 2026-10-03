@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, User, Phone, MapPin, Camera, Loader2, Check, Upload, FileCheck2, FileText, AlertCircle, Building, Search } from 'lucide-react';
+import { ArrowLeft, User, Phone, MapPin, Camera, Loader2, Check, Upload, FileCheck2, FileText, AlertCircle, Building, Search, Shield } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import Logo from '@/components/Logo';
 import Background from '@/components/Background';
@@ -22,6 +22,7 @@ export default function CandidateProfile() {
     cep: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '',
     linkedin: '', bio: '',
     resume_url: '', resume_name: '', profile_photo_url: '',
+    profile_visible: true, resume_visible: true, phone_visible: false, email_visible: false, allow_contact: true,
   });
   const fileResumeRef = useRef(null);
   const filePhotoRef = useRef(null);
@@ -51,6 +52,11 @@ export default function CandidateProfile() {
               resume_url: p.resume_url || '',
               resume_name: p.resume_name || '',
               profile_photo_url: p.profile_photo_url || '',
+              profile_visible: p.profile_visible !== false,
+              resume_visible: p.resume_visible !== false,
+              phone_visible: p.phone_visible === true,
+              email_visible: p.email_visible === true,
+              allow_contact: p.allow_contact !== false,
             });
           } else {
             setForm(f => ({ ...f, full_name: u.full_name || '', email: u.email || '' }));
@@ -375,6 +381,17 @@ export default function CandidateProfile() {
                 <p className="text-xs text-muted-foreground/60 mt-2">Formatos: PDF, DOC, DOCX, PNG, JPG. A empresa terá acesso a este arquivo.</p>
               </Field>
             </div>
+
+            {/* Section: Privacidade */}
+            <SectionHeader title="Privacidade" />
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground/70 mb-3">Controle o que as empresas podem ver. Seu endereço completo nunca é compartilhado — apenas cidade e estado.</p>
+              <ToggleRow icon={Shield} label="Perfil visível para empresas" desc="Empresas podem encontrar seu perfil em processos seletivos" checked={form.profile_visible} onChange={(v) => update('profile_visible', v)} />
+              <ToggleRow icon={FileCheck2} label="Currículo visível" desc="Recrutadores podem ver seu currículo" checked={form.resume_visible} onChange={(v) => update('resume_visible', v)} />
+              <ToggleRow icon={Phone} label="Telefone visível" desc="Empresas podem ver seu telefone" checked={form.phone_visible} onChange={(v) => update('phone_visible', v)} />
+              <ToggleRow icon={User} label="E-mail visível" desc="Empresas podem ver seu e-mail" checked={form.email_visible} onChange={(v) => update('email_visible', v)} />
+              <ToggleRow icon={Building} label="Permitir contato" desc="Aceito ser contatado por empresas" checked={form.allow_contact} onChange={(v) => update('allow_contact', v)} />
+            </div>
           </div>
 
           <button
@@ -407,6 +424,25 @@ function Field({ label, hint, children }) {
         {hint && <span className="text-[10px] text-muted-foreground/60">{hint}</span>}
       </div>
       {children}
+    </div>
+  );
+}
+
+function ToggleRow({ icon: Icon, label, desc, checked, onChange }) {
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="text-sm text-foreground">{label}</div>
+        <div className="text-xs text-muted-foreground/70">{desc}</div>
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ${checked ? 'bg-primary' : 'bg-muted'}`}
+      >
+        <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${checked ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+      </button>
     </div>
   );
 }

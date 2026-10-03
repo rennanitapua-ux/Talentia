@@ -17,6 +17,12 @@ export default function CompanyDashboard() {
     setData((d) => ({ ...d, loading: true, error: false }));
     try {
       const user = await base44.auth.me();
+      // Redirect to company onboarding if culture profile doesn't exist yet
+      const profiles = await base44.entities.CompanyProfile.filter({ user_id: user.id });
+      if (!profiles?.[0] && user.account_type === 'company') {
+        navigate('/company/onboarding', { replace: true });
+        return;
+      }
       const jobs = await base44.entities.Job.filter({ created_by_id: user.id }, '-created_date', 100);
       const sims = jobs.length
         ? await base44.entities.Simulation.filter({ job_id: { $in: jobs.map((j) => j.id) } }, '-created_date', 500)

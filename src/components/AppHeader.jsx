@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Plus, Award, UserRound, LogOut } from 'lucide-react';
+import { LayoutDashboard, Plus, Award, UserRound, LogOut, Building2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { userName } from '@/lib/accounts';
 import Logo from '@/components/Logo';
@@ -9,6 +9,7 @@ const NAV = {
   company: [
     { to: '/company', label: 'Painel', icon: LayoutDashboard },
     { to: '/company/jobs/new', label: 'Nova vaga', icon: Plus },
+    { to: '/company/profile', label: 'Perfil', icon: Building2 },
   ],
   candidate: [
     { to: '/candidate', label: 'Skill Passport', icon: Award },

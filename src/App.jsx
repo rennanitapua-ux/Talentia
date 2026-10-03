@@ -22,6 +22,8 @@ import CandidateResults from '@/pages/CandidateResults';
 import CandidatePassport from '@/pages/CandidatePassport';
 import CandidateProfile from '@/pages/CandidateProfile';
 import CompanyCompare from '@/pages/CompanyCompare';
+import CompanyOnboarding from '@/pages/CompanyOnboarding';
+import CompanyProfilePage from '@/pages/CompanyProfilePage';
 import Onboarding from '@/pages/Onboarding';
 import LoginRedirect from '@/components/LoginRedirect';
 // Add page imports here
@@ -60,6 +62,8 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute unauthenticatedElement={<LoginRedirect />} />}>
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/company" element={<CompanyDashboard />} />
+        <Route path="/company/onboarding" element={<CompanyOnboarding />} />
+        <Route path="/company/profile" element={<CompanyProfilePage />} />
         <Route path="/company/jobs/new" element={<CompanyJobCreate />} />
         <Route path="/company/jobs/:id" element={<CompanyJobDetail />} />
         <Route path="/company/candidates/:id" element={<CompanyCandidateDetail />} />

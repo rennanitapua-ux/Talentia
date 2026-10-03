@@ -57,6 +57,27 @@
     "completed": {
       "type": "boolean",
       "default": false
+    },
+    "profile_visible": {
+      "type": "boolean",
+      "default": true,
+      "description": "Perfil vis\u00edvel para empresas"
+    },
+    "resume_visible": {
+      "type": "boolean",
+      "default": true
+    },
+    "phone_visible": {
+      "type": "boolean",
+      "default": false
+    },
+    "email_visible": {
+      "type": "boolean",
+      "default": false
+    },
+    "allow_contact": {
+      "type": "boolean",
+      "default": true
     }
   },
   "required": [

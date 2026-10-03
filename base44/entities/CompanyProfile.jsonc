@@ -1,0 +1,199 @@
+{
+  "name": "CompanyProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio dono da empresa"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Raz\u00e3o social ou nome da empresa"
+    },
+    "trade_name": {
+      "type": "string",
+      "description": "Nome fantasia"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CNPJ da empresa \u2014 usado para identifica\u00e7\u00e3o e preven\u00e7\u00e3o de duplicidade"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    },
+    "linkedin": {
+      "type": "string"
+    },
+    "instagram": {
+      "type": "string"
+    },
+    "founded_year": {
+      "type": "number"
+    },
+    "employee_count": {
+      "type": "string",
+      "enum": [
+        "1-10",
+        "11-50",
+        "51-200",
+        "201-500",
+        "501-1000",
+        "1000+"
+      ]
+    },
+    "sector": {
+      "type": "string"
+    },
+    "subsector": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string",
+      "default": "Brasil"
+    },
+    "state": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "cep": {
+      "type": "string"
+    },
+    "street": {
+      "type": "string"
+    },
+    "number": {
+      "type": "string"
+    },
+    "complement": {
+      "type": "string"
+    },
+    "neighborhood": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "description": "Texto livre: o que faz, produtos/servi\u00e7os, quem atende, como funciona"
+    },
+    "valued": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "O que \u00e9 mais valorizado na empresa"
+    },
+    "decision_making": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Como a empresa toma decis\u00f5es"
+    },
+    "autonomy_level": {
+      "type": "string",
+      "enum": [
+        "Baixa",
+        "Moderada",
+        "Alta",
+        "Muito alta"
+      ]
+    },
+    "autonomy_description": {
+      "type": "string"
+    },
+    "management_style": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "error_handling": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "error_description": {
+      "type": "string"
+    },
+    "collaboration": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "communication": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "work_rhythm": {
+      "type": "string",
+      "enum": [
+        "Previs\u00edvel",
+        "Moderado",
+        "Acelerado",
+        "Muito acelerado",
+        "Vari\u00e1vel"
+      ]
+    },
+    "rhythm_description": {
+      "type": "string"
+    },
+    "work_environment": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "what_succeeds": {
+      "type": "string",
+      "description": "O que faz uma pessoa dar certo na empresa"
+    },
+    "what_doesnt_work": {
+      "type": "string",
+      "description": "O que costuma gerar dificuldades na empresa"
+    },
+    "purpose": {
+      "type": "string",
+      "description": "Por que a empresa existe"
+    },
+    "mission": {
+      "type": "string"
+    },
+    "vision": {
+      "type": "string"
+    },
+    "values": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "expected_behavior": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Valores com comportamento esperado \u2014 valor \u2192 comportamento"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "user_id",
+    "company_name"
+  ]
+}
