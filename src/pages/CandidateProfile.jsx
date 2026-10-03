@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 import Logo from '@/components/Logo';
 import Background from '@/components/Background';
 import { maskCPF, validateCPF, maskCEP, fetchAddressByCEP } from '@/lib/cpfUtils';
+import { extractResume, mergeExtracted } from '@/lib/ai/extractResume';
 
 export default function CandidateProfile() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function CandidateProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
+  const [extractingResume, setExtractingResume] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
   const [cpfError, setCpfError] = useState('');
@@ -113,6 +115,18 @@ export default function CandidateProfile() {
       const result = await base44.integrations.Core.UploadPublicFile({ file });
       update('resume_url', result.file_url);
       update('resume_name', file.name);
+      // Extração por IA — preenche campos vazios do formulário
+      setExtractingResume(true);
+      try {
+        const extracted = await extractResume(result.file_url);
+        if (extracted) {
+          setForm(f => mergeExtracted(f, extracted));
+        }
+      } catch (e) {
+        console.warn('Resume extraction failed', e);
+      } finally {
+        setExtractingResume(false);
+      }
     } catch (err) {
       alert('Erro ao enviar currículo. Tente novamente.');
     } finally {
@@ -355,15 +369,23 @@ export default function CandidateProfile() {
               <Field label="Currículo / CV">
                 <input ref={fileResumeRef} type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" onChange={handleResumeUpload} className="hidden" />
                 {form.resume_url ? (
-                  <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl p-4">
-                    <FileCheck2 className="w-5 h-5 text-primary flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-primary truncate">{form.resume_name || 'Currículo enviado'}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">Clique para trocar o arquivo</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl p-4">
+                      <FileCheck2 className="w-5 h-5 text-primary flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-primary truncate">{form.resume_name || 'Currículo enviado'}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">Clique para trocar o arquivo</div>
+                      </div>
+                      <button onClick={() => fileResumeRef.current?.click()} disabled={extractingResume} className="text-xs text-muted-foreground hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-accent disabled:opacity-50">
+                        Trocar
+                      </button>
                     </div>
-                    <button onClick={() => fileResumeRef.current?.click()} className="text-xs text-muted-foreground hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-accent">
-                      Trocar
-                    </button>
+                    {extractingResume && (
+                      <div className="flex items-center gap-2 text-xs text-primary">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Extraindo dados do currículo com IA…
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <button
