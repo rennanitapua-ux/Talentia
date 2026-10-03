@@ -4,7 +4,8 @@ import { TrendingUp, TrendingDown } from 'lucide-react';
 import { getScoreColor } from '@/lib/skillScoring';
 
 function Bar({ name, count, avg, demonstrated, strong, evaluated, required }) {
-  const pct = evaluated ? Math.round((count / evaluated) * 100) : 0;
+  const barPct = avg != null ? avg : 0;
+  const hasScore = avg != null;
   return (
     <div className="py-2.5 border-b border-border/60 last:border-0">
       <div className="flex items-center justify-between mb-1.5">
@@ -12,14 +13,14 @@ function Bar({ name, count, avg, demonstrated, strong, evaluated, required }) {
           <span className="text-sm font-medium text-foreground">{name}</span>
           {required && <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">exigida</span>}
         </div>
-        <span className="text-xs font-mono text-muted-foreground">{count}/{evaluated} · {pct}%</span>
+        <span className="text-xs font-mono text-muted-foreground">{count}/{evaluated} candidatos</span>
       </div>
       <div className="h-2 rounded-full bg-muted overflow-hidden">
-        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: avg != null ? getScoreColor(avg) : 'hsl(217 91% 60%)' }} />
+        <div className="h-full rounded-full transition-all" style={{ width: `${barPct}%`, background: hasScore ? getScoreColor(avg) : 'hsl(217 14% 40%)' }} />
       </div>
       <div className="flex items-center justify-between mt-1 text-[11px] text-muted-foreground/70">
         <span>demonstraram: {demonstrated} · evidência forte: {strong}</span>
-        {avg != null && <span>score médio: {avg}/100</span>}
+        {hasScore ? <span className="font-mono">score médio: {avg}/100</span> : <span>sem avaliações</span>}
       </div>
     </div>
   );
