@@ -11,9 +11,11 @@ import IntegrityCard from '@/components/company/IntegrityCard';
 import BehaviorProfile from '@/components/company/BehaviorProfile';
 import SoftSkillsDetail from '@/components/company/SoftSkillsDetail';
 import CompetencyLevels from '@/components/company/CompetencyLevels';
+import BehaviorObservations from '@/components/company/BehaviorObservations';
 import SituationReplay from '@/components/company/SituationReplay';
 import { getRecommendation } from '@/lib/skillScoring';
 import { getSituations } from '@/lib/situations';
+import { seatStatus } from '@/lib/seats';
 
 const HIRING_STATUS = {
   em_analise: { label: 'Em Análise', color: '#64748b', bg: 'bg-muted', text: 'text-muted-foreground' },
@@ -43,10 +45,28 @@ export default function CompanyCandidateDetail() {
   }, [id]);
 
   const updateHiringStatus = async (status) => {
+    // Ao aprovar, verifica assentos disponíveis
+    if (status === 'aprovado' && sim.hiring_status !== 'aprovado' && job) {
+      const allSims = await base44.entities.Simulation.filter({ job_id: job.id }, '-overall_score', 200);
+      const seats = seatStatus(job, allSims);
+      if (seats.full) {
+        const ok = window.confirm(`Todos os ${seats.openings} assentos já estão preenchidos. Aprovar mesmo assim?`);
+        if (!ok) return;
+      }
+    }
     setUpdatingStatus(true);
     try {
       await base44.entities.Simulation.update(sim.id, { hiring_status: status });
       setSim({ ...sim, hiring_status: status });
+      // Se aprovou e lotou a vaga, encerra automaticamente
+      if (status === 'aprovado' && job) {
+        const allSims = await base44.entities.Simulation.filter({ job_id: job.id }, '-overall_score', 200);
+        const seats = seatStatus(job, allSims);
+        if (seats.full && job.status === 'published') {
+          await base44.entities.Job.update(job.id, { status: 'closed' });
+          setJob({ ...job, status: 'closed' });
+        }
+      }
     } catch (e) {
       alert('Erro ao atualizar status.');
     } finally {
@@ -172,6 +192,9 @@ export default function CompanyCandidateDetail() {
 
         {/* Required vs demonstrated levels */}
         <CompetencyLevels sim={sim} />
+
+        {/* Behavioral observations during assessment */}
+        <BehaviorObservations sim={sim} />
 
         {/* Summary */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">

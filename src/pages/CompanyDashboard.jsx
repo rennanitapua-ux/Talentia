@@ -8,6 +8,7 @@ import Background from '@/components/Background';
 import MetricCard from '@/components/company/MetricCard';
 import JobRow from '@/components/company/JobRow';
 import TopCandidates from '@/components/company/TopCandidates';
+import { filledSeats } from '@/lib/seats';
 
 export default function CompanyDashboard() {
   const navigate = useNavigate();
@@ -86,7 +87,8 @@ export default function CompanyDashboard() {
                     {jobs.map((job) => (
                       <JobRow key={job.id} job={job}
                         evaluated={completed.filter((s) => s.job_id === job.id).length}
-                        inProgress={inProgress.filter((s) => s.job_id === job.id).length} />
+                        inProgress={inProgress.filter((s) => s.job_id === job.id).length}
+                        filledSeats={filledSeats(completed.filter((s) => s.job_id === job.id))} />
                     ))}
                   </div>
                 )}

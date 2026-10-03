@@ -86,6 +86,10 @@
       "type": "object",
       "description": "N\u00edvel 0-10 demonstrado vs. exigido por compet\u00eancia"
     },
+    "behavioral_observations": {
+      "type": "object",
+      "description": "Observa\u00e7\u00f5es de comportamento durante a simula\u00e7\u00e3o"
+    },
     "overall_score": {
       "type": "number"
     },

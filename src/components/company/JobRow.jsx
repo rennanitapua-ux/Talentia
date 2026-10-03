@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Copy, Check, ChevronRight, Users } from 'lucide-react';
+import { Copy, Check, ChevronRight, Users, Armchair } from 'lucide-react';
 import { LEVELS, getSituations } from '@/lib/situations';
 
-export default function JobRow({ job, evaluated, inProgress }) {
+export default function JobRow({ job, evaluated, inProgress, filledSeats = 0 }) {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
@@ -37,6 +37,10 @@ export default function JobRow({ job, evaluated, inProgress }) {
         <Users className="w-4 h-4" />
         <span className="text-foreground font-semibold">{evaluated}</span>
         {inProgress > 0 && <span className="text-xs">+{inProgress}</span>}
+      </div>
+      <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground" title="Assentos preenchidos / total">
+        <Armchair className={`w-4 h-4 ${filledSeats >= (job.openings || 1) ? 'text-emerald-400' : 'text-muted-foreground/70'}`} />
+        <span className={filledSeats >= (job.openings || 1) ? 'text-emerald-400 font-semibold' : 'text-foreground/80'}>{filledSeats}/{job.openings || 1}</span>
       </div>
       <button onClick={copy} className="h-9 px-3 rounded-lg border border-border text-xs flex items-center gap-1.5 hover:bg-muted transition-colors">
         {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}

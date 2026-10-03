@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layers, GitCompare, Link2, Check, Copy, Filter, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layers, GitCompare, Link2, Check, Copy, Filter, ChevronDown, Armchair } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
 import { getEvidenceMarker } from '@/lib/skillScoring';
 import { getSituations } from '@/lib/situations';
 import SituationPreview from '@/components/jobs/SituationPreview';
+import { seatStatus } from '@/lib/seats';
 
 const HIRING_STATUS = {
   em_analise: { label: 'Em Análise', color: 'text-muted-foreground', bg: 'bg-muted', dot: 'bg-muted-foreground' },
@@ -64,6 +65,7 @@ export default function CompanyJobDetail() {
   const shareUrl = `${window.location.origin}/candidate/simulate/${id}`;
   const completedSims = simulations.filter(s => s.status === 'completed');
   const inProgressSims = simulations.filter(s => s.status === 'in_progress');
+  const seats = seatStatus(job, simulations);
 
   const copyLink = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -160,7 +162,24 @@ export default function CompanyJobDetail() {
           <div className="bg-card/60 border border-border rounded-xl p-4">
             <Layers className="w-4 h-4 text-amber-400 mb-2" />
             <div className="text-2xl font-bold font-mono">{getSituations(job).length}</div>
-            <div className="text-xs text-muted-foreground/70">Situações · {job.openings || 1} {(job.openings || 1) > 1 ? 'vagas' : 'vaga'}</div>
+            <div className="text-xs text-muted-foreground/70">Situações</div>
+          </div>
+        </div>
+
+        {/* Seat tracker */}
+        <div className="bg-card/60 border border-border rounded-2xl p-5 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Armchair className={`w-4 h-4 ${seats.full ? 'text-emerald-400' : 'text-primary'}`} />
+              <span className="text-sm font-semibold text-foreground">Assentos</span>
+              <span className="text-xs text-muted-foreground/70">{seats.filled} de {seats.openings} preenchidos</span>
+            </div>
+            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${seats.full ? 'bg-emerald-500/15 text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
+              {seats.full ? 'Lotada' : `${seats.available} ${seats.available > 1 ? 'disponíveis' : 'disponível'}`}
+            </span>
+          </div>
+          <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+            <div className={`h-full rounded-full transition-all ${seats.full ? 'bg-emerald-500' : 'bg-primary'}`} style={{ width: `${seats.pct}%` }} />
           </div>
         </div>
 

@@ -211,6 +211,34 @@ Responda SOMENTE com JSON válido:
   const overall_score = Math.round(responseAvg * 0.6 + skillAvg * 0.4);
   const weight = 1 / competencies.length;
 
+  // Observações de comportamento durante a avaliação
+  const times = responses.map((r) => r.time_spent_seconds || 0).filter(Boolean);
+  const avgTime = times.length ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
+  const minTime = times.length ? Math.min(...times) : 0;
+  const maxTime = times.length ? Math.max(...times) : 0;
+  const timeVariance = times.length > 1 ? Math.round(Math.sqrt(times.reduce((s, t) => s + Math.pow(t - avgTime, 2), 0) / times.length)) : 0;
+  const rushed = times.filter((t) => t > 0 && t < 15).length;
+  const longPauses = times.filter((t) => t > 240).length;
+  const totalChars = responses.reduce((s, r) => s + (r.typing?.chars || (r.justification || '').length || 0), 0);
+  const avgChars = responses.length ? Math.round(totalChars / responses.length) : 0;
+  const bulkInserts = responses.reduce((s, r) => s + (r.typing?.bulk_inserts || 0), 0);
+  const blockedPastes = responses.reduce((s, r) => s + (r.typing?.blocked_pastes || 0), 0);
+  const observations = [];
+  if (rushed > 0) observations.push({ type: 'rushed', label: `${rushed} resposta(s) muito rápida(s)`, detail: 'Tempo abaixo de 15s pode indicar baixa reflexão.', severity: rushed > 1 ? 'warn' : 'info' });
+  if (longPauses > 0) observations.push({ type: 'pause', label: `${longPauses} pausa(s) longa(s)`, detail: 'Mais de 4 min em uma questão pode indicar hesitação ou dúvida.', severity: 'info' });
+  if (avgTime > 0 && timeVariance > avgTime * 0.6) observations.push({ type: 'inconsistent', label: 'Ritmo inconsistente', detail: 'Grande variação de tempo entre as questões.', severity: 'info' });
+  if (bulkInserts > 0) observations.push({ type: 'bulk', label: `${bulkInserts} inserção(ões) de bloco de texto`, detail: 'Texto inserido em massa — possível uso de fonte externa.', severity: 'warn' });
+  if (blockedPastes > 0) observations.push({ type: 'paste', label: `${blockedPastes} tentativa(s) de colar bloqueada(s)`, detail: 'Tentou colar texto na resposta (bloqueado).', severity: 'warn' });
+  if (integrity?.tab_switches > 0) observations.push({ type: 'tab', label: `${integrity.tab_switches} saída(s) de aba`, detail: 'Mudou de aba durante a simulação.', severity: 'warn' });
+  if (avgChars > 0 && avgChars < 60) observations.push({ type: 'short', label: 'Respostas curtas', detail: `Média de ${avgChars} caracteres por resposta.`, severity: 'info' });
+  if (observations.length === 0) observations.push({ type: 'steady', label: 'Comportamento estável', detail: 'Ritmo consistente, sem sinais de atalho ou distração.', severity: 'ok' });
+  const behavioral_observations = {
+    avg_time_per_question: avgTime, min_time: minTime, max_time: maxTime,
+    time_variance: timeVariance, rushed_answers: rushed, long_pauses: longPauses,
+    avg_chars: avgChars, bulk_inserts: bulkInserts, blocked_pastes: blockedPastes,
+    observations,
+  };
+
   // Níveis 0-10: exigido pela vaga vs. demonstrado pelo candidato
   const reqMap = {};
   (job.competency_requirements || []).forEach((r) => { reqMap[r.name] = r.required_level; });
@@ -296,6 +324,7 @@ Responda SOMENTE com JSON válido:
     score_confidence,
     skill_graph: skill_scores,
     demonstrated_levels,
+    behavioral_observations,
     score_composition: competencies.map((c) => ({ competency: c, score: skill_scores[c], weight, contribution: skill_scores[c] * weight * 0.4 })),
     skill_dna: ai.skill_dna || { strengths: [], growth_areas: [] },
     hard_skills: ai.hard_skills || [],
