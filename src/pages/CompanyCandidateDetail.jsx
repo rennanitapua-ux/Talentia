@@ -14,6 +14,7 @@ import CompetencyLevels from '@/components/company/CompetencyLevels';
 import BehaviorObservations from '@/components/company/BehaviorObservations';
 import EvidenceCategories from '@/components/company/EvidenceCategories';
 import SituationReplay from '@/components/company/SituationReplay';
+import ReportExporter from '@/components/company/ReportExporter';
 import AderenciaPanel from '@/components/company/AderenciaPanel';
 import CandidateProfessionalProfile from '@/components/company/CandidateProfessionalProfile';
 import { getRecommendation } from '@/lib/skillScoring';
@@ -108,17 +109,18 @@ export default function CompanyCandidateDetail() {
             <div className="text-xs text-muted-foreground/70">{sim.job_title} · {sim.company_name}</div>
           </div>
           <SkillScoreBadge score={sim.overall_score || 0} size="md" />
+          <ReportExporter candidateName={sim.candidate_name} jobTitle={sim.job_title} />
           <button
             onClick={() => window.print()}
             className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-muted border border-border text-foreground/80 hover:bg-accent text-xs font-medium transition-colors"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Exportar</span>
+            <span className="hidden sm:inline">Imprimir</span>
           </button>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="max-w-6xl mx-auto px-6 py-10 report-export-area">
         {/* Candidate profile + hiring status */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-card">

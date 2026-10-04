@@ -10,8 +10,7 @@ const NAV = {
     { to: '/company', label: 'Painel', icon: LayoutDashboard },
     { to: '/company/jobs/new', label: 'Nova vaga', icon: Plus },
     { to: '/company/intelligence', label: 'Inteligência', icon: Brain },
-    { to: '/company', label: 'Processos', icon: ClipboardList },
-    { to: '/company/intelligence', label: 'Relatórios', icon: FileBarChart },
+    { to: '/company/processes', label: 'Processos', icon: ClipboardList },
     { to: '/company/profile', label: 'Perfil', icon: Building2 },
   ],
   candidate: [

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layers, GitCompare, Link2, Check, Copy, Filter, ChevronDown, Armchair, Brain, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layers, GitCompare, Link2, Check, Copy, Filter, ChevronDown, Armchair, Brain, BarChart3, RefreshCw, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
 import { getEvidenceMarker } from '@/lib/skillScoring';
@@ -9,6 +9,8 @@ import { getSituations } from '@/lib/situations';
 import SituationPreview from '@/components/jobs/SituationPreview';
 import { seatStatus } from '@/lib/seats';
 import { ADERENCIA, ADERENCIA_ORDER } from '@/lib/aderencia';
+import { generateAssessment, buildFallbackAssessment } from '@/lib/ai/generateAssessment';
+import AssessmentVersionHistory from '@/components/company/AssessmentVersionHistory';
 
 const HIRING_STATUS = {
   em_analise: { label: 'Em Análise', color: 'text-muted-foreground', bg: 'bg-muted', dot: 'bg-muted-foreground' },
@@ -31,6 +33,7 @@ export default function CompanyJobDetail() {
   const [scoreFilter, setScoreFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -42,6 +45,42 @@ export default function CompanyJobDetail() {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [id]);
+
+  // Regenera a simulação preservando a versão atual no histórico.
+  // Candidatos que já responderam continuam vinculados à versão antiga.
+  const regenerateAssessment = async (useFallback = false) => {
+    if (!job) return;
+    const hasResponses = simulations.some((s) => (s.responses || []).length > 0);
+    if (hasResponses) {
+      const ok = window.confirm('Já existem candidatos que responderam a esta simulação. A versão atual será preservada no histórico e novos candidatos responderão à nova versão. Continuar?');
+      if (!ok) return;
+    }
+    setRegenerating(true);
+    try {
+      const data = useFallback ? buildFallbackAssessment(job, (job.assessment?.situations?.length) || 12) : await generateAssessment(job, (job.assessment?.situations?.length) || 12);
+      if (!data) { alert('Não conseguimos gerar a simulação agora. Tente novamente.'); return; }
+      const versions = job.assessment_versions || [];
+      if (job.assessment) {
+        versions.push({
+          saved_at: new Date().toISOString(),
+          source: job.assessment.source,
+          situations_count: (job.assessment.situations || []).length,
+          note: hasResponses ? 'Regenerada após respostas' : 'Regenerada',
+          assessment: job.assessment,
+        });
+      }
+      const updated = await base44.entities.Job.update(job.id, {
+        assessment: { version: 2, source: data.source, generated_at: new Date().toISOString(), situations: data.situations },
+        virtual_company_profile: data.virtual_company_profile || job.virtual_company_profile,
+        assessment_versions: versions,
+      });
+      setJob(updated);
+    } catch (e) {
+      alert('Erro ao regenerar simulação.');
+    } finally {
+      setRegenerating(false);
+    }
+  };
 
   const ranked = useMemo(() => {
     let list = [...simulations].sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0));
@@ -460,10 +499,27 @@ export default function CompanyJobDetail() {
         )}
 
         {tab === 'scenarios' && (
-          <div className="space-y-3">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="text-sm text-muted-foreground">
+                <span className="text-foreground font-semibold">{getSituations(job).length} situações</span>
+                {(job.assessment_versions || []).length > 0 && <span className="ml-2 text-brand-violet">· {(job.assessment_versions || []).length} versão{(job.assessment_versions || []).length > 1 ? 'ões' : ''} anterior{(job.assessment_versions || []).length > 1 ? 'es' : ''}</span>}
+              </div>
+              <button
+                onClick={() => regenerateAssessment(false)}
+                disabled={regenerating}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-border text-xs font-medium text-foreground/80 hover:bg-muted transition-colors disabled:opacity-60"
+              >
+                {regenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                {regenerating ? 'Gerando…' : 'Regenerar simulação'}
+              </button>
+            </div>
             {getSituations(job).map((s, i) => (
               <SituationPreview key={s.id || i} situation={s} index={i} />
             ))}
+            {(job.assessment_versions || []).length > 0 && (
+              <AssessmentVersionHistory versions={job.assessment_versions} currentCount={getSituations(job).length} />
+            )}
           </div>
         )}
 

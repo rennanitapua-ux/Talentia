@@ -22,6 +22,7 @@ import CandidateResults from '@/pages/CandidateResults';
 import CandidatePassport from '@/pages/CandidatePassport';
 import CandidateProfile from '@/pages/CandidateProfile';
 import CompanyCompare from '@/pages/CompanyCompare';
+import CompanyProcesses from '@/pages/CompanyProcesses';
 import CompanyIntelligence from '@/pages/CompanyIntelligence';
 import JobIntelligence from '@/pages/JobIntelligence';
 import JobApplication from '@/pages/JobApplication';
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute unauthenticatedElement={<LoginRedirect />} />}>
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/company" element={<CompanyDashboard />} />
+        <Route path="/company/processes" element={<CompanyProcesses />} />
         <Route path="/company/onboarding" element={<CompanyOnboarding />} />
         <Route path="/company/profile" element={<CompanyProfilePage />} />
         <Route path="/company/jobs/new" element={<CompanyJobCreate />} />
