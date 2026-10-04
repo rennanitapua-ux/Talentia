@@ -5,7 +5,7 @@ import html2canvas from 'html2canvas';
 
 // Gera um PDF do relatório do candidato capturando o conteúdo da página.
 // O seletor padrão captura o <main> do CompanyCandidateDetail.
-export default function ReportExporter({ candidateName, jobTitle, targetSelector = '.report-export-area', fileName }) {
+export default function ReportExporter({ candidateName, targetSelector = '.report-export-area', fileName }) {
   const [exporting, setExporting] = useState(false);
 
   const handleExport = async () => {
@@ -43,7 +43,7 @@ export default function ReportExporter({ candidateName, jobTitle, targetSelector
 
       const safeName = (candidateName || 'candidato').replace(/[^a-zA-Z0-9]/g, '_');
       pdf.save(fileName || `TalentIA_${safeName}.pdf`);
-    } catch (e) {
+    } catch {
       // Fallback para o print nativo
       window.print();
     } finally {

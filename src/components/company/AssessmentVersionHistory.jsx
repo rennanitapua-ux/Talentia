@@ -4,7 +4,7 @@ import { History, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 
 // Mostra o histórico de versões anteriores da simulação da vaga.
 // Cada versão preserva as perguntas que candidatos já responderam.
-export default function AssessmentVersionHistory({ versions = [], currentCount }) {
+export default function AssessmentVersionHistory({ versions = [] }) {
   const [expanded, setExpanded] = useState(null);
 
   if (!versions || versions.length === 0) return null;

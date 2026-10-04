@@ -71,7 +71,7 @@ export default function CompanyCandidateDetail() {
           setJob({ ...job, status: 'closed' });
         }
       }
-    } catch (e) {
+    } catch {
       alert('Erro ao atualizar status.');
     } finally {
       setUpdatingStatus(false);
@@ -84,7 +84,6 @@ export default function CompanyCandidateDetail() {
   const rec = getRecommendation(sim.overall_score || 0);
   const responses = sim.responses || [];
   const competencies = Object.keys(sim.skill_scores || {});
-  const aiFlags = sim.ai_flags || [];
   const totalTime = sim.total_time_seconds || responses.reduce((sum, r) => sum + (r.time_spent_seconds || 0), 0);
   const hiringStatus = HIRING_STATUS[sim.hiring_status] || HIRING_STATUS.em_analise;
 

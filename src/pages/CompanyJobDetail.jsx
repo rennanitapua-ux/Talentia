@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layers, GitCompare, Link2, Check, Copy, Filter, ChevronDown, Armchair, Brain, BarChart3, RefreshCw, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Play, Eye, Target, Layers, GitCompare, Link2, Check, Copy, Filter, ChevronDown, Armchair, Brain, BarChart3, RefreshCw, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
-import { getEvidenceMarker } from '@/lib/skillScoring';
 import { getSituations } from '@/lib/situations';
 import SituationPreview from '@/components/jobs/SituationPreview';
 import { seatStatus } from '@/lib/seats';
@@ -75,7 +74,7 @@ export default function CompanyJobDetail() {
         assessment_versions: versions,
       });
       setJob(updated);
-    } catch (e) {
+    } catch {
       alert('Erro ao regenerar simulação.');
     } finally {
       setRegenerating(false);

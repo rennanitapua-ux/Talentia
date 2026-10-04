@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ClipboardList, RefreshCw, Armchair, Eye, ChevronRight, Filter } from 'lucide-react';
+import { ClipboardList, RefreshCw, Armchair, ChevronRight, Filter } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import AppHeader from '@/components/AppHeader';
 import Background from '@/components/Background';
