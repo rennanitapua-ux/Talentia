@@ -20,6 +20,7 @@ import CandidateProfessionalProfile from '@/components/company/CandidateProfessi
 import { getRecommendation } from '@/lib/skillScoring';
 import { getSituations } from '@/lib/situations';
 import { seatStatus } from '@/lib/seats';
+import { useSignedUrl } from '@/lib/useSignedUrl';
 
 const HIRING_STATUS = {
   em_analise: { label: 'Em Análise', color: '#64748b', bg: 'bg-muted', text: 'text-muted-foreground' },
@@ -36,6 +37,8 @@ export default function CompanyCandidateDetail() {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const { url: photoUrl } = useSignedUrl(sim?.candidate_profile_photo);
+  const { url: resumeUrl } = useSignedUrl(sim?.candidate_resume_url);
 
   useEffect(() => {
     base44.entities.Simulation.get(id).then(async (s) => {
@@ -126,7 +129,7 @@ export default function CompanyCandidateDetail() {
             <div className="flex items-start gap-4 mb-5">
               <div className="w-16 h-16 rounded-2xl bg-muted border border-border overflow-hidden flex items-center justify-center text-xl font-bold flex-shrink-0">
                 {sim.candidate_profile_photo ? (
-                  <img src={sim.candidate_profile_photo} alt={sim.candidate_name} className="w-full h-full object-cover" />
+                  <img src={photoUrl} alt={sim.candidate_name} className="w-full h-full object-cover" />
                 ) : (
                   (sim.candidate_name || 'U').charAt(0).toUpperCase()
                 )}
@@ -139,8 +142,8 @@ export default function CompanyCandidateDetail() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {sim.candidate_resume_url && (
-                <a href={sim.candidate_resume_url} target="_blank" rel="noopener noreferrer"
+              {resumeUrl && (
+                <a href={resumeUrl} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 px-3.5 py-3 rounded-xl bg-primary/5 border border-primary/20 text-primary text-xs font-medium hover:bg-[hsl(190,85%,45%,0.12)] transition-colors">
                   <FileText className="w-4 h-4" />
                   Ver Currículo

@@ -8,6 +8,7 @@ import Background from '@/components/Background';
 import { maskCPF, validateCPF, maskCEP, fetchAddressByCEP } from '@/lib/cpfUtils';
 import { extractResume, mergeExtracted } from '@/lib/ai/extractResume';
 import CandidateProfessionalSections from '@/components/candidate/CandidateProfessionalSections';
+import { useSignedUrl, getSignedUrl } from '@/lib/useSignedUrl';
 
 export default function CandidateProfile() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export default function CandidateProfile() {
   });
   const fileResumeRef = useRef(null);
   const filePhotoRef = useRef(null);
+  const { url: photoUrl } = useSignedUrl(form.profile_photo_url);
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -126,13 +128,14 @@ export default function CandidateProfile() {
     if (!file) return;
     setUploadingResume(true);
     try {
-      const result = await base44.integrations.Core.UploadPublicFile({ file });
-      update('resume_url', result.file_url);
+      const result = await base44.integrations.Core.UploadPrivateFile({ file });
+      update('resume_url', result.file_uri);
       update('resume_name', file.name);
       // Extração por IA — preenche campos vazios do formulário
       setExtractingResume(true);
       try {
-        const extracted = await extractResume(result.file_url);
+        const signedUrl = await getSignedUrl(result.file_uri);
+        const extracted = await extractResume(signedUrl);
         if (extracted) {
           setForm(f => mergeExtracted(f, extracted));
         }
@@ -153,8 +156,8 @@ export default function CandidateProfile() {
     if (!file) return;
     setUploadingPhoto(true);
     try {
-      const result = await base44.integrations.Core.UploadPublicFile({ file });
-      update('profile_photo_url', result.file_url);
+      const result = await base44.integrations.Core.UploadPrivateFile({ file });
+      update('profile_photo_url', result.file_uri);
     } catch (err) {
       alert('Erro ao enviar foto. Tente novamente.');
     } finally {
@@ -243,7 +246,7 @@ export default function CandidateProfile() {
               <div className="relative">
                 <div className="w-20 h-20 rounded-2xl bg-muted border border-border overflow-hidden flex items-center justify-center">
                   {form.profile_photo_url ? (
-                    <img src={form.profile_photo_url} alt="Foto" className="w-full h-full object-cover" />
+                    <img src={photoUrl} alt="Foto" className="w-full h-full object-cover" />
                   ) : (
                     <Camera className="w-7 h-7 text-muted-foreground" />
                   )}

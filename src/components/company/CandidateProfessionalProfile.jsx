@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Briefcase, GraduationCap, Award, Languages, Target, User, FileText, MapPin } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useSignedUrl } from '@/lib/useSignedUrl';
 
 // Perfil profissional completo do candidato para a empresa.
 // Carrega o CandidateProfile pelo candidate_user_id da simulação.
 export default function CandidateProfessionalProfile({ sim }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { url: resumeUrl } = useSignedUrl(profile?.resume_url);
 
   useEffect(() => {
     if (!sim?.candidate_user_id) { setLoading(false); return; }
@@ -106,8 +108,8 @@ export default function CandidateProfessionalProfile({ sim }) {
 
       {/* Currículo + localização */}
       <div className="grid grid-cols-2 gap-4">
-        {profile.resume_url && (
-          <a href={profile.resume_url} target="_blank" rel="noopener noreferrer"
+        {resumeUrl && (
+          <a href={resumeUrl} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-3 rounded-xl bg-primary/5 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/10 transition-colors">
             <FileText className="w-4 h-4" /> Ver currículo original
           </a>
