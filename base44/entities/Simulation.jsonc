@@ -11,6 +11,10 @@
     "company_name": {
       "type": "string"
     },
+    "company_user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio-empresa dono da vaga \u2014 usado para RLS (empresa acessa suas simula\u00e7\u00f5es)"
+    },
     "candidate_name": {
       "type": "string"
     },
@@ -197,5 +201,61 @@
   "required": [
     "job_id",
     "candidate_name"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.candidate_user_id": "{{user.id}}"
+        },
+        {
+          "data.company_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.candidate_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.candidate_user_id": "{{user.id}}"
+        },
+        {
+          "data.company_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.company_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
 }
