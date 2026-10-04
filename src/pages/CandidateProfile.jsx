@@ -7,6 +7,7 @@ import Logo from '@/components/Logo';
 import Background from '@/components/Background';
 import { maskCPF, validateCPF, maskCEP, fetchAddressByCEP } from '@/lib/cpfUtils';
 import { extractResume, mergeExtracted } from '@/lib/ai/extractResume';
+import CandidateProfessionalSections from '@/components/candidate/CandidateProfessionalSections';
 
 export default function CandidateProfile() {
   const navigate = useNavigate();
@@ -23,6 +24,8 @@ export default function CandidateProfile() {
     full_name: '', email: '', phone: '', cpf: '',
     cep: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '',
     linkedin: '', bio: '',
+    birth_date: '', country: 'Brasil', current_role: '', desired_role: '', professional_summary: '',
+    experiences: [], education: [], courses: [], certifications: [], competencies: [], languages: [],
     resume_url: '', resume_name: '', profile_photo_url: '',
     profile_visible: true, resume_visible: true, phone_visible: false, email_visible: false, allow_contact: true,
   });
@@ -51,6 +54,17 @@ export default function CandidateProfile() {
               state: p.state || '',
               linkedin: p.linkedin || '',
               bio: p.bio || '',
+              birth_date: p.birth_date || '',
+              country: p.country || 'Brasil',
+              current_role: p.current_role || '',
+              desired_role: p.desired_role || '',
+              professional_summary: p.professional_summary || '',
+              experiences: p.experiences || [],
+              education: p.education || [],
+              courses: p.courses || [],
+              certifications: p.certifications || [],
+              competencies: p.competencies || [],
+              languages: p.languages || [],
               resume_url: p.resume_url || '',
               resume_name: p.resume_name || '',
               profile_photo_url: p.profile_photo_url || '',
@@ -405,6 +419,10 @@ export default function CandidateProfile() {
                 <p className="text-xs text-muted-foreground/60 mt-2">Formatos: PDF, DOC, DOCX, PNG, JPG. A empresa terá acesso a este arquivo.</p>
               </Field>
             </div>
+
+            {/* Section: Dados profissionais detalhados */}
+            <SectionHeader title="Trajetória profissional" />
+            <CandidateProfessionalSections form={form} update={update} />
 
             {/* Section: Privacidade */}
             <SectionHeader title="Privacidade" />

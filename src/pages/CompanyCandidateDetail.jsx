@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Award, AlertTriangle, MessageSquare, CheckCircle2, Clock, FileText, Phone, Briefcase, Brain, TrendingUp, Download, Printer, Gauge } from 'lucide-react';
+import { ArrowLeft, Award, AlertTriangle, MessageSquare, CheckCircle2, Clock, FileText, Phone, Briefcase, Brain, TrendingUp, Download, Printer, Gauge, User } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillGraph from '@/components/SkillGraph';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
@@ -15,6 +15,7 @@ import BehaviorObservations from '@/components/company/BehaviorObservations';
 import EvidenceCategories from '@/components/company/EvidenceCategories';
 import SituationReplay from '@/components/company/SituationReplay';
 import AderenciaPanel from '@/components/company/AderenciaPanel';
+import CandidateProfessionalProfile from '@/components/company/CandidateProfessionalProfile';
 import { getRecommendation } from '@/lib/skillScoring';
 import { getSituations } from '@/lib/situations';
 import { seatStatus } from '@/lib/seats';
@@ -178,6 +179,15 @@ export default function CompanyCandidateDetail() {
             </div>
           </div>
         </motion.div>
+
+        {/* Perfil profissional completo do candidato */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <User className="w-4 h-4 text-primary" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-primary">Perfil Profissional</span>
+          </div>
+          <CandidateProfessionalProfile sim={sim} />
+        </div>
 
         {/* DISC (clickable for full detail) + integrity */}
         <div className="grid lg:grid-cols-2 gap-6 mb-8">

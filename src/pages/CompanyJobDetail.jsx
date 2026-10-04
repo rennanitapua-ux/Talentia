@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layers, GitCompare, Link2, Check, Copy, Filter, ChevronDown, Armchair, Brain } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layers, GitCompare, Link2, Check, Copy, Filter, ChevronDown, Armchair, Brain, BarChart3 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
 import { getEvidenceMarker } from '@/lib/skillScoring';
 import { getSituations } from '@/lib/situations';
 import SituationPreview from '@/components/jobs/SituationPreview';
 import { seatStatus } from '@/lib/seats';
+import { ADERENCIA, ADERENCIA_ORDER } from '@/lib/aderencia';
 
 const HIRING_STATUS = {
   em_analise: { label: 'Em Análise', color: 'text-muted-foreground', bg: 'bg-muted', dot: 'bg-muted-foreground' },
@@ -195,6 +196,7 @@ export default function CompanyJobDetail() {
           {[
             { id: 'candidates', label: 'Candidatos', icon: Users },
             { id: 'pipeline', label: 'Pipeline', icon: Filter },
+            { id: 'analysis', label: 'Análise', icon: BarChart3 },
             { id: 'scenarios', label: 'Situações', icon: Layers },
             { id: 'competencies', label: 'Competências', icon: Target },
           ].map(t => (
@@ -382,6 +384,78 @@ export default function CompanyJobDetail() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {tab === 'analysis' && (
+          <div className="space-y-6">
+            {/* Distribuição de aderência dos candidatos desta vaga */}
+            <div className="bg-card/60 border border-border rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Distribuição de aderência</h3>
+                </div>
+                <button onClick={() => navigate(`/company/jobs/${id}/intelligence`)} className="flex items-center gap-1.5 text-xs text-brand-violet hover:text-brand-violet/80">
+                  <Brain className="w-3.5 h-3.5" /> Ver inteligência completa da vaga
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground/70 mb-5">Nível demonstrado vs. exigido por competência — somado por candidato. Nunca "nota alta = melhor"; o contexto da vaga define o suficiente.</p>
+              {(() => {
+                const dist = { atende: 0, supera: 0, parcial: 0, abaixo: 0, validar: 0, insuficiente: 0 };
+                completedSims.forEach((s) => {
+                  if (!s.aderencia?.distribution) return;
+                  Object.keys(dist).forEach((k) => { dist[k] += s.aderencia.distribution[k] || 0; });
+                });
+                const max = Math.max(1, ...Object.values(dist));
+                const hasAny = Object.values(dist).some((v) => v > 0);
+                if (!hasAny) return <p className="text-xs text-muted-foreground/50 py-4 text-center">Nenhum candidato avaliado com aderência calculada ainda.</p>;
+                return (
+                  <div className="space-y-2.5">
+                    {ADERENCIA_ORDER.map((key) => {
+                      const entry = Object.values(ADERENCIA).find((a) => a.key === key);
+                      const count = dist[key] || 0;
+                      const pct = Math.round((count / max) * 100);
+                      return (
+                        <div key={key} className="flex items-center gap-3">
+                          <div className="w-28 text-xs text-foreground/80 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full" style={{ background: entry.color }} />
+                            {entry.short}
+                          </div>
+                          <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: entry.color }} />
+                          </div>
+                          <div className="w-10 text-right text-xs font-mono text-muted-foreground">{count}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Resumo por candidato */}
+            <div className="bg-card/60 border border-border rounded-2xl p-6">
+              <h3 className="text-sm font-semibold text-foreground mb-4">Aderência por candidato</h3>
+              <div className="space-y-2">
+                {completedSims.length === 0 && <p className="text-xs text-muted-foreground/50 py-4 text-center">Nenhum candidato avaliado ainda.</p>}
+                {completedSims.map((s) => {
+                  const a = s.aderencia;
+                  const top = a ? Object.entries(a.distribution || {}).sort(([, x], [, y]) => y - x)[0] : null;
+                  const topEntry = top ? Object.values(ADERENCIA).find((ad) => ad.key === top[0]) : null;
+                  return (
+                    <button key={s.id} onClick={() => navigate(`/company/candidates/${s.id}`)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border hover:border-primary/30 transition-all text-left">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold">{s.candidate_name?.charAt(0).toUpperCase()}</div>
+                      <span className="text-sm text-foreground flex-1 truncate">{s.candidate_name}</span>
+                      {topEntry && <span className="text-[10px] px-2 py-0.5 rounded-md" style={{ background: `${topEntry.color}20`, color: topEntry.color }}>{topEntry.short} {top[1]}</span>}
+                      <span className="text-xs font-mono text-muted-foreground">{s.overall_score || 0}</span>
+                      <Eye className="w-3.5 h-3.5 text-muted-foreground/50" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 
