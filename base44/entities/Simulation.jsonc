@@ -15,6 +15,13 @@
       "type": "string",
       "description": "ID do usu\u00e1rio-empresa dono da vaga \u2014 usado para RLS (empresa acessa suas simula\u00e7\u00f5es)"
     },
+    "assessment_snapshot": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Snapshot das situa\u00e7\u00f5es da simula\u00e7\u00e3o no momento em que o candidato iniciou \u2014 preserva o replay mesmo se a empresa regenerar as perguntas"
+    },
     "candidate_name": {
       "type": "string"
     },

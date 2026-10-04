@@ -366,7 +366,7 @@ export default function CompanyCandidateDetail() {
         )}
 
         {/* Situation-by-situation replay */}
-        <SituationReplay responses={responses} situations={getSituations(job)} />
+        <SituationReplay responses={responses} situations={sim.assessment_snapshot?.length ? sim.assessment_snapshot : getSituations(job)} />
       </div>
     </div>
   );

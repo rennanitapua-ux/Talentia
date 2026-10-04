@@ -15,13 +15,14 @@ function typingSuspicion(typing) {
 function localAnalysis({ option, justification, typing, situation }) {
   const len = (justification || '').trim().length;
   const decision = option ? option.score ?? 50 : 50;
-  const just = len < 15 ? 5 : len < 60 ? 30 : len < 160 ? 50 : 60;
+  // Não recompensa texto longo — fallback sem IA dá nota conservadora fixa
+  const just = len < 5 ? 5 : 35;
   const suspicious = typingSuspicion(typing);
   // Soft skill evidence from the situation's own tags + the behavior of the chosen option
   const softSkillEvidence = (situation?.soft_skills || []).map((ss) => {
     const skill = SKILL_BY_KEY[ss.skill];
     const dim = skill?.dimensions.find((d) => d.key === ss.dimension);
-    const hasJust = len > 15;
+    const hasJust = len > 0;
     return {
       skill: ss.skill,
       skill_label: skill?.label || ss.skill,

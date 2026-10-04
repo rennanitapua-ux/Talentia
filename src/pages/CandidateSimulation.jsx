@@ -99,6 +99,7 @@ export default function CandidateSimulation() {
       const { job, user, profile } = ctx;
       current = await base44.entities.Simulation.create({
         job_id: id, job_title: job.title, company_name: job.company_name, company_user_id: job.created_by_id,
+        assessment_snapshot: baseSituations,
         candidate_name: profile?.full_name || userName(user) || 'Candidato',
         candidate_user_id: user.id, candidate_email: user.email,
         candidate_phone: profile?.phone || '', candidate_resume_url: profile?.resume_url || '',
