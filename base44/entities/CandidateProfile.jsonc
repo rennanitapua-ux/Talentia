@@ -18,11 +18,20 @@
       "type": "string",
       "description": "CPF do candidato \u2014 usado para identifica\u00e7\u00e3o"
     },
+    "birth_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de nascimento \u2014 usada apenas para coer\u00eancia de trajet\u00f3ria, nunca como crit\u00e9rio de penaliza\u00e7\u00e3o"
+    },
     "resume_url": {
       "type": "string"
     },
     "resume_name": {
       "type": "string"
+    },
+    "resume_structured": {
+      "type": "object",
+      "description": "Curr\u00edculo estruturado pela IA (apenas dados extra\u00eddos do documento, nunca inventados)"
     },
     "profile_photo_url": {
       "type": "string"
@@ -30,8 +39,129 @@
     "bio": {
       "type": "string"
     },
+    "professional_summary": {
+      "type": "string",
+      "description": "Resumo profissional escrito pelo candidato"
+    },
+    "current_role": {
+      "type": "string",
+      "description": "Cargo atual"
+    },
+    "desired_role": {
+      "type": "string",
+      "description": "Cargo desejado"
+    },
     "linkedin": {
       "type": "string"
+    },
+    "experiences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "current": {
+            "type": "boolean"
+          },
+          "responsibilities": {
+            "type": "string"
+          },
+          "results": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Experi\u00eancias profissionais informadas pelo candidato"
+    },
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "institution": {
+            "type": "string"
+          },
+          "course": {
+            "type": "string"
+          },
+          "degree": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "ongoing": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Forma\u00e7\u00e3o acad\u00eamica"
+    },
+    "courses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "year": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Cursos e certifica\u00e7\u00f5es"
+    },
+    "certifications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "competencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Compet\u00eancias autodeclaradas (opini\u00e3o \u2014 n\u00e3o substitui evid\u00eancia)"
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "basico",
+              "intermediario",
+              "avancado",
+              "fluente",
+              "nativo"
+            ]
+          }
+        }
+      }
     },
     "cep": {
       "type": "string"
@@ -53,6 +183,10 @@
     },
     "state": {
       "type": "string"
+    },
+    "country": {
+      "type": "string",
+      "default": "Brasil"
     },
     "completed": {
       "type": "boolean",

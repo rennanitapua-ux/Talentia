@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layers, GitCompare, Link2, Check, Copy, Filter, ChevronDown, Armchair } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Play, Eye, Award, Briefcase, Target, Layers, GitCompare, Link2, Check, Copy, Filter, ChevronDown, Armchair, Brain } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SkillScoreBadge from '@/components/SkillScoreBadge';
 import { getEvidenceMarker } from '@/lib/skillScoring';
@@ -62,7 +62,7 @@ export default function CompanyJobDetail() {
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   if (!job) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Vaga não encontrada</div>;
 
-  const shareUrl = `${window.location.origin}/candidate/simulate/${id}`;
+  const shareUrl = `${window.location.origin}/candidatura/vaga/${id}`;
   const completedSims = simulations.filter(s => s.status === 'completed');
   const inProgressSims = simulations.filter(s => s.status === 'in_progress');
   const seats = seatStatus(job, simulations);
@@ -102,6 +102,13 @@ export default function CompanyJobDetail() {
             <div className="flex-1 min-w-[200px] bg-card border border-border rounded-lg px-3 py-2.5 text-xs text-foreground/80 font-mono truncate">
               {shareUrl}
             </div>
+            <button
+              onClick={() => navigate(`/company/jobs/${id}/intelligence`)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-medium bg-brand-violet/15 text-brand-violet hover:bg-brand-violet/25 border border-brand-violet/30 transition-colors"
+            >
+              <Brain className="w-3.5 h-3.5" />
+              Inteligência da vaga
+            </button>
             <button
               onClick={copyLink}
               className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors ${

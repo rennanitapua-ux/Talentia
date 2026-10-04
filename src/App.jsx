@@ -23,6 +23,8 @@ import CandidatePassport from '@/pages/CandidatePassport';
 import CandidateProfile from '@/pages/CandidateProfile';
 import CompanyCompare from '@/pages/CompanyCompare';
 import CompanyIntelligence from '@/pages/CompanyIntelligence';
+import JobIntelligence from '@/pages/JobIntelligence';
+import JobApplication from '@/pages/JobApplication';
 import CompanyOnboarding from '@/pages/CompanyOnboarding';
 import CompanyProfilePage from '@/pages/CompanyProfilePage';
 import Onboarding from '@/pages/Onboarding';
@@ -60,6 +62,7 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/" element={<Home />} />
+      <Route path="/candidatura/vaga/:jobId" element={<JobApplication />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<LoginRedirect />} />}>
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/company" element={<CompanyDashboard />} />
@@ -70,6 +73,7 @@ const AuthenticatedApp = () => {
         <Route path="/company/candidates/:id" element={<CompanyCandidateDetail />} />
         <Route path="/company/jobs/:id/compare" element={<CompanyCompare />} />
         <Route path="/company/intelligence" element={<CompanyIntelligence />} />
+        <Route path="/company/jobs/:id/intelligence" element={<JobIntelligence />} />
         <Route path="/candidate" element={<CandidatePassport />} />
         <Route path="/candidate/profile" element={<CandidateProfile />} />
         <Route path="/candidate/simulate/:id" element={<CandidateSimulation />} />

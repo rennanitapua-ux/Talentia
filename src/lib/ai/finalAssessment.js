@@ -4,6 +4,7 @@ import { getRecommendation } from '@/lib/skillScoring';
 import { DISC_QUESTIONS } from '@/lib/discTest';
 import { SOFT_SKILLS, SKILL_BY_KEY, inferSoftSkills } from '@/lib/softSkills';
 import { confidenceFor, interviewQuestionsFromGaps } from '@/lib/softSkillsRubric';
+import { buildAderenciaSummary } from '@/lib/aderencia';
 
 const avg = (list) => (list.length ? Math.round(list.reduce((a, b) => a + b, 0) / list.length) : 0);
 
@@ -296,6 +297,8 @@ Responda SOMENTE com JSON válido:
     };
   });
 
+  const aderencia = buildAderenciaSummary(demonstrated_levels, skill_scores, score_confidence, competencies);
+
   const behavior = ai.behavioral_profile?.axes ? ai.behavioral_profile : localBehaviorProfile(responses);
 
   // Merge AI soft_skills_detail with local; AI takes priority but local fills gaps.
@@ -365,6 +368,7 @@ Responda SOMENTE com JSON válido:
     score_confidence,
     skill_graph: skill_scores,
     demonstrated_levels,
+    aderencia,
     behavioral_observations,
     score_composition: competencies.map((c) => ({ competency: c, score: skill_scores[c], weight, contribution: skill_scores[c] * weight * 0.4 })),
     skill_dna: ai.skill_dna || { strengths: [], growth_areas: [] },

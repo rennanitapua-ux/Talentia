@@ -14,6 +14,7 @@ import CompetencyLevels from '@/components/company/CompetencyLevels';
 import BehaviorObservations from '@/components/company/BehaviorObservations';
 import EvidenceCategories from '@/components/company/EvidenceCategories';
 import SituationReplay from '@/components/company/SituationReplay';
+import AderenciaPanel from '@/components/company/AderenciaPanel';
 import { getRecommendation } from '@/lib/skillScoring';
 import { getSituations } from '@/lib/situations';
 import { seatStatus } from '@/lib/seats';
@@ -196,6 +197,13 @@ export default function CompanyCandidateDetail() {
 
         {/* Required vs demonstrated levels */}
         <CompetencyLevels sim={sim} />
+
+        {/* Aderência contextual à vaga — nível demonstrado vs. exigido, não nota universal */}
+        {sim.aderencia && (
+          <div className="mb-8">
+            <AderenciaPanel aderencia={sim.aderencia} competencies={competencies} />
+          </div>
+        )}
 
         {/* Categorized evidence + company analysis */}
         <EvidenceCategories sim={sim} />

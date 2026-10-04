@@ -147,7 +147,7 @@ export function computeLocalMetrics(jobs, allSims, filters = {}) {
   };
 }
 
-export async function generateIntelligenceReport(metrics, companyProfile) {
+export async function generateIntelligenceReport(metrics, companyProfile, job = null) {
   if (!metrics.hasEnoughData) return null;
 
   const ctx = {
@@ -156,6 +156,13 @@ export async function generateIntelligenceReport(metrics, companyProfile) {
       setor: companyProfile.sector,
       ritmo: companyProfile.work_rhythm,
       proposito: companyProfile.purpose,
+    } : null,
+    vaga_analisada: job ? {
+      titulo: job.title,
+      setor: job.sector,
+      senioridade: job.seniority_level,
+      competencias: job.competencies,
+      requisitos: job.competency_requirements,
     } : null,
     amostra: metrics.sample,
     candidaturas_total: metrics.total,

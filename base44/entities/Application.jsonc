@@ -1,0 +1,94 @@
+{
+  "name": "Application",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "ID da vaga"
+    },
+    "job_title": {
+      "type": "string"
+    },
+    "company_user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio-empresa dono da vaga"
+    },
+    "candidate_user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio-candidato"
+    },
+    "candidate_profile_id": {
+      "type": "string"
+    },
+    "candidate_name": {
+      "type": "string"
+    },
+    "candidate_email": {
+      "type": "string"
+    },
+    "simulation_id": {
+      "type": "string",
+      "description": "ID da simula\u00e7\u00e3o vinculada a esta candidatura"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "profile",
+        "assessment",
+        "simulation",
+        "analysis",
+        "completed"
+      ],
+      "default": "profile",
+      "description": "Etapa atual do funil de candidatura"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "em_analise",
+        "convocacao_entrevista",
+        "entrevista_agendada",
+        "aprovado",
+        "reprovado",
+        "dados_insuficientes"
+      ],
+      "default": "em_analise",
+      "description": "Status de avan\u00e7o no processo seletivo"
+    },
+    "aderencia": {
+      "type": "object",
+      "description": "Classifica\u00e7\u00e3o contextual de ader\u00eancia \u00e0 vaga: atende/supera/parcial/abaixo/validar/insuficiente + resumo + distribui\u00e7\u00e3o"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Hist\u00f3rico de etapas e mudan\u00e7as de status da candidatura"
+    },
+    "applied_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "job_id",
+    "candidate_user_id"
+  ]
+}

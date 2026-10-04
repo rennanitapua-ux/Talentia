@@ -159,10 +159,24 @@ export default function CandidateSimulation() {
     await Promise.allSettled(pendingRef.current);
     await saveChain.current;
     try {
-      await finalizeSimulation({
+      const finalSim = await finalizeSimulation({
         sim: { ...sim, id: simIdRef.current }, job: ctx.job, situations,
         responses: responsesRef.current, integrity: integrityRef.current, onStep: setFinishStep,
       });
+      // Vincula a candidatura (Application) à simulação concluída
+      try {
+        const apps = await base44.entities.Application.filter({ job_id: id, candidate_user_id: ctx.user.id });
+        if (apps?.[0]) {
+          await base44.entities.Application.update(apps[0].id, {
+            simulation_id: simIdRef.current,
+            stage: 'completed',
+            completed_at: new Date().toISOString(),
+            history: [...(apps[0].history || []), { at: new Date().toISOString(), stage: 'completed', status: apps[0].status || 'em_analise', note: 'Simulação concluída' }],
+          });
+        }
+      } catch (e) {
+        console.warn('Application link failed', e?.message);
+      }
       navigate(`/candidate/results/${simIdRef.current}`, { replace: true });
     } catch (e) {
       console.error(e);

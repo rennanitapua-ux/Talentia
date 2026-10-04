@@ -186,7 +186,9 @@ export default function CandidateProfile() {
       } catch (e) {
         console.error('Failed to update user:', e);
       }
-      navigate('/candidate');
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get('returnTo');
+      navigate(returnTo || '/candidate');
     } catch (err) {
       alert('Erro ao salvar perfil. Tente novamente.');
       setSaving(false);
