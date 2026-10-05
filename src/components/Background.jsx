@@ -64,13 +64,13 @@ export default function Background() {
       <div
         className="absolute inset-0 opacity-[0.012]"
         style={{
-          backgroundImage: `linear-gradient(hsl(220 20% 96%) 1px, transparent 1px), linear-gradient(90deg, hsl(220 20% 96%) 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
           backgroundSize: '72px 72px',
         }}
       />
 
       {/* Top vignette for depth */}
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center top, transparent 40%, hsl(224 47% 4%) 100%)' }} />
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center top, transparent 40%, hsl(var(--bg-vignette)) 100%)' }} />
     </div>
   );
 }

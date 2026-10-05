@@ -6,30 +6,31 @@
 
 @layer base {
   :root {
-    /* TalentIA Design System — Navy + Electric Blue + Violet */
-    --background: 224 47% 4%;        /* #06080f — deep navy, almost black */
-    --foreground: 220 20% 96%;
-    --card: 226 28% 8%;              /* #111620 — slightly lifted surface */
-    --card-foreground: 220 20% 96%;
-    --popover: 226 28% 10%;
-    --popover-foreground: 220 20% 96%;
-    --primary: 217 91% 60%;         /* #3a82f7 — electric blue */
-    --primary-foreground: 224 47% 4%;
-    --secondary: 226 20% 12%;
-    --secondary-foreground: 220 20% 96%;
-    --muted: 226 18% 10%;
-    --muted-foreground: 220 14% 52%;
-    --accent: 226 20% 14%;
-    --accent-foreground: 220 20% 96%;
+    /* TalentIA Design System — Light theme (default) */
+    --bg-vignette: 210 40% 92%;
+    --background: 210 40% 98%;
+    --foreground: 224 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 47% 11%;
+    --primary: 217 91% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 224 47% 11%;
+    --muted: 210 40% 95%;
+    --muted-foreground: 220 14% 40%;
+    --accent: 210 40% 93%;
+    --accent-foreground: 224 47% 11%;
     --destructive: 0 72% 51%;
-    --destructive-foreground: 220 20% 96%;
-    --border: 226 20% 15%;
-    --input: 226 20% 14%;
-    --ring: 217 91% 60%;
-    --violet: 271 91% 65%;          /* #a64eff — purple */
-    --violet-foreground: 224 47% 4%;
-    --cyan: 190 90% 55%;            /* #2dd4ee — cyan accent */
-    --cyan-foreground: 224 47% 4%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 217 91% 52%;
+    --violet: 271 91% 58%;
+    --violet-foreground: 0 0% 100%;
+    --cyan: 190 85% 42%;
+    --cyan-foreground: 0 0% 100%;
     --radius: 0.75rem;
 
     /* Typography — single family, hierarchy through weight */
@@ -39,24 +40,25 @@
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
     /* Charts */
-    --chart-1: 217 91% 60%;
-    --chart-2: 271 91% 65%;
-    --chart-3: 190 85% 50%;
-    --chart-4: 160 60% 50%;
-    --chart-5: 30 80% 55%;
+    --chart-1: 217 91% 50%;
+    --chart-2: 271 91% 55%;
+    --chart-3: 190 85% 42%;
+    --chart-4: 160 60% 40%;
+    --chart-5: 30 80% 50%;
 
     /* Sidebar */
-    --sidebar-background: 226 28% 6%;
-    --sidebar-foreground: 220 14% 60%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 224 47% 4%;
-    --sidebar-accent: 226 20% 12%;
-    --sidebar-accent-foreground: 220 20% 96%;
-    --sidebar-border: 226 20% 14%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 14% 40%;
+    --sidebar-primary: 217 91% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 95%;
+    --sidebar-accent-foreground: 224 47% 11%;
+    --sidebar-border: 220 20% 90%;
+    --sidebar-ring: 217 91% 52%;
   }
 
   .dark {
+    --bg-vignette: 224 47% 4%;
     --background: 224 47% 4%;
     --foreground: 220 20% 96%;
     --card: 226 28% 8%;
@@ -121,14 +123,14 @@
 
   /* Subtle glassmorphism — use sparingly */
   .glass {
-    background: hsl(226 28% 8% / 0.6);
+    background: hsl(var(--card) / 0.6);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(226 20% 15% / 0.6);
+    border: 1px solid hsl(var(--border) / 0.6);
   }
 
   .glass-subtle {
-    background: hsl(226 28% 8% / 0.35);
+    background: hsl(var(--card) / 0.35);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }

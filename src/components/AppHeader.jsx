@@ -4,6 +4,7 @@ import { LayoutDashboard, Plus, Award, UserRound, LogOut, Building2, Brain, Clip
 import { base44 } from '@/api/base44Client';
 import { userName } from '@/lib/accounts';
 import Logo from '@/components/Logo';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const NAV = {
   company: [
@@ -50,6 +51,7 @@ export default function AppHeader({ area }) {
             <div className="text-sm text-foreground truncate max-w-[200px]">{userName(user)}</div>
             {area === 'company' && user?.company_name && <div className="text-[11px] text-muted-foreground truncate max-w-[200px]">{user.company_name}</div>}
           </div>
+          <ThemeToggle />
           <button onClick={() => base44.auth.logout('/')} title="Sair" className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
             <LogOut className="w-4 h-4" />
           </button>
