@@ -8,32 +8,67 @@ import { buildAderenciaSummary } from '@/lib/aderencia';
 
 const avg = (list) => (list.length ? Math.round(list.reduce((a, b) => a + b, 0) / list.length) : 0);
 
+// Scoring com peso por evidência: questões abertas com evidência concreta pesam MAIS.
+// Uma resposta aberta com situação real, ação específica e resultado tem mais valor
+// que uma escolha isolada. Mas resposta genérica não ganha peso extra.
+// Hierarquia de evidência: declaração < explicação < exemplo concreto < experiência real.
 function localSkillScores(responses, competencies) {
   const buckets = {};
   responses.forEach((r) => {
-    (r.competencies?.length ? r.competencies : competencies).forEach((c) => {
-      (buckets[c] = buckets[c] || []).push(r.analysis?.response_score ?? r.choice_score ?? 0);
+    const score = r.analysis?.response_score ?? r.choice_score;
+    if (score == null) return; // null = dados ausentes, não entra no cálculo
+    const comps = r.competencies?.length ? r.competencies : competencies;
+    const isOpen = !r.is_choice && !r.choice_id;
+    // Peso por tipo de evidência:
+    // - Escolha (choice): peso 1.0
+    // - Aberta com evidência concreta (score >= 60): peso 1.5 (situação real, ação, resultado)
+    // - Aberta com explicação razoável (score 40-59): peso 1.0
+    // - Aberta genérica/declarativa (score < 40 mas respondida): peso 0.7
+    let weight = 1.0;
+    if (isOpen) {
+      if (score >= 60) weight = 1.5;
+      else if (score >= 40) weight = 1.0;
+      else weight = 0.7;
+    }
+    comps.forEach((c) => {
+      (buckets[c] = buckets[c] || []).push({ score, weight });
     });
   });
   const out = {};
   // Competências sem nenhuma evidência → null (DADOS INSUFICIENTES), nunca 0.
   competencies.forEach((c) => {
-    const scores = buckets[c] || [];
-    out[c] = scores.length ? avg(scores) : null;
+    const entries = buckets[c] || [];
+    if (!entries.length) { out[c] = null; return; }
+    const totalWeight = entries.reduce((s, e) => s + e.weight, 0);
+    const weightedSum = entries.reduce((s, e) => s + e.score * e.weight, 0);
+    out[c] = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : null;
   });
   return out;
 }
 
 // Calcula confiança da análise com base na quantidade e qualidade das evidências.
 // Mais dados não = melhor score; dados relevantes e confiáveis é o que importa.
+// Questões abertas com evidência concreta aumentam a confiança.
 function computeOverallConfidence({ responses, skill_scores, hasDisc, hasProfile, competencies }) {
   const assessedCount = Object.values(skill_scores).filter((v) => v != null).length;
   const totalComps = competencies.length || 1;
   const responseCount = responses.length;
   const coverage = assessedCount / totalComps;
 
+  // Conta questões abertas com evidência concreta (score >= 60 = situação real + ação + resultado)
+  const openWithConcreteEvidence = responses.filter(
+    (r) => !r.is_choice && !r.choice_id && r.analysis?.response_score != null && r.analysis.response_score >= 60
+  ).length;
+  // Conta questões abertas respondidas (qualquer conteúdo)
+  const openAnswered = responses.filter(
+    (r) => !r.is_choice && !r.choice_id && r.analysis?.response_score != null
+  ).length;
+
   if (responseCount < 3 || assessedCount === 0) return 'insuficiente';
-  if (coverage >= 0.7 && responseCount >= 8 && hasDisc) return 'alta';
+  // Confiança alta: boa cobertura + DISC + pelo menos 1 aberta com evidência concreta
+  if (coverage >= 0.7 && responseCount >= 8 && hasDisc && openWithConcreteEvidence >= 1) return 'alta';
+  // Confiança alta também se coverage total + muitas respostas + abertas respondidas
+  if (coverage >= 0.8 && responseCount >= 10 && openAnswered >= 1) return 'alta';
   if (coverage >= 0.5 && responseCount >= 5) return 'media';
   return 'baixa';
 }
@@ -231,17 +266,21 @@ export function computeLocalAssessment({ candidateName, job, responses, disc, di
 
   // overall_score: média ponderada de respostas + competências avaliadas.
   // Competências null (sem evidência) NÃO entram no cálculo — não arrastam o score para baixo.
-  const validResponseScores = responses.map((r) => r.analysis?.response_score ?? r.choice_score).filter((v) => v != null);
-  const responseAvg = avg(validResponseScores);
+  // Se NÃO há nenhuma evidência (todas as respostas são null) → score null (DADOS INSUFICIENTES).
+  const validResponseScores = responses.map((r) => r.analysis?.response_score ?? r.choice_score).filter((v) => v != null && !isNaN(v));
+  const hasAnyEvidence = validResponseScores.length > 0;
+  const responseAvg = hasAnyEvidence ? avg(validResponseScores) : 0;
   const assessedSkillScores = Object.entries(skill_scores)
     .filter(([, v]) => v != null)
     .map(([name, v]) => ({ name, score: v, weight: competencyWeight(name, job) }));
   const totalWeight = assessedSkillScores.reduce((s, e) => s + e.weight, 0);
   const weightedSkillAvg = totalWeight > 0 ? assessedSkillScores.reduce((s, e) => s + e.score * e.weight, 0) / totalWeight : 0;
-  // Se não há competências avaliadas, o score depende só das respostas (mas com confiança baixa)
-  const overall_score = assessedSkillScores.length > 0
-    ? Math.round(responseAvg * 0.5 + weightedSkillAvg * 0.5)
-    : Math.round(responseAvg);
+  // Sem evidência → null (não 0). Com evidência → média ponderada.
+  const overall_score = !hasAnyEvidence
+    ? null
+    : assessedSkillScores.length > 0
+      ? Math.round(responseAvg * 0.5 + weightedSkillAvg * 0.5)
+      : Math.round(responseAvg);
 
   // Confiança real baseada em evidência
   const hasDisc = !!(disc?.scores);
@@ -434,16 +473,20 @@ Responda SOMENTE com JSON válido:
     if (v?.confidence) score_confidence[c] = v.confidence;
   });
   // overall_score: média ponderada excluindo competências null (sem evidência)
-  const validResponseScores = responses.map((r) => r.analysis?.response_score ?? r.choice_score).filter((v) => v != null);
-  const responseAvg = avg(validResponseScores);
+  // Sem nenhuma evidência → null (DADOS INSUFICIENTES, não 0)
+  const validResponseScores = responses.map((r) => r.analysis?.response_score ?? r.choice_score).filter((v) => v != null && !isNaN(v));
+  const hasAnyEvidence = validResponseScores.length > 0;
+  const responseAvg = hasAnyEvidence ? avg(validResponseScores) : 0;
   const assessedSkillScores = Object.entries(skill_scores)
     .filter(([, v]) => v != null)
     .map(([name, v]) => ({ name, score: v, weight: competencyWeight(name, job) }));
   const totalWeight = assessedSkillScores.reduce((s, e) => s + e.weight, 0);
   const weightedSkillAvg = totalWeight > 0 ? assessedSkillScores.reduce((s, e) => s + e.score * e.weight, 0) / totalWeight : 0;
-  const overall_score = assessedSkillScores.length > 0
-    ? Math.round(responseAvg * 0.5 + weightedSkillAvg * 0.5)
-    : Math.round(responseAvg);
+  const overall_score = !hasAnyEvidence
+    ? null
+    : assessedSkillScores.length > 0
+      ? Math.round(responseAvg * 0.5 + weightedSkillAvg * 0.5)
+      : Math.round(responseAvg);
 
   const behavior = ai.behavioral_profile?.axes ? ai.behavioral_profile : assessment.behavioral_profile;
 

@@ -25,15 +25,54 @@ export default function StepAssessment({
 
   // ---- Ready state: review generated questions + validation ----
   if (status === 'ready') {
-    const validation = validateMandatoryStructure({ situations, competencies: form.competencies, depth });
+    const expectedCfg = depthConfig(depth, depthCustom);
+    const validation = validateMandatoryStructure({ situations, competencies: form.competencies, depth, expectedConfig: expectedCfg });
     const totalMin = estimateMinutes(choices.length) + opens.length * 3;
+    const totalCount = choices.length + opens.length;
+    const expectedTotal = expectedCfg.totalCount;
 
     return (
       <div className="space-y-6">
+        {/* Contagem exata — total + objetivas + abertas + DISC separado */}
+        <div className="rounded-xl border border-border bg-muted/30 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-foreground">Contagem de questões</span>
+            <span className={`text-2xl font-bold font-mono ${totalCount === expectedTotal ? 'text-primary' : 'text-amber-400'}`}>
+              {totalCount}
+            </span>
+          </div>
+          <div className="grid grid-cols-4 gap-2 text-xs">
+            <div className="text-center">
+              <div className="text-lg font-semibold text-foreground">{choices.length}</div>
+              <div className="text-muted-foreground">Objetivas</div>
+              <div className="text-[10px] text-muted-foreground/60">esperado: {expectedCfg.choiceCount}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-foreground">{opens.length}</div>
+              <div className="text-muted-foreground">Abertas</div>
+              <div className="text-[10px] text-muted-foreground/60">esperado: {expectedCfg.openCount}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-foreground">{totalCount}</div>
+              <div className="text-muted-foreground">Total</div>
+              <div className="text-[10px] text-muted-foreground/60">esperado: {expectedTotal}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-violet">DISC</div>
+              <div className="text-muted-foreground">À parte</div>
+              <div className="text-[10px] text-muted-foreground/60">obrigatório</div>
+            </div>
+          </div>
+          {validation.countMismatch && (
+            <div className="mt-3 flex items-start gap-2 text-xs text-amber-400">
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+              <span>A contagem atual ({totalCount}) não bate com o configurado ({expectedTotal}). Ajuste as questões ou regenere.</span>
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-wrap items-center gap-3 justify-between">
           <div className="text-sm text-muted-foreground">
-            <span className="text-foreground font-semibold">{choices.length} perguntas</span> ·{' '}
-            <span className="text-foreground font-semibold">{opens.length} questões abertas</span> · DISC · ~{totalMin} min
             {data.source === 'fallback' && <span className="ml-2 text-amber-400">(situações base)</span>}
           </div>
           <button onClick={() => onGenerate(depthConfig(depth, depthCustom))} className="h-9 px-3 rounded-lg border border-border text-sm flex items-center gap-1.5 hover:bg-muted">
@@ -121,7 +160,7 @@ export default function StepAssessment({
           )}
         </div>
 
-        {/* Validação da estrutura mínima obrigatória */}
+        {/* Validação da estrutura obrigatória */}
         <div className="rounded-xl border border-border bg-muted/30 p-4">
           <div className="flex items-center gap-2 mb-3">
             <ShieldCheck className="w-4 h-4 text-primary" />
@@ -132,16 +171,18 @@ export default function StepAssessment({
             <CheckRow ok={validation.choiceCount >= 1} label={`${validation.choiceCount} pergunta(s) estruturada(s)`} />
             <CheckRow ok={validation.openCount >= 1} label={`${validation.openCount} questão(ões) aberta(s)`} />
             <CheckRow ok={competencyCount >= 2} label={`${competencyCount} competência(s) exigida(s)`} />
+            <CheckRow ok={!validation.countMismatch} label={`Contagem exata: ${validation.totalCount || 0} = ${validation.choiceCount} + ${validation.openCount}`} />
+            <CheckRow ok={true} label="DISC separado das questões da vaga" />
           </div>
-          {!validation.valid && (
+          {(!validation.valid || validation.countMismatch) && (
             <div className="mt-3 flex items-start gap-2 text-xs text-amber-400">
               <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-              <span>{validation.issues.join(' ')}</span>
+              <span>{[...validation.issues, validation.countMismatch ? `Quantidade configurada (${expectedTotal}) ≠ atual (${totalCount}).` : ''].filter(Boolean).join(' ')}</span>
             </div>
           )}
         </div>
 
-        <button onClick={onPublish} disabled={publishing || !validation.valid}
+        <button onClick={onPublish} disabled={publishing || !validation.valid || validation.countMismatch}
           className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
           {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Publicar vaga
         </button>
@@ -196,8 +237,8 @@ export default function StepAssessment({
                 <p className="text-xs text-muted-foreground leading-relaxed mb-2">{d.description}</p>
                 <div className="flex flex-wrap gap-1.5 text-[10px]">
                   <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">DISC</span>
-                  <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{d.key === 'personalizada' ? 'N perguntas' : `${d.choiceCount} perguntas`}</span>
-                  <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{d.key === 'personalizada' ? '≥1 aberta' : `${d.openCount} aberta(s)`}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{d.key === 'personalizada' ? 'Você define' : `${d.totalCount} questões`}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{d.key === 'personalizada' ? '≥1 aberta' : `${d.choiceCount} + ${d.openCount} aberta(s)`}</span>
                 </div>
               </button>
             );
@@ -210,24 +251,31 @@ export default function StepAssessment({
         </div>
 
         {depth === 'personalizada' && (
-          <div className="mt-4 grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">Perguntas estruturadas</label>
-              <div className="flex items-center gap-3 mt-1.5">
-                <input type="range" min={4} max={20} value={depthCustom?.choiceCount || 10}
-                  onChange={(e) => onUpdateDepthCustom({ ...depthCustom, choiceCount: parseInt(e.target.value) })}
-                  className="flex-1 accent-primary h-2" />
-                <span className="text-sm font-mono font-semibold text-primary w-8 text-right">{depthCustom?.choiceCount || 10}</span>
+          <div className="mt-4 space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Perguntas estruturadas (objetivas)</label>
+                <div className="flex items-center gap-3 mt-1.5">
+                  <input type="range" min={4} max={20} value={depthCustom?.choiceCount || 10}
+                    onChange={(e) => onUpdateDepthCustom({ ...depthCustom, choiceCount: parseInt(e.target.value) })}
+                    className="flex-1 accent-primary h-2" />
+                  <span className="text-sm font-mono font-semibold text-primary w-8 text-right">{depthCustom?.choiceCount || 10}</span>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Questões abertas</label>
+                <div className="flex items-center gap-3 mt-1.5">
+                  <input type="range" min={1} max={5} value={depthCustom?.openCount || 1}
+                    onChange={(e) => onUpdateDepthCustom({ ...depthCustom, openCount: parseInt(e.target.value) })}
+                    className="flex-1 accent-primary h-2" />
+                  <span className="text-sm font-mono font-semibold text-primary w-8 text-right">{depthCustom?.openCount || 1}</span>
+                </div>
               </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">Questões abertas</label>
-              <div className="flex items-center gap-3 mt-1.5">
-                <input type="range" min={1} max={5} value={depthCustom?.openCount || 1}
-                  onChange={(e) => onUpdateDepthCustom({ ...depthCustom, openCount: parseInt(e.target.value) })}
-                  className="flex-1 accent-primary h-2" />
-                <span className="text-sm font-mono font-semibold text-primary w-8 text-right">{depthCustom?.openCount || 1}</span>
-              </div>
+            <div className="flex items-center justify-center gap-2 text-sm bg-muted/30 rounded-lg py-2 border border-border">
+              <span className="text-muted-foreground">Total:</span>
+              <span className="font-bold font-mono text-primary">{(depthCustom?.choiceCount || 10) + (depthCustom?.openCount || 1)}</span>
+              <span className="text-muted-foreground/60 text-xs">questões + DISC à parte</span>
             </div>
           </div>
         )}

@@ -118,18 +118,30 @@ Responda SOMENTE com JSON válido:
       const all = p.situations || [];
       const choices = all.filter(isValidChoice).length;
       const opens = all.filter(isValidOpen).length;
-      return choices >= choiceCount && opens >= openCount;
+      // Exige pelo menos o mínimo — completaremos com fallback se faltar
+      return choices >= Math.min(choiceCount, 3) && opens >= 1;
     },
   });
   if (!parsed) return null;
   const all = parsed.situations || [];
-  const choices = all.filter(isValidChoice).slice(0, choiceCount).map((s, i) => normalizeChoice(s, i, competencies, []));
-  const opens = all.filter(isValidOpen).slice(0, openCount).map((s, i) => normalizeOpen(s, i, competencies, []));
-  // Garante pelo menos 1 questão aberta (regra de ouro).
-  const situations = [...choices, ...opens];
-  if (opens.length === 0) {
-    situations.push(normalizeOpen({ question: `Conte sobre uma situação real que você viveu como ${job.title || 'profissional'}: o que aconteceu, o que você fez e qual foi o resultado.`, context: job.company_problems || '' }, 0, competencies, []));
+  let choices = all.filter(isValidChoice).slice(0, choiceCount).map((s, i) => normalizeChoice(s, i, competencies, []));
+  let opens = all.filter(isValidOpen).slice(0, openCount).map((s, i) => normalizeOpen(s, i, competencies, []));
+
+  // COMPLETAR quantidades faltantes com fallback — a empresa pediu X, entregamos X.
+  if (choices.length < choiceCount) {
+    const fallback = buildFallbackAssessment(job, { choiceCount: choiceCount - choices.length, openCount: 0 });
+    choices = [...choices, ...fallback.situations.filter((s) => s.options?.length > 0).map((s, i) => ({ ...s, id: `s${choices.length + i + 1}` }))];
   }
+  if (opens.length < openCount) {
+    const fallback = buildFallbackAssessment(job, { choiceCount: 0, openCount: openCount - opens.length });
+    opens = [...opens, ...fallback.situations.filter((s) => !s.options?.length).map((s, i) => ({ ...s, id: `o${opens.length + i + 1}` }))];
+  }
+
+  // Trunca para garantir EXATAMENTE a quantidade configurada (não mais)
+  choices = choices.slice(0, choiceCount);
+  opens = opens.slice(0, openCount);
+
+  const situations = [...choices, ...opens];
   return { virtual_company_profile: parsed.virtual_company_profile || '', situations, source: 'ai' };
 }
 

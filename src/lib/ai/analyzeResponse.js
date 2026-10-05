@@ -81,12 +81,13 @@ function finalize(a, { option, typing, situation }) {
   }));
   // response_score: para escolhas, depende SÓ da decisão (justificativa não diminui).
   // Para questões abertas, a justificativa É a resposta — piso justo para respostas com conteúdo.
+  // Questão aberta NÃO respondida → null (DADOS AUSENTES, nunca 0 — não penaliza).
   let response_score;
   if (option) {
     response_score = decision;
   } else {
     const hasText = (justification ?? 0) > 0;
-    response_score = hasText ? Math.max(40, justification ?? 0) : 0;
+    response_score = hasText ? Math.max(40, justification ?? 0) : null;
   }
   return {
     ...a,
