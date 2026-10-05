@@ -166,21 +166,18 @@ export default function CandidateProfile() {
   };
 
   const handleSave = async () => {
-    if (!form.full_name.trim()) {
-      alert('Por favor, preencha seu nome completo.');
-      return;
-    }
     if (form.cpf && !validateCPF(form.cpf)) {
       setCpfError('CPF inválido');
       return;
     }
     setSaving(true);
     try {
+      const isComplete = !!(form.full_name.trim() && form.cpf && validateCPF(form.cpf));
       const data = {
         ...form,
         user_id: user.id,
         email: user.email,
-        completed: true,
+        completed: isComplete,
       };
       if (profile) {
         await base44.entities.CandidateProfile.update(profile.id, data);
@@ -268,7 +265,7 @@ export default function CandidateProfile() {
             {/* Section: Dados pessoais */}
             <SectionHeader title="Dados pessoais" />
             <div className="space-y-5">
-              <Field label="Nome completo *">
+              <Field label="Nome completo">
                 <div className="relative">
                   <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input value={form.full_name} onChange={e => update('full_name', e.target.value)}
@@ -431,7 +428,7 @@ export default function CandidateProfile() {
 
           <button
             onClick={handleSave}
-            disabled={saving || !form.full_name.trim() || !!cpfError}
+            disabled={saving || !!cpfError}
             className="w-full mt-6 flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
           >
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : <><Check className="w-4 h-4" /> Salvar e Continuar</>}
