@@ -30,9 +30,8 @@ export default function JobApplication() {
       const isOwner = job.created_by_id === user.id;
       const companyProfiles = await base44.entities.CompanyProfile.filter({ user_id: user.id }).catch(() => []);
       if (isOwner || (companyProfiles && companyProfiles.length > 0)) {
-        await base44.auth.logout();
         const returnTo = `/candidatura/vaga/${jobId}`;
-        window.location.href = `/register?returnTo=${encodeURIComponent(returnTo)}&role=candidate`;
+        base44.auth.logout(`${window.location.origin}/register?returnTo=${encodeURIComponent(returnTo)}&role=candidate`);
         return;
       }
       const [profiles, apps] = await Promise.all([
@@ -156,6 +155,15 @@ export default function JobApplication() {
             >
               {creating ? <><Loader2 className="w-4 h-4 animate-spin" /> Iniciando...</> : <>{application ? 'Continuar simulação' : 'Iniciar simulação'} <ArrowRight className="w-4 h-4" /></>}
             </button>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              Conectado como <span className="text-foreground">{state.user.email}</span> ·{' '}
+              <button
+                onClick={() => base44.auth.logout(`${window.location.origin}/register?returnTo=${encodeURIComponent(`/candidatura/vaga/${jobId}`)}&role=candidate`)}
+                className="text-primary hover:underline"
+              >
+                Não é você? Trocar de conta
+              </button>
+            </p>
           </div>
         </motion.div>
       </div>
