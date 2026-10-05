@@ -371,14 +371,6 @@ export default function CandidateProfile() {
             {/* Section: Profissional */}
             <SectionHeader title="Profissional" />
             <div className="space-y-5">
-              <Field label="LinkedIn">
-                <div className="relative">
-                  <input value={form.linkedin} onChange={e => update('linkedin', e.target.value)}
-                    placeholder="linkedin.com/in/seuperfil"
-                    className="w-full bg-input border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none transition-colors" />
-                </div>
-              </Field>
-
               <Field label="Bio / Resumo profissional">
                 <textarea value={form.bio} onChange={e => update('bio', e.target.value)} rows={3}
                   placeholder="Conte um pouco sobre sua experiência e objetivos..."
