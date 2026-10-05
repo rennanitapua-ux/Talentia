@@ -62,7 +62,7 @@ export default function CompanyProfilePage() {
     <div className="min-h-screen bg-background relative">
       <Background />
       <div className="relative z-10">
-        <AppHeader />
+        <AppHeader area="company" />
         <div className="max-w-3xl mx-auto px-5 py-8 pb-24">
           <div className="flex items-center justify-between mb-6">
             <div>
