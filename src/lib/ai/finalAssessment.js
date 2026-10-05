@@ -8,6 +8,47 @@ import { buildAderenciaSummary } from '@/lib/aderencia';
 
 const avg = (list) => (list.length ? Math.round(list.reduce((a, b) => a + b, 0) / list.length) : 0);
 
+// Normalização de nomes de competências para matching flexível.
+// As questões abertas geradas pela IA podem usar nomes ligeiramente diferentes
+// dos da vaga (ex: "Gestão de Conflitos" vs "Gestão de conflitos", "Comunicação Assertiva" vs "Comunicação",
+// "Orientação para o Cliente" vs "Atendimento ao cliente"). Sem isso, evidência real é ignorada.
+export function normalizeComp(name) {
+  return (name || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+// Faz matching flexível de uma competência da resposta para a competência equivalente na vaga.
+// 1. Match exato normalizado (sem acento/maiúscula)
+// 2. Match parcial: um nome contém o outro
+// 3. Match por palavra-chave: palavra significativa (>3 chars) em comum
+export function matchToJobComp(comp, jobComps) {
+  const norm = normalizeComp(comp);
+  if (!norm) return null;
+  const exact = jobComps.find((c) => normalizeComp(c) === norm);
+  if (exact) return exact;
+  const partial = jobComps.find((c) => {
+    const cn = normalizeComp(c);
+    return cn.includes(norm) || norm.includes(cn);
+  });
+  if (partial) return partial;
+  const keywords = norm.split(/\s+/).filter((k) => k.length > 3);
+  if (!keywords.length) return null;
+  const keywordMatch = jobComps.find((c) => {
+    const cn = normalizeComp(c);
+    return keywords.some((k) => cn.includes(k));
+  });
+  return keywordMatch || null;
+}
+
+// Mapeia uma lista de competências da resposta para as competências da vaga, deduplicando.
+export function mapToJobComps(responseComps, jobComps) {
+  const matched = (responseComps || []).map((c) => matchToJobComp(c, jobComps)).filter(Boolean);
+  return [...new Set(matched)];
+}
+
 // Scoring com peso por evidência: questões abertas com evidência concreta pesam MAIS.
 // Uma resposta aberta com situação real, ação específica e resultado tem mais valor
 // que uma escolha isolada. Mas resposta genérica não ganha peso extra.
@@ -17,7 +58,11 @@ function localSkillScores(responses, competencies) {
   responses.forEach((r) => {
     const score = r.analysis?.response_score ?? r.choice_score;
     if (score == null) return; // null = dados ausentes, não entra no cálculo
-    const comps = r.competencies?.length ? r.competencies : competencies;
+    // Matching flexível: questões abertas podem usar nomes diferentes da vaga.
+    // Ex: "Gestão de Conflitos" → "Gestão de conflitos", "Comunicação Assertiva" → "Comunicação".
+    const responseComps = r.competencies?.length ? r.competencies : competencies;
+    const matchedComps = mapToJobComps(responseComps, competencies);
+    if (!matchedComps.length) return; // sem match = essa resposta não contribui para nenhuma comp da vaga
     const isOpen = !r.is_choice && !r.choice_id;
     // Peso por tipo de evidência:
     // - Escolha (choice): peso 1.0
@@ -30,7 +75,7 @@ function localSkillScores(responses, competencies) {
       else if (score >= 40) weight = 1.0;
       else weight = 0.7;
     }
-    comps.forEach((c) => {
+    matchedComps.forEach((c) => {
       (buckets[c] = buckets[c] || []).push({ score, weight });
     });
   });
@@ -225,22 +270,24 @@ function buildBehavioralObservations(responses, integrity) {
 // Score null (sem evidência) → demonstrated null, status 'insufficient' (NUNCA 0).
 function buildDemonstratedLevels(job, skill_scores) {
   const competencies = job.competencies?.length ? job.competencies : ['Resolução de problemas'];
+  // Usa chaves normalizadas para matching flexível (sem acento/maiúscula)
   const reqMap = {};
-  (job.competency_requirements || []).forEach((r) => { reqMap[r.name] = r.required_level; });
+  (job.competency_requirements || []).forEach((r) => { reqMap[normalizeComp(r.name)] = r.required_level; });
   const importanceMap = {};
-  (job.competency_requirements || []).forEach((r) => { importanceMap[r.name] = r.importance || 'obrigatoria'; });
+  (job.competency_requirements || []).forEach((r) => { importanceMap[normalizeComp(r.name)] = r.importance || 'obrigatoria'; });
   const demonstrated_levels = {};
   competencies.forEach((c) => {
     const score = skill_scores[c];
     const hasEvidence = score != null;
     const demonstrated = hasEvidence ? Math.round(score / 10) : null;
-    const required = reqMap[c] != null ? reqMap[c] : null;
+    const nc = normalizeComp(c);
+    const required = reqMap[nc] != null ? reqMap[nc] : null;
     const gap = required !== null && demonstrated !== null ? demonstrated - required : null;
     demonstrated_levels[c] = {
       demonstrated,
       required,
       gap,
-      importance: importanceMap[c] || 'obrigatoria',
+      importance: importanceMap[nc] || 'obrigatoria',
       status: !hasEvidence ? 'insufficient' : required === null ? 'no_target' : gap >= 0 ? 'meets' : gap >= -1 ? 'close' : 'below',
     };
   });
@@ -259,8 +306,11 @@ export function computeLocalAssessment({ candidateName, job, responses, disc, di
   const score_confidence = {};
   competencies.forEach((c) => {
     skill_scores[c] = local[c];
-    // Confiança por competência: baseada em quantas situações produziram evidência
-    const evidenceCount = responses.filter((r) => (r.competencies || []).includes(c) && r.analysis?.response_score != null).length;
+    // Confiança por competência: baseada em quantas situações produziram evidência (matching flexível)
+    const evidenceCount = responses.filter((r) => {
+      const matched = mapToJobComps(r.competencies || [], competencies);
+      return matched.includes(c) && r.analysis?.response_score != null;
+    }).length;
     score_confidence[c] = evidenceCount >= 3 ? 'high' : evidenceCount === 2 ? 'medium' : evidenceCount === 1 ? 'low' : 'insufficient';
   });
 
@@ -464,10 +514,13 @@ Responda SOMENTE com JSON válido:
   const ai = (await askJSON(prompt, { models: ['claude-sonnet-5', 'gemini_3_flash'], validate: (p) => p.summary || p.skill_scores })) || {};
 
   // Merge AI skill_scores with local; AI takes priority when available.
+  // Matching flexível: a IA pode usar nome ligeiramente diferente da vaga.
   const skill_scores = { ...assessment.skill_scores };
   const score_confidence = { ...assessment.score_confidence };
+  const aiSkillKeys = Object.keys(ai.skill_scores || {});
   competencies.forEach((c) => {
-    const v = ai.skill_scores?.[c];
+    const matchKey = aiSkillKeys.find((k) => normalizeComp(k) === normalizeComp(c)) || c;
+    const v = ai.skill_scores?.[matchKey];
     const aiScore = typeof v === 'number' ? v : v?.score;
     if (aiScore !== undefined && aiScore !== null) skill_scores[c] = clamp(aiScore);
     if (v?.confidence) score_confidence[c] = v.confidence;
