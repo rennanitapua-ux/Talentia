@@ -32,7 +32,6 @@ export default function Register() {
     setError("");
     setExists(false);
     if (form.password.length < 8) return setError("A senha precisa ter pelo menos 8 caracteres.");
-    if (role === "candidate" && (!form.birth_date || !form.work_area)) return setError("Informe sua data de nascimento e área de atuação.");
     setLoading(true);
     try {
       await base44.auth.register({ email: form.email.trim(), password: form.password });

@@ -1,18 +1,19 @@
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Plus, X } from 'lucide-react';
 import OptionList from '@/components/simulation/OptionList';
 import JustificationBox from '@/components/simulation/JustificationBox';
 
 export default function SituationCard({ situation, index, total, onSubmit, onPasteBlocked }) {
   const [choice, setChoice] = useState(null);
   const [text, setText] = useState('');
+  const [showJustification, setShowJustification] = useState(false);
   const typing = useRef({ keystrokes: 0, bulk_inserts: 0, blocked_pastes: 0 });
   const options = situation.options || [];
   const hasOptions = options.length > 0;
   const minChars = hasOptions ? 20 : 40;
-  // Para questões de marcar: o comentário é OPCIONAL — avança só com a escolha.
-  // Para questões abertas (sem opções): o texto continua obrigatório.
+  // Para questões de marcar: avança só com a escolha. Justificativa é OPCIONAL (botão "+").
+  // Para questões abertas: o texto é a própria resposta — obrigatório.
   const ready = (!hasOptions || choice) && (hasOptions ? true : text.trim().length >= minChars);
 
   const handleChange = (value) => {
@@ -60,15 +61,52 @@ export default function SituationCard({ situation, index, total, onSubmit, onPas
 
       {hasOptions && <OptionList options={options} value={choice} onChange={setChoice} />}
 
-      <JustificationBox
-        label={hasOptions ? 'Quer explicar melhor sua resposta?' : 'Sua resposta'}
-        prompt={hasOptions ? 'Se quiser, conte um pouco mais sobre sua escolha (opcional).' : (situation.justification_prompt || 'Explique seu raciocínio em poucas frases.')}
-        value={text}
-        onChange={handleChange}
-        minChars={minChars}
-        onBlocked={handleBlocked}
-        optional={hasOptions}
-      />
+      {hasOptions ? (
+        showJustification ? (
+          <div className="rounded-xl border border-border bg-card/30 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold text-foreground">Mais informações <span className="text-muted-foreground font-normal">(opcional)</span></span>
+              <button onClick={() => { setShowJustification(false); setText(''); }} className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <textarea
+              value={text}
+              onChange={(e) => handleChange(e.target.value)}
+              onPaste={handleBlocked}
+              onCopy={handleBlocked}
+              onCut={handleBlocked}
+              onDrop={handleBlocked}
+              onContextMenu={(e) => e.preventDefault()}
+              rows={3}
+              autoComplete="off"
+              maxLength={800}
+              placeholder="Se quiser, conte um pouco mais sobre sua resposta..."
+              className="w-full rounded-xl bg-background/60 border border-border px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/15 resize-none transition-colors"
+            />
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1.5">
+              <span className="text-muted-foreground/60">{text.trim().length > 0 ? `${text.trim().length} caracteres` : 'Pode avançar sem escrever'}</span>
+              <span className="flex items-center gap-1"><Plus className="w-3 h-3" /> Opcional — não afeta a nota</span>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowJustification(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border border-dashed border-border hover:border-primary/40 text-muted-foreground hover:text-primary transition-all duration-200 text-sm font-medium"
+          >
+            <Plus className="w-4 h-4" /> Adicionar mais informações (opcional)
+          </button>
+        )
+      ) : (
+        <JustificationBox
+          label="Sua resposta"
+          prompt={situation.justification_prompt || 'Explique seu raciocínio em poucas frases.'}
+          value={text}
+          onChange={handleChange}
+          minChars={minChars}
+          onBlocked={handleBlocked}
+        />
+      )}
 
       <button
         onClick={submit}

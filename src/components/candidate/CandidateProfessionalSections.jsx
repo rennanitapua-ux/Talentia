@@ -24,18 +24,10 @@ export default function CandidateProfessionalSections({ form, update }) {
           className="w-full bg-input border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-2">Data de nascimento</label>
-          <input type="date" value={form.birth_date || ''} onChange={(e) => update('birth_date', e.target.value)}
-            className="w-full bg-input border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:border-primary/50 focus:outline-none" />
-          <p className="text-[10px] text-muted-foreground/60 mt-1">Usada apenas para coerência de trajetória — nunca como critério de penalização.</p>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-2">País</label>
-          <input value={form.country || 'Brasil'} onChange={(e) => update('country', e.target.value)}
-            className="w-full bg-input border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:border-primary/50 focus:outline-none" />
-        </div>
+      <div>
+        <label className="block text-xs font-medium text-muted-foreground mb-2">País</label>
+        <input value={form.country || 'Brasil'} onChange={(e) => update('country', e.target.value)}
+          className="w-full bg-input border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:border-primary/50 focus:outline-none" />
       </div>
 
       <div>

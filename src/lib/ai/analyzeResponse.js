@@ -15,14 +15,14 @@ function typingSuspicion(typing) {
 function localAnalysis({ option, justification, typing, situation }) {
   const len = (justification || '').trim().length;
   const decision = option ? option.score ?? 50 : 50;
-  // Não recompensa texto longo — fallback sem IA dá nota conservadora fixa
-  const just = len < 5 ? 5 : 35;
+  const hasJust = len > 0;
+  // Justificativa é OPCIONAL: sem texto → score null (não zera, não penaliza)
+  const just = hasJust ? 35 : null;
   const suspicious = typingSuspicion(typing);
   // Soft skill evidence from the situation's own tags + the behavior of the chosen option
   const softSkillEvidence = (situation?.soft_skills || []).map((ss) => {
     const skill = SKILL_BY_KEY[ss.skill];
     const dim = skill?.dimensions.find((d) => d.key === ss.dimension);
-    const hasJust = len > 0;
     return {
       skill: ss.skill,
       skill_label: skill?.label || ss.skill,
@@ -33,7 +33,7 @@ function localAnalysis({ option, justification, typing, situation }) {
       observed: hasJust ? `Escolheu "${option?.text || '—'}" e justificou.` : 'Escolheu uma alternativa sem justificativa.',
       inferred: hasJust ? `A escolha e a justificativa sugerem comportamento relacionado a ${dim?.label || ss.dimension}.` : null,
       evidence_quote: (justification || '').slice(0, 200) || null,
-      confidence: hasJust ? 'low' : 'low',
+      confidence: 'low',
     };
   });
   return {
@@ -45,13 +45,15 @@ function localAnalysis({ option, justification, typing, situation }) {
     behavior_signals: option?.behavior ? [{ trait: option.behavior, evidence: `Escolheu: "${option.text}"` }] : [],
     positive_points: [],
     points_to_investigate: [],
+    quality_metrics: { clarity: null, reasoning: null, coherence: null, problem_solving: null, communication: null, has_concrete_examples: null },
+    response_depth: { level: null, reasoning: hasJust ? '' : 'Sem comentário adicional.' },
     ai_detection: {
       is_ai_generated: suspicious,
       confidence: suspicious ? 70 : 0,
       indicators: suspicious ? ['Texto inserido sem digitação correspondente'] : [],
       analysis: suspicious ? 'Quantidade de texto incompatível com as teclas digitadas.' : 'Análise automática indisponível.',
     },
-    detailed_feedback: 'Análise detalhada indisponível no momento — nota calculada pela qualidade da escolha e pela justificativa.',
+    detailed_feedback: 'Análise detalhada indisponível no momento — nota calculada pela qualidade da escolha.',
     source: 'local',
   };
 }
@@ -60,9 +62,11 @@ function finalize(a, { option, typing, situation }) {
   let decision = clamp(a.decision_score);
   if (option && DECISION_RANGE[option.quality]) {
     const [min, max] = DECISION_RANGE[option.quality];
+    // Garante o piso da faixa — a melhor escolha nunca recebe nota negativa
     decision = Math.max(min, Math.min(max, decision));
   }
-  const justification = clamp(a.justification_score);
+  // Justificativa é OPCIONAL: null quando ausente (não zera, não penaliza)
+  const justification = a.justification_score == null ? null : clamp(a.justification_score);
   const ai = a.ai_detection || {};
   if (typingSuspicion(typing)) {
     ai.is_ai_generated = true;
@@ -74,11 +78,14 @@ function finalize(a, { option, typing, situation }) {
     ...e,
     score: e.not_assessable ? null : clamp(e.score ?? 0),
   }));
+  // response_score: para escolhas, depende SÓ da decisão (justificativa não diminui).
+  // Para questões abertas, a justificativa É a resposta.
+  const response_score = option ? decision : (justification ?? 0);
   return {
     ...a,
     decision_score: decision,
     justification_score: justification,
-    response_score: option ? Math.round(decision * 0.55 + justification * 0.45) : justification,
+    response_score,
     soft_skill_evidence: softSkillEvidence,
     ai_detection: { is_ai_generated: !!ai.is_ai_generated, confidence: clamp(ai.confidence), indicators: ai.indicators || [], analysis: ai.analysis || '' },
   };
@@ -112,16 +119,18 @@ SOFT SKILLS QUE ESTA SITUAÇÃO MIRA:
 ${targetSkills || '—'}
 
 REGRAS (EVIDÊNCIA, NÃO ADJETIVOS):
-- A escolha pesa muito: "bad" → decision_score 0-20; "weak" → 25-45; "good" → 55-75; "best" → 80-100. Ajuste dentro da faixa conforme a justificativa.
-- justification_score (0-100): clareza, raciocínio, coerência com a escolha e uso dos fatos da situação. Texto vazio, sem sentido ou genérico → 0-15. Justificativa que contradiz a escolha → no máximo 30.
+- A ESCOLHA é o principal fator: "bad" → decision_score 0-20; "weak" → 25-45; "good" → 55-75; "best" → 80-100. A justificativa é OPCIONAL e NUNCA diminui a nota da escolha — só pode acrescentar evidência. Se a melhor escolha ("best") foi marcada, o decision_score fica em 80-100, sem pontos negativos.
+- justification_score (0-100 ou null): se NÃO houver justificativa escrita, retorne null. Se houver, avalie clareza, raciocínio e coerência. Justificativa que contradiz a escolha → no máximo 30.
 - NÃO identificar uma soft skill só porque o candidato ESCREVEU "sou organizado" ou "tenho boa comunicação". Procure COMPORTAMENTO DEMONSTRADO: o que ele descreveu que faria, com que critérios, em que ordem.
 - soft_skill_evidence: para CADA sub-dimensão que esta situação mira, produza:
   - "observed": o que EFETIVAMENTE apareceu na resposta (fato — ex.: "descreveu 3 etapas antes de decidir").
   - "inferred": interpretação possível do observado (inferência — ex.: "sugere análise de alternativas").
-  - "evidence_quote": trecho REAL da justificativa que sustenta (máx 200 chars). Se não houver, null.
+  - "evidence_quote": trecho REAL da justificativa que sustenta (máx 200 chars). Se não houver justificativa, null.
   - "score": 0-100 refletindo o DEMONSTRADO, ou null se "not_assessable".
-  - "not_assessable": true quando NÃO há evidência suficiente para avaliar esta sub-dimensão (justificativa vazia, genérica ou que não toca o comportamento). Neste caso score=null.
+  - "not_assessable": true quando NÃO há justificativa ou ela é genérica e não toca o comportamento. Neste caso score=null.
   - "confidence": high/medium/low.
+- response_depth: só analise se houver justificativa escrita. Se NÃO houver, retorne level=null e reasoning="Sem comentário adicional." NUNCA diga que o candidato "repetiu o texto da alternativa" — se não escreveu, não há profundidade a analisar.
+- quality_metrics.has_concrete_examples: true se houver exemplos concretos na justificativa. Se não houver justificativa, retorne null (não false).
 - behavior_signals: como a pessoa age nesta situação (impulsiva, calma, ansiosa, ponderada, evasiva, assertiva, colaborativa, autoritária, analítica, passiva...), sempre com a evidência.
 - ai_detection: sinais de texto gerado por IA (linguagem genérica e polida demais, estrutura perfeita em tópicos, ausência de voz própria, muitos caracteres para poucas teclas). confidence 0-100. Trate como INDÍCIO, nunca como fato provado.
 - Evite elogios vazios. Seja específico. Cite trechos reais.

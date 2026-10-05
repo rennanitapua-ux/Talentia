@@ -126,12 +126,12 @@ export default function ResponseAnalysis({ analysis }) {
                 <Metric label="Raciocínio" value={qualityMetrics.reasoning} />
                 <Metric label="Resol. Problemas" value={qualityMetrics.problem_solving} />
                 <Metric label="Coerência" value={qualityMetrics.coherence} />
-                <div className="flex items-center gap-1.5 text-xs">
-                  <span className="text-muted-foreground/70">Exemplos:</span>
-                  <span className={qualityMetrics.has_concrete_examples ? 'text-emerald-400' : 'text-muted-foreground/50'}>
-                    {qualityMetrics.has_concrete_examples ? 'Sim' : 'Não'}
-                  </span>
-                </div>
+                {qualityMetrics.has_concrete_examples === true && (
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className="text-muted-foreground/70">Exemplos:</span>
+                    <span className="text-emerald-400">Sim</span>
+                  </div>
+                )}
               </div>
             </Section>
           )}

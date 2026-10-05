@@ -172,12 +172,12 @@ export default function CandidateProfile() {
     }
     setSaving(true);
     try {
-      const isComplete = !!(form.full_name.trim() && form.cpf && validateCPF(form.cpf));
+      // Todos os campos são opcionais — o perfil pode ser salvo a qualquer momento, mesmo em branco.
       const data = {
         ...form,
         user_id: user.id,
         email: user.email,
-        completed: isComplete,
+        completed: true,
       };
       if (profile) {
         await base44.entities.CandidateProfile.update(profile.id, data);
