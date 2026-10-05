@@ -120,12 +120,33 @@ function computeOverallConfidence({ responses, skill_scores, hasDisc, hasProfile
 
 // Pesos contextuais: competências obrigatórias pesam mais que desejáveis/desenvolvíveis.
 // Se a empresa não definiu importância, todas pesam igual (fallback).
+// Usa matching normalizado para encontrar a competência mesmo se o nome variar ligeiramente.
 function competencyWeight(name, job) {
   const reqs = job?.competency_requirements || [];
-  const req = reqs.find((r) => r.name === name);
+  const req = reqs.find((r) => normalizeComp(r.name) === normalizeComp(name));
   const imp = req?.importance || 'obrigatoria';
   // obrigatoria: 1.0, desejavel: 0.6, desenvolvivel: 0.3
   return imp === 'obrigatoria' ? 1.0 : imp === 'desejavel' ? 0.6 : 0.3;
+}
+
+// Cálculo centralizado do overall_score — usado tanto pelo local quanto pelo enriquecimento de IA.
+// Competências null (sem evidência) NÃO entram no cálculo — não arrastam o score para baixo.
+// Sem nenhuma evidência → null (DADOS INSUFICIENTES, não 0).
+export function computeOverallScore(responses, skill_scores, job) {
+  const validResponseScores = responses
+    .map((r) => r.analysis?.response_score ?? r.choice_score)
+    .filter((v) => v != null && !isNaN(v));
+  const hasAnyEvidence = validResponseScores.length > 0;
+  if (!hasAnyEvidence) return null;
+  const responseAvg = avg(validResponseScores);
+  const assessedSkillScores = Object.entries(skill_scores)
+    .filter(([, v]) => v != null)
+    .map(([name, v]) => ({ name, score: v, weight: competencyWeight(name, job) }));
+  const totalWeight = assessedSkillScores.reduce((s, e) => s + e.weight, 0);
+  const weightedSkillAvg = totalWeight > 0 ? assessedSkillScores.reduce((s, e) => s + e.score * e.weight, 0) / totalWeight : 0;
+  return assessedSkillScores.length > 0
+    ? Math.round(responseAvg * 0.5 + weightedSkillAvg * 0.5)
+    : Math.round(responseAvg);
 }
 
 // Aggregates per-response soft_skill_evidence into a structured per-skill, per-dimension breakdown.
@@ -314,23 +335,11 @@ export function computeLocalAssessment({ candidateName, job, responses, disc, di
     score_confidence[c] = evidenceCount >= 3 ? 'high' : evidenceCount === 2 ? 'medium' : evidenceCount === 1 ? 'low' : 'insufficient';
   });
 
-  // overall_score: média ponderada de respostas + competências avaliadas.
-  // Competências null (sem evidência) NÃO entram no cálculo — não arrastam o score para baixo.
-  // Se NÃO há nenhuma evidência (todas as respostas são null) → score null (DADOS INSUFICIENTES).
-  const validResponseScores = responses.map((r) => r.analysis?.response_score ?? r.choice_score).filter((v) => v != null && !isNaN(v));
-  const hasAnyEvidence = validResponseScores.length > 0;
-  const responseAvg = hasAnyEvidence ? avg(validResponseScores) : 0;
+  // overall_score: cálculo centralizado (consistente entre local e IA).
+  const overall_score = computeOverallScore(responses, skill_scores, job);
   const assessedSkillScores = Object.entries(skill_scores)
     .filter(([, v]) => v != null)
-    .map(([name, v]) => ({ name, score: v, weight: competencyWeight(name, job) }));
-  const totalWeight = assessedSkillScores.reduce((s, e) => s + e.weight, 0);
-  const weightedSkillAvg = totalWeight > 0 ? assessedSkillScores.reduce((s, e) => s + e.score * e.weight, 0) / totalWeight : 0;
-  // Sem evidência → null (não 0). Com evidência → média ponderada.
-  const overall_score = !hasAnyEvidence
-    ? null
-    : assessedSkillScores.length > 0
-      ? Math.round(responseAvg * 0.5 + weightedSkillAvg * 0.5)
-      : Math.round(responseAvg);
+    .map(([name, v]) => ({ name, score: v }));
 
   // Confiança real baseada em evidência
   const hasDisc = !!(disc?.scores);
@@ -438,20 +447,14 @@ export async function enrichAssessmentWithAI(assessment, { candidateName, job, r
   const items = responses.map((r, i) => ({
     n: i + 1,
     situacao: r.phase_title,
-    pergunta: r.question_short || r.question_prompt,
     escolha: r.choice_text || null,
-    qualidade_escolha: r.choice_quality || null,
-    comportamento_escolha: r.choice_behavior || null,
-    justificativa: String(r.justification || r.answer || '').slice(0, 700),
+    qualidade: r.choice_quality || null,
+    justificativa: String(r.justification || r.answer || '').slice(0, 500),
     nota: r.analysis?.response_score ?? null,
-    soft_skills_medidas: (r.analysis?.soft_skill_evidence || []).map((e) => ({
-      skill: e.skill_label,
-      dimension: e.dimension_label,
-      observed: e.observed || null,
-      inferred: e.inferred || null,
-      score: e.score,
-      not_assessable: e.not_assessable || false,
-      quote: e.evidence_quote,
+    soft_skills: (r.analysis?.soft_skill_evidence || []).map((e) => ({
+      skill: e.skill_label, dimension: e.dimension_label,
+      observed: e.observed || null, inferred: e.inferred || null,
+      score: e.score, not_assessable: e.not_assessable || false,
     })),
     sinais: (r.analysis?.behavior_signals || []).map((b) => b.trait).join(', '),
     suspeita_ia: r.analysis?.ai_detection?.is_ai_generated ? r.analysis.ai_detection.confidence : 0,
@@ -525,21 +528,8 @@ Responda SOMENTE com JSON válido:
     if (aiScore !== undefined && aiScore !== null) skill_scores[c] = clamp(aiScore);
     if (v?.confidence) score_confidence[c] = v.confidence;
   });
-  // overall_score: média ponderada excluindo competências null (sem evidência)
-  // Sem nenhuma evidência → null (DADOS INSUFICIENTES, não 0)
-  const validResponseScores = responses.map((r) => r.analysis?.response_score ?? r.choice_score).filter((v) => v != null && !isNaN(v));
-  const hasAnyEvidence = validResponseScores.length > 0;
-  const responseAvg = hasAnyEvidence ? avg(validResponseScores) : 0;
-  const assessedSkillScores = Object.entries(skill_scores)
-    .filter(([, v]) => v != null)
-    .map(([name, v]) => ({ name, score: v, weight: competencyWeight(name, job) }));
-  const totalWeight = assessedSkillScores.reduce((s, e) => s + e.weight, 0);
-  const weightedSkillAvg = totalWeight > 0 ? assessedSkillScores.reduce((s, e) => s + e.score * e.weight, 0) / totalWeight : 0;
-  const overall_score = !hasAnyEvidence
-    ? null
-    : assessedSkillScores.length > 0
-      ? Math.round(responseAvg * 0.5 + weightedSkillAvg * 0.5)
-      : Math.round(responseAvg);
+  // overall_score: cálculo centralizado (consistente entre local e IA).
+  const overall_score = computeOverallScore(responses, skill_scores, job);
 
   const behavior = ai.behavioral_profile?.axes ? ai.behavioral_profile : assessment.behavioral_profile;
 

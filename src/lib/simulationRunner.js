@@ -44,12 +44,25 @@ export function analyzeResponse(job, situations, response) {
   });
 }
 
+// Analisa respostas em lotes concorrentes (3 por vez) para evitar rate-limit e falhas em cascata.
+async function analyzeAllResponses(job, situations, responses) {
+  const analyzed = [...responses];
+  const CONCURRENCY = 3;
+  for (let i = 0; i < analyzed.length; i += CONCURRENCY) {
+    const batch = analyzed.slice(i, i + CONCURRENCY);
+    await Promise.all(batch.map(async (r, idx) => {
+      if (!r.analysis) {
+        const analysis = await analyzeResponse(job, situations, r);
+        analyzed[i + idx] = { ...r, analysis };
+      }
+    }));
+  }
+  return analyzed;
+}
+
 export async function finalizeSimulation({ sim, job, situations, responses, integrity, onStep }) {
   onStep?.(0);
-  const analyzed = [...responses];
-  await Promise.all(analyzed.map(async (r, i) => {
-    if (!r.analysis) analyzed[i] = { ...r, analysis: await analyzeResponse(job, situations, r) };
-  }));
+  const analyzed = await analyzeAllResponses(job, situations, responses);
 
   onStep?.(1);
   const ai_flags = analyzed
@@ -101,6 +114,7 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
   enrichAssessmentWithAI(localAssessment, ctx)
     .then(async (full) => {
       try {
+        // Persiste todos os campos enriquecidos de uma vez — sem listar cada um.
         await base44.entities.Simulation.update(sim.id, {
           analysis_status: 'completed',
           profile_summary: full.profile_summary,
@@ -134,7 +148,6 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
         });
       } catch (e) {
         console.warn('Failed to persist AI-enriched assessment', e?.message);
-        // Marca como failed mas mantém o score local — o app continua funcionando
         await base44.entities.Simulation.update(sim.id, { analysis_status: 'failed' }).catch(() => {});
       }
     })
