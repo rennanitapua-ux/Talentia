@@ -43,12 +43,9 @@ export default function JobApplication() {
     navigate(`/register?returnTo=${encodeURIComponent(returnTo)}&role=candidate`);
   };
 
-  const profileComplete = (p) => {
-    const base = !!(p && p.completed && p.full_name && p.cpf);
-    if (!base) return false;
-    if (state.job?.resume_required === false) return true;
-    return !!p.resume_url;
-  };
+  // Perfil é OPCIONAL — o candidato pode prosseguir mesmo sem completar.
+  // Consideramos "pronto" se ele já salvou o perfil (completed=true) ou se nunca existiu.
+  const profileComplete = () => true;
 
   const apply = async () => {
     setCreating(true);
@@ -129,46 +126,17 @@ export default function JobApplication() {
   }
 
   const { job, profile, application } = state;
-  const complete = profileComplete(profile);
 
-  // Perfil incompleto — orientar completar
-  if (!complete) {
-    return (
-      <div className="min-h-screen relative">
-        <Background />
-        <header className="border-b border-border bg-card/60 backdrop-blur-xl sticky top-0 z-30">
-          <div className="max-w-2xl mx-auto px-6 py-4 flex items-center gap-3">
-            <Logo size="sm" withText />
-          </div>
-        </header>
-        <div className="relative z-10 max-w-2xl mx-auto px-6 py-10">
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="mb-6">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-primary mb-1">Vaga: {job.title}</div>
-              <h1 className="text-2xl font-bold mb-2">Complete seu perfil profissional</h1>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Antes de responder à simulação, precisamos do seu perfil completo. Esses dados ficam salvos — você não precisa repetir em próximas candidaturas.
-              </p>
-            </div>
-            <div className="glass rounded-2xl shadow-card p-6 space-y-4">
-              <Step icon={User} label="Dados pessoais e CPF" done={!!(profile?.full_name && profile?.cpf)} />
-              <Step icon={FileText} label="Endereço e contato" done={!!(profile?.cep && profile?.phone)} />
-              <Step icon={Briefcase} label="Experiência e currículo" done={job.resume_required === false ? true : !!profile?.resume_url} />
-              <Step icon={ShieldCheck} label="Privacidade configurada" done={profile != null} />
-            </div>
-            <button
-              onClick={() => navigate(`/candidate/profile?returnTo=${encodeURIComponent(`/candidatura/vaga/${jobId}`)}`)}
-              className="w-full mt-6 h-12 rounded-xl bg-primary text-primary-foreground font-medium flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
-            >
-              Completar perfil <ArrowRight className="w-4 h-4" />
-            </button>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
+  // Perfil é opcional — candidato pode prosseguir mesmo sem completar.
+  // Mostramos o status do perfil como informativo, mas nunca bloqueia.
+  const profileSteps = [
+    { icon: User, label: 'Dados pessoais e CPF', done: !!(profile?.full_name && profile?.cpf) },
+    { icon: FileText, label: 'Endereço e contato', done: !!(profile?.cep && profile?.phone) },
+    { icon: Briefcase, label: 'Experiência e currículo', done: job.resume_required === false ? true : !!profile?.resume_url },
+    { icon: ShieldCheck, label: 'Privacidade configurada', done: profile != null },
+  ];
+  const allDone = profileSteps.every((s) => s.done);
 
-  // Perfil completo — pronto para candidatar
   return (
     <div className="min-h-screen relative">
       <Background />
@@ -180,20 +148,26 @@ export default function JobApplication() {
       <div className="relative z-10 max-w-2xl mx-auto px-6 py-10">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
           <div className="mb-6">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-primary mb-1">Candidatura</div>
-            <h1 className="text-2xl font-bold mb-1">{job.title}</h1>
-            <p className="text-sm text-muted-foreground">{job.company_name} · {job.sector || ''}</p>
+            <div className="text-[10px] font-mono uppercase tracking-wider text-primary mb-1">Vaga: {job.title}</div>
+            <h1 className="text-2xl font-bold mb-2">{allDone ? 'Tudo pronto para a simulação' : 'Complete seu perfil (opcional)'}</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {allDone
+                ? 'Seu perfil está completo. Você pode iniciar a simulação agora.'
+                : 'Completar o perfil ajuda a empresa a conhecer você melhor, mas é opcional — você pode prosseguir para a simulação a qualquer momento.'}
+            </p>
           </div>
-          <div className="glass rounded-2xl shadow-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-foreground">Perfil completo</div>
-                <div className="text-xs text-muted-foreground">Olá, {profile.full_name}. Você está pronto para a simulação desta vaga.</div>
-              </div>
-            </div>
+          <div className="glass rounded-2xl shadow-card p-6 space-y-4">
+            {profileSteps.map((s, i) => <Step key={i} {...s} />)}
+          </div>
+          {!allDone && (
+            <button
+              onClick={() => navigate(`/candidate/profile?returnTo=${encodeURIComponent(`/candidatura/vaga/${jobId}`)}`)}
+              className="w-full mt-4 h-12 rounded-xl border border-border bg-card text-foreground font-medium flex items-center justify-center gap-2 hover:bg-accent transition-colors"
+            >
+              Completar perfil <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
+          <div className="glass rounded-2xl shadow-card p-6 mt-6">
             {application && (
               <div className="mb-4 p-3 rounded-lg bg-muted/40 border border-border text-xs text-muted-foreground">
                 Você já iniciou esta candidatura. Continue de onde parou.
