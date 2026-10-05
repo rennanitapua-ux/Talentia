@@ -25,6 +25,16 @@ export default function JobApplication() {
       if (!user) { setState({ loading: false, user: null }); return; }
       const job = await base44.entities.Job.get(jobId).catch(() => null);
       if (!job) { setState({ loading: false, user, job: null, error: 'Vaga não encontrada ou não publicada.' }); return; }
+      // Empresa (dono da vaga ou com perfil de empresa) não pode se candidatar como candidato.
+      // Desconecta e envia ao cadastro de candidato para criar uma sessão de candidato separada.
+      const isOwner = job.created_by_id === user.id;
+      const companyProfiles = await base44.entities.CompanyProfile.filter({ user_id: user.id }).catch(() => []);
+      if (isOwner || (companyProfiles && companyProfiles.length > 0)) {
+        await base44.auth.logout();
+        const returnTo = `/candidatura/vaga/${jobId}`;
+        window.location.href = `/register?returnTo=${encodeURIComponent(returnTo)}&role=candidate`;
+        return;
+      }
       const [profiles, apps] = await Promise.all([
         base44.entities.CandidateProfile.filter({ user_id: user.id }),
         base44.entities.Application.filter({ job_id: jobId, candidate_user_id: user.id }),
