@@ -66,6 +66,25 @@ export default function StepBasics({ form, update }) {
         </div>
         <p className="text-xs text-muted-foreground/70 mt-1">Escala de domínio da função — 0 = iniciante, 10 = referência absoluta. Substitui a senioridade fixa.</p>
       </div>
+
+      <div className="space-y-2">
+        <Label>Envio de currículo</Label>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => update('resume_required', true)}
+            className={`h-11 rounded-md border text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+              form.resume_required !== false ? 'bg-primary/10 border-primary text-primary' : 'bg-background/60 border-input text-muted-foreground hover:bg-accent'
+            }`}>
+            Obrigatório
+          </button>
+          <button type="button" onClick={() => update('resume_required', false)}
+            className={`h-11 rounded-md border text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+              form.resume_required === false ? 'bg-primary/10 border-primary text-primary' : 'bg-background/60 border-input text-muted-foreground hover:bg-accent'
+            }`}>
+            Opcional
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground/70">Define se o candidato precisa enviar currículo para se candidatar a esta vaga.</p>
+      </div>
     </div>
   );
 }

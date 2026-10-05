@@ -19,6 +19,7 @@ export default function CompanyJobCreate() {
     company_name: '', title: '', sector: '', difficulty: 'mid', seniority_level: 6, openings: 1,
     company_problems: '', situations: [], company_context: '', product: '', client: '', competencies: [],
     process_depth: 'padrao', depth_custom: { choiceCount: 10, openCount: 1 },
+    resume_required: true,
   });
   const [assessment, setAssessment] = useState({ status: 'idle', data: null });
   const [publishing, setPublishing] = useState(false);
@@ -77,6 +78,7 @@ export default function CompanyJobCreate() {
       const job = await base44.entities.Job.create({
         ...form, role: form.title, openings: Number(form.openings) || 1, status: 'published',
         process_depth: form.process_depth || 'padrao',
+        resume_required: form.resume_required !== false,
         depth_custom: form.process_depth === 'personalizada' ? form.depth_custom : undefined,
         virtual_company_profile: data.virtual_company_profile,
         assessment: { version: 2, source: data.source, generated_at: new Date().toISOString(), situations: data.situations },

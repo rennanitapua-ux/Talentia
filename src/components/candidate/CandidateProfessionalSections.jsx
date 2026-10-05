@@ -17,19 +17,11 @@ export default function CandidateProfessionalSections({ form, update }) {
   return (
     <div className="space-y-7">
       {/* Dados profissionais básicos */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-2">Cargo atual</label>
-          <input value={form.current_role || ''} onChange={(e) => update('current_role', e.target.value)}
-            placeholder="Ex.: Analista de Marketing"
-            className="w-full bg-input border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none" />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-2">Cargo desejado</label>
-          <input value={form.desired_role || ''} onChange={(e) => update('desired_role', e.target.value)}
-            placeholder="Ex.: Coordenador de Marketing"
-            className="w-full bg-input border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none" />
-        </div>
+      <div>
+        <label className="block text-xs font-medium text-muted-foreground mb-2">Cargo atual</label>
+        <input value={form.current_role || ''} onChange={(e) => update('current_role', e.target.value)}
+          placeholder="Ex.: Analista de Marketing"
+          className="w-full bg-input border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none" />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -88,7 +80,7 @@ export default function CandidateProfessionalSections({ form, update }) {
 
       {/* Cursos */}
       <RepeatableList
-        title="Cursos e certificações" icon={Award}
+        title="Cursos e certificações (opcional)" icon={Award}
         items={form.courses || []}
         onChange={(v) => update('courses', v)}
         addLabel="Adicionar curso"

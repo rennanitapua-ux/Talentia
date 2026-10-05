@@ -43,7 +43,12 @@ export default function JobApplication() {
     navigate(`/register?returnTo=${encodeURIComponent(returnTo)}&role=candidate`);
   };
 
-  const profileComplete = (p) => !!(p && p.completed && p.full_name && p.cpf);
+  const profileComplete = (p) => {
+    const base = !!(p && p.completed && p.full_name && p.cpf);
+    if (!base) return false;
+    if (state.job?.resume_required === false) return true;
+    return !!p.resume_url;
+  };
 
   const apply = async () => {
     setCreating(true);
@@ -148,7 +153,7 @@ export default function JobApplication() {
             <div className="glass rounded-2xl shadow-card p-6 space-y-4">
               <Step icon={User} label="Dados pessoais e CPF" done={!!(profile?.full_name && profile?.cpf)} />
               <Step icon={FileText} label="Endereço e contato" done={!!(profile?.cep && profile?.phone)} />
-              <Step icon={Briefcase} label="Experiência e currículo" done={!!profile?.resume_url} />
+              <Step icon={Briefcase} label="Experiência e currículo" done={job.resume_required === false ? true : !!profile?.resume_url} />
               <Step icon={ShieldCheck} label="Privacidade configurada" done={profile != null} />
             </div>
             <button
