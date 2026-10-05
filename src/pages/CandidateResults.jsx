@@ -31,6 +31,14 @@ export default function CandidateResults() {
       setSim(s);
       setLoading(false);
     }).catch(() => setLoading(false));
+
+    // Atualiza o resultado quando o enriquecimento da IA terminar (em segundo plano).
+    const unsubscribe = base44.entities.Simulation.subscribe((event) => {
+      if (event.id === id && event.type === 'update') {
+        base44.entities.Simulation.get(id).then(setSim).catch(() => {});
+      }
+    });
+    return unsubscribe;
   }, [id]);
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-brand-violet border-t-transparent rounded-full animate-spin" /></div>;

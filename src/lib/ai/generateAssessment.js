@@ -80,7 +80,7 @@ ${skillsBlock}
 SITUAÇÕES REAIS ESCRITAS PELA EMPRESA (base obrigatória):
 ${(job.situations || []).map((s, i) => `${i + 1}. ${s}`).join('\n') || '— (use o problema real da empresa)'}
 
-GERE EXATAMENTE ${choiceCount} SITUAÇÕES DE MÚLTIPLA ESCOLHA (type:"choice") E ${openCount} QUESTÕES ABERTAS (type:"open").
+GERE EXATAMENTE ${choiceCount} SITUAÇÕES DE MÚLTIPLA ESCOLHA (type:"choice") E ${openCount} QUESTÕES ABERTAS (type:"open"). NÃO inclua nenhuma situação extra além dessas contagens — o número de itens no array "situations" deve ser exatamente ${choiceCount + openCount}.
 
 PARA AS SITUAÇÕES DE MÚLTIPLA ESCOLHA (type:"choice"):
 1. Parta das situações reais e do problema da empresa. Use primeiro as situações escritas pela empresa e depois crie desdobramentos (consequência de uma decisão, prazo apertado, cliente irritado, conflito com colega, erro próprio, dilema ético, priorização, dados incompletos). Nunca repita cenário.
@@ -118,7 +118,7 @@ Responda SOMENTE com JSON válido:
       const all = p.situations || [];
       const choices = all.filter(isValidChoice).length;
       const opens = all.filter(isValidOpen).length;
-      return choices >= Math.ceil(choiceCount * 0.6) && opens >= 1;
+      return choices >= choiceCount && opens >= openCount;
     },
   });
   if (!parsed) return null;

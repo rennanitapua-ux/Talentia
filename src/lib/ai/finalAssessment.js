@@ -85,7 +85,6 @@ function localSoftSkillsDetail(responses, targetSkills) {
       const de = detail[e.skill].dimensions[e.dimension];
       de.count++;
       de.not_assessable = false;
-      // Preserve observed/inferred from per-response analysis
       if (e.observed) de.observed = de.observed ? `${de.observed}; ${e.observed}` : e.observed;
       if (e.inferred) de.inferred = de.inferred ? `${de.inferred}; ${e.inferred}` : e.inferred;
       de.evidence.push({
@@ -96,14 +95,12 @@ function localSoftSkillsDetail(responses, targetSkills) {
         note: e.observed || e.evidence,
         inferred: e.inferred,
       });
-      // Running average only when there's a real score
       if (typeof e.score === 'number') {
         de.score = de.score === null ? e.score : Math.round((de.score * (de.count - 1) + e.score) / de.count);
       }
     });
   });
 
-  // Compute per-skill score = avg of assessed dimension scores; confidence by evidence count
   Object.values(detail).forEach((skill) => {
     const assessedDims = Object.values(skill.dimensions).filter((d) => !d.not_assessable && typeof d.score === 'number');
     if (assessedDims.length) {
@@ -131,12 +128,121 @@ function discText(disc, answers) {
   return `D=${disc.scores.D}% I=${disc.scores.I}% S=${disc.scores.S}% C=${disc.scores.C}% · perfil ${disc.profile_code}\n${lines.join('\n')}`;
 }
 
-export async function generateFinalAssessment({ candidateName, job, responses, disc, discAnswers, integrity, companyProfile }) {
+// Observações de comportamento durante a avaliação — computação local, sem IA.
+function buildBehavioralObservations(responses, integrity) {
+  const times = responses.map((r) => r.time_spent_seconds || 0).filter(Boolean);
+  const avgTime = times.length ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
+  const minTime = times.length ? Math.min(...times) : 0;
+  const maxTime = times.length ? Math.max(...times) : 0;
+  const timeVariance = times.length > 1 ? Math.round(Math.sqrt(times.reduce((s, t) => s + Math.pow(t - avgTime, 2), 0) / times.length)) : 0;
+  const rushed = times.filter((t) => t > 0 && t < 15).length;
+  const longPauses = times.filter((t) => t > 240).length;
+  const totalChars = responses.reduce((s, r) => s + (r.typing?.chars || (r.justification || '').length || 0), 0);
+  const avgChars = responses.length ? Math.round(totalChars / responses.length) : 0;
+  const bulkInserts = responses.reduce((s, r) => s + (r.typing?.bulk_inserts || 0), 0);
+  const blockedPastes = responses.reduce((s, r) => s + (r.typing?.blocked_pastes || 0), 0);
+  const observations = [];
+  if (rushed > 0) observations.push({ type: 'rushed', label: `${rushed} resposta(s) muito rápida(s)`, detail: 'Tempo abaixo de 15s pode indicar baixa reflexão.', severity: rushed > 1 ? 'warn' : 'info' });
+  if (longPauses > 0) observations.push({ type: 'pause', label: `${longPauses} pausa(s) longa(s)`, detail: 'Mais de 4 min em uma questão pode indicar hesitação ou dúvida.', severity: 'info' });
+  if (avgTime > 0 && timeVariance > avgTime * 0.6) observations.push({ type: 'inconsistent', label: 'Ritmo inconsistente', detail: 'Grande variação de tempo entre as questões.', severity: 'info' });
+  if (bulkInserts > 0) observations.push({ type: 'bulk', label: `${bulkInserts} inserção(ões) de bloco de texto`, detail: 'Texto inserido em massa — possível uso de fonte externa.', severity: 'warn' });
+  if (blockedPastes > 0) observations.push({ type: 'paste', label: `${blockedPastes} tentativa(s) de colar bloqueada(s)`, detail: 'Tentou colar texto na resposta (bloqueado).', severity: 'warn' });
+  if (integrity?.tab_switches > 0) observations.push({ type: 'tab', label: `${integrity.tab_switches} saída(s) de aba`, detail: 'Mudou de aba durante a simulação.', severity: 'warn' });
+  if (avgChars > 0 && avgChars < 60) observations.push({ type: 'short', label: 'Respostas curtas', detail: `Média de ${avgChars} caracteres por resposta.`, severity: 'info' });
+  if (observations.length === 0) observations.push({ type: 'steady', label: 'Comportamento estável', detail: 'Ritmo consistente, sem sinais de atalho ou distração.', severity: 'ok' });
+  return {
+    avg_time_per_question: avgTime, min_time: minTime, max_time: maxTime,
+    time_variance: timeVariance, rushed_answers: rushed, long_pauses: longPauses,
+    avg_chars: avgChars, bulk_inserts: bulkInserts, blocked_pastes: blockedPastes,
+    observations,
+  };
+}
+
+// Níveis 0-10: exigido pela vaga vs. demonstrado pelo candidato — local, sem IA.
+function buildDemonstratedLevels(job, skill_scores) {
+  const competencies = job.competencies?.length ? job.competencies : ['Resolução de problemas'];
+  const reqMap = {};
+  (job.competency_requirements || []).forEach((r) => { reqMap[r.name] = r.required_level; });
+  const demonstrated_levels = {};
+  competencies.forEach((c) => {
+    const demonstrated = Math.round((skill_scores[c] || 0) / 10);
+    const required = reqMap[c] != null ? reqMap[c] : null;
+    const gap = required !== null ? demonstrated - required : null;
+    demonstrated_levels[c] = {
+      demonstrated,
+      required,
+      gap,
+      status: required === null ? 'no_target' : gap >= 0 ? 'meets' : gap >= -1 ? 'close' : 'below',
+    };
+  });
+  return demonstrated_levels;
+}
+
+// Computa a avaliação completa usando apenas lógica local (sem chamada de IA).
+// Os campos narrativos da IA ficam vazios/nulos — preenchidos depois por enrichAssessmentWithAI.
+// É instantâneo: permite salvar e mostrar o resultado ao candidato imediatamente.
+export function computeLocalAssessment({ candidateName, job, responses, disc, discAnswers, integrity, companyProfile }) {
+  const competencies = job.competencies?.length ? job.competencies : ['Resolução de problemas'];
+  const targetSkills = inferSoftSkills(job);
+
+  const local = localSkillScores(responses, competencies);
+  const skill_scores = {};
+  const score_confidence = {};
+  competencies.forEach((c) => { skill_scores[c] = local[c]; });
+
+  const responseAvg = avg(responses.map((r) => r.analysis?.response_score ?? r.choice_score ?? 0));
+  const skillAvg = avg(Object.values(skill_scores));
+  const overall_score = Math.round(responseAvg * 0.6 + skillAvg * 0.4);
+  const weight = 1 / competencies.length;
+
+  const behavioral_observations = buildBehavioralObservations(responses, integrity);
+  const demonstrated_levels = buildDemonstratedLevels(job, skill_scores);
+  const aderencia = buildAderenciaSummary(demonstrated_levels, skill_scores, score_confidence, competencies);
+  const behavior = localBehaviorProfile(responses);
+  const soft_skills_detail = localSoftSkillsDetail(responses, targetSkills);
+  const interview_questions = interviewQuestionsFromGaps({ targetSkills, softSkillsDetail: soft_skills_detail, job }).slice(0, 8);
+
+  return {
+    profile_summary: '',
+    summary: 'Relatório gerado a partir das notas individuais de cada situação.',
+    soft_skills_narrative: '',
+    soft_skills_detail,
+    skill_scores,
+    score_confidence,
+    skill_graph: skill_scores,
+    demonstrated_levels,
+    aderencia,
+    behavioral_observations,
+    score_composition: competencies.map((c) => ({ competency: c, score: skill_scores[c], weight, contribution: skill_scores[c] * weight * 0.4 })),
+    skill_dna: { strengths: [], growth_areas: [] },
+    hard_skills: [],
+    soft_skills: [],
+    behavioral_profile: behavior,
+    disc_interpretation: null,
+    personality_analysis: '',
+    work_style: '',
+    strengths_detail: '',
+    weaknesses_detail: '',
+    job_compatibility: {},
+    consistency_analysis: '',
+    company_analysis: null,
+    evidence_categories: null,
+    interview_questions,
+    overall_score,
+    overall_confidence: 'medium',
+    assessment_confidence: { level: 'low', reasoning: 'Análise detalhada em processamento pela IA.', evidence_count: responses.length },
+    recommendation: getRecommendation(overall_score).label,
+  };
+}
+
+// Enriquece a avaliação local com a análise narrativa da IA.
+// Faz a chamada lenta ao LLM e mescla o resultado com os campos locais.
+// Retorna a avaliação completa; pode falhar graciosamente (retorna a local intacta).
+export async function enrichAssessmentWithAI(assessment, { candidateName, job, responses, disc, discAnswers, integrity, companyProfile }) {
   const competencies = job.competencies?.length ? job.competencies : ['Resolução de problemas'];
   const targetSkills = inferSoftSkills(job);
   const skillsBlock = targetSkills.map((s) => `${s.label} (${s.key}): ${s.dimensions.map((d) => d.key).join(', ')}`).join('; ');
 
-  // Perfil cultural da empresa para análise contextual profunda
   const cp = companyProfile || {};
   const companyCultureBlock = [
     `Empresa: ${cp.company_name || job.company_name || '—'}`,
@@ -180,8 +286,6 @@ export async function generateFinalAssessment({ candidateName, job, responses, d
     suspeita_ia: r.analysis?.ai_detection?.is_ai_generated ? r.analysis.ai_detection.confidence : 0,
     tempo_s: r.time_spent_seconds,
   }));
-
-  const localSoft = localSoftSkillsDetail(responses, targetSkills);
 
   const prompt = `Você é o TalentIA gerando o RELATÓRIO FINAL de um candidato para recrutadores. Seja rigoroso, específico e baseado em EVIDÊNCIAS de soft skills. Português do Brasil.
 
@@ -238,14 +342,13 @@ Responda SOMENTE com JSON válido:
 
   const ai = (await askJSON(prompt, { models: ['claude-sonnet-5', 'gemini_3_flash'], validate: (p) => p.summary || p.skill_scores })) || {};
 
-  // Scores: AI per competency when available, otherwise computed from the individual notes.
-  const local = localSkillScores(responses, competencies);
-  const skill_scores = {};
-  const score_confidence = {};
+  // Merge AI skill_scores with local; AI takes priority when available.
+  const skill_scores = { ...assessment.skill_scores };
+  const score_confidence = { ...assessment.score_confidence };
   competencies.forEach((c) => {
     const v = ai.skill_scores?.[c];
     const aiScore = typeof v === 'number' ? v : v?.score;
-    skill_scores[c] = aiScore !== undefined ? clamp(aiScore) : local[c];
+    if (aiScore !== undefined) skill_scores[c] = clamp(aiScore);
     if (v?.confidence) score_confidence[c] = v.confidence;
   });
   const responseAvg = avg(responses.map((r) => r.analysis?.response_score ?? r.choice_score ?? 0));
@@ -253,57 +356,10 @@ Responda SOMENTE com JSON válido:
   const overall_score = Math.round(responseAvg * 0.6 + skillAvg * 0.4);
   const weight = 1 / competencies.length;
 
-  // Observações de comportamento durante a avaliação
-  const times = responses.map((r) => r.time_spent_seconds || 0).filter(Boolean);
-  const avgTime = times.length ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
-  const minTime = times.length ? Math.min(...times) : 0;
-  const maxTime = times.length ? Math.max(...times) : 0;
-  const timeVariance = times.length > 1 ? Math.round(Math.sqrt(times.reduce((s, t) => s + Math.pow(t - avgTime, 2), 0) / times.length)) : 0;
-  const rushed = times.filter((t) => t > 0 && t < 15).length;
-  const longPauses = times.filter((t) => t > 240).length;
-  const totalChars = responses.reduce((s, r) => s + (r.typing?.chars || (r.justification || '').length || 0), 0);
-  const avgChars = responses.length ? Math.round(totalChars / responses.length) : 0;
-  const bulkInserts = responses.reduce((s, r) => s + (r.typing?.bulk_inserts || 0), 0);
-  const blockedPastes = responses.reduce((s, r) => s + (r.typing?.blocked_pastes || 0), 0);
-  const observations = [];
-  if (rushed > 0) observations.push({ type: 'rushed', label: `${rushed} resposta(s) muito rápida(s)`, detail: 'Tempo abaixo de 15s pode indicar baixa reflexão.', severity: rushed > 1 ? 'warn' : 'info' });
-  if (longPauses > 0) observations.push({ type: 'pause', label: `${longPauses} pausa(s) longa(s)`, detail: 'Mais de 4 min em uma questão pode indicar hesitação ou dúvida.', severity: 'info' });
-  if (avgTime > 0 && timeVariance > avgTime * 0.6) observations.push({ type: 'inconsistent', label: 'Ritmo inconsistente', detail: 'Grande variação de tempo entre as questões.', severity: 'info' });
-  if (bulkInserts > 0) observations.push({ type: 'bulk', label: `${bulkInserts} inserção(ões) de bloco de texto`, detail: 'Texto inserido em massa — possível uso de fonte externa.', severity: 'warn' });
-  if (blockedPastes > 0) observations.push({ type: 'paste', label: `${blockedPastes} tentativa(s) de colar bloqueada(s)`, detail: 'Tentou colar texto na resposta (bloqueado).', severity: 'warn' });
-  if (integrity?.tab_switches > 0) observations.push({ type: 'tab', label: `${integrity.tab_switches} saída(s) de aba`, detail: 'Mudou de aba durante a simulação.', severity: 'warn' });
-  if (avgChars > 0 && avgChars < 60) observations.push({ type: 'short', label: 'Respostas curtas', detail: `Média de ${avgChars} caracteres por resposta.`, severity: 'info' });
-  if (observations.length === 0) observations.push({ type: 'steady', label: 'Comportamento estável', detail: 'Ritmo consistente, sem sinais de atalho ou distração.', severity: 'ok' });
-  const behavioral_observations = {
-    avg_time_per_question: avgTime, min_time: minTime, max_time: maxTime,
-    time_variance: timeVariance, rushed_answers: rushed, long_pauses: longPauses,
-    avg_chars: avgChars, bulk_inserts: bulkInserts, blocked_pastes: blockedPastes,
-    observations,
-  };
-
-  // Níveis 0-10: exigido pela vaga vs. demonstrado pelo candidato
-  const reqMap = {};
-  (job.competency_requirements || []).forEach((r) => { reqMap[r.name] = r.required_level; });
-  const demonstrated_levels = {};
-  competencies.forEach((c) => {
-    const demonstrated = Math.round((skill_scores[c] || 0) / 10);
-    const required = reqMap[c] != null ? reqMap[c] : null;
-    const gap = required !== null ? demonstrated - required : null;
-    demonstrated_levels[c] = {
-      demonstrated,
-      required,
-      gap,
-      status: required === null ? 'no_target' : gap >= 0 ? 'meets' : gap >= -1 ? 'close' : 'below',
-    };
-  });
-
-  const aderencia = buildAderenciaSummary(demonstrated_levels, skill_scores, score_confidence, competencies);
-
-  const behavior = ai.behavioral_profile?.axes ? ai.behavioral_profile : localBehaviorProfile(responses);
+  const behavior = ai.behavioral_profile?.axes ? ai.behavioral_profile : assessment.behavioral_profile;
 
   // Merge AI soft_skills_detail with local; AI takes priority but local fills gaps.
-  // Preserves not_assessable when neither has evidence.
-  const soft_skills_detail = { ...localSoft };
+  const soft_skills_detail = { ...assessment.soft_skills_detail };
   if (ai.soft_skills_detail) {
     Object.entries(ai.soft_skills_detail).forEach(([key, val]) => {
       if (!soft_skills_detail[key]) {
@@ -352,7 +408,6 @@ Responda SOMENTE com JSON válido:
     });
   }
 
-  // Interview questions: merge AI's with gap-generated ones (gaps fill first if AI didn't cover them)
   const aiQuestions = ai.interview_questions || [];
   const gapQuestions = interviewQuestionsFromGaps({ targetSkills, softSkillsDetail: soft_skills_detail, job });
   const coveredCompetencies = new Set(aiQuestions.map((q) => q.competency?.split(' → ')[0]));
@@ -360,18 +415,17 @@ Responda SOMENTE com JSON válido:
   const interview_questions = [...aiQuestions, ...missingGaps].slice(0, 8);
 
   return {
+    ...assessment,
     profile_summary: ai.profile_summary || '',
-    summary: ai.summary || 'Relatório gerado a partir das notas individuais de cada situação.',
+    summary: ai.summary || assessment.summary,
     soft_skills_narrative: ai.soft_skills_narrative || '',
     soft_skills_detail,
     skill_scores,
     score_confidence,
     skill_graph: skill_scores,
-    demonstrated_levels,
-    aderencia,
-    behavioral_observations,
+    demonstrated_levels: buildDemonstratedLevels(job, skill_scores),
     score_composition: competencies.map((c) => ({ competency: c, score: skill_scores[c], weight, contribution: skill_scores[c] * weight * 0.4 })),
-    skill_dna: ai.skill_dna || { strengths: [], growth_areas: [] },
+    skill_dna: ai.skill_dna || assessment.skill_dna,
     hard_skills: ai.hard_skills || [],
     soft_skills: ai.soft_skills || [],
     behavioral_profile: behavior,
@@ -387,7 +441,13 @@ Responda SOMENTE com JSON válido:
     interview_questions,
     overall_score,
     overall_confidence: ai.overall_confidence || 'medium',
-    assessment_confidence: ai.assessment_confidence || { level: 'low', reasoning: 'Relatório gerado sem a análise completa da IA.', evidence_count: responses.length },
+    assessment_confidence: ai.assessment_confidence || { level: 'medium', reasoning: 'Relatório enriquecido com análise de IA.', evidence_count: responses.length },
     recommendation: getRecommendation(overall_score).label,
   };
+}
+
+// Wrapper backward-compatible: local + IA em uma chamada.
+export async function generateFinalAssessment(ctx) {
+  const local = computeLocalAssessment(ctx);
+  return enrichAssessmentWithAI(local, ctx);
 }

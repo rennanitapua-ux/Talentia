@@ -11,8 +11,6 @@ import SimulationTopBar from '@/components/simulation/SimulationTopBar';
 import SituationCard from '@/components/simulation/SituationCard';
 import FinishingScreen from '@/components/simulation/FinishingScreen';
 import IntegrityAlert from '@/components/simulation/IntegrityAlert';
-import FollowupTransition from '@/components/simulation/FollowupTransition';
-import { generateFollowup } from '@/lib/ai/generateFollowup';
 
 const VIOLATION_KEY = { tab: 'tab_switches', blur: 'focus_losses', fullscreen: 'fullscreen_exits' };
 
@@ -27,8 +25,6 @@ export default function CandidateSimulation() {
   const [alert, setAlert] = useState(null);
   const [finishStep, setFinishStep] = useState(0);
   const [finishError, setFinishError] = useState(false);
-  const [queue, setQueue] = useState(null);
-  const [transitioning, setTransitioning] = useState(false);
   const responsesRef = useRef([]);
   const integrityRef = useRef(emptyIntegrity());
   const pendingRef = useRef([]);
@@ -37,7 +33,7 @@ export default function CandidateSimulation() {
   const startedAt = useRef(Date.now());
 
   const baseSituations = getSituations(ctx.job);
-  const situations = queue || baseSituations;
+  const situations = baseSituations;
 
   useEffect(() => {
     (async () => {
@@ -130,25 +126,6 @@ export default function CandidateSimulation() {
       })
     );
 
-    // Follow-up adaptativo: só para situações principais (não follow-ups)
-    if (!situation.is_followup) {
-      setTransitioning(true);
-      try {
-        const followup = await generateFollowup(ctx.job, situation, response);
-        if (followup) {
-          setQueue((q) => {
-            const list = q || baseSituations;
-            const next = [...list];
-            next.splice(index + 1, 0, followup);
-            return next;
-          });
-        }
-      } catch (e) {
-        console.warn('Followup generation failed', e?.message);
-      }
-      setTransitioning(false);
-    }
-
     startedAt.current = Date.now();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setIndex((i) => i + 1);
@@ -186,8 +163,8 @@ export default function CandidateSimulation() {
   };
 
   useEffect(() => {
-    if (phase === 'simulating' && !transitioning && situations.length > 0 && index >= situations.length) finish();
-  }, [phase, index, situations.length, transitioning]);
+    if (phase === 'simulating' && situations.length > 0 && index >= situations.length) finish();
+  }, [phase, index, situations.length]);
 
   if (ctx.loading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -211,9 +188,7 @@ export default function CandidateSimulation() {
         <IntegrityAlert alert={alert} />
         <SimulationTopBar job={ctx.job} index={index} total={situations.length} violations={violations} />
         <main className="max-w-3xl mx-auto px-5 py-10 pb-24">
-          {transitioning ? (
-            <FollowupTransition />
-          ) : situation && (
+          {situation && (
             <SituationCard
               key={situation.id}
               situation={situation}

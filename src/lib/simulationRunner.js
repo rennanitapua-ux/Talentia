@@ -1,6 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { analyzeSituationResponse } from '@/lib/ai/analyzeResponse';
-import { generateFinalAssessment } from '@/lib/ai/finalAssessment';
+import { computeLocalAssessment, enrichAssessmentWithAI } from '@/lib/ai/finalAssessment';
 
 export const emptyIntegrity = () => ({ tab_switches: 0, focus_losses: 0, fullscreen_exits: 0, paste_attempts: 0, ai_suspicions: 0 });
 
@@ -70,14 +70,16 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
   } catch (e) {
     console.warn('Failed to load company profile for assessment', e?.message);
   }
-  const assessment = await generateFinalAssessment({
+
+  // Avaliação local (instantânea, sem IA) — permite salvar e mostrar o resultado ao candidato imediatamente.
+  const localAssessment = computeLocalAssessment({
     candidateName: sim.candidate_name, job, responses: analyzed,
     disc: sim.disc_results, discAnswers: sim.disc_answers, integrity: finalIntegrity, companyProfile,
   });
 
   onStep?.(3);
   await base44.entities.Simulation.update(sim.id, {
-    ...assessment,
+    ...localAssessment,
     responses: analyzed,
     ai_flags,
     integrity: finalIntegrity,
@@ -87,4 +89,49 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
     total_time_seconds: analyzed.reduce((s, r) => s + (r.time_spent_seconds || 0), 0),
   });
   onStep?.(4);
+
+  // Enriquecimento com IA em segundo plano — atualiza o registro quando pronto.
+  // Não bloqueia a navegação do candidato; a página de resultado atualiza via subscription.
+  const ctx = {
+    candidateName: sim.candidate_name, job, responses: analyzed,
+    disc: sim.disc_results, discAnswers: sim.disc_answers, integrity: finalIntegrity, companyProfile,
+  };
+  enrichAssessmentWithAI(localAssessment, ctx)
+    .then(async (full) => {
+      try {
+        await base44.entities.Simulation.update(sim.id, {
+          profile_summary: full.profile_summary,
+          summary: full.summary,
+          soft_skills_narrative: full.soft_skills_narrative,
+          soft_skills_detail: full.soft_skills_detail,
+          skill_scores: full.skill_scores,
+          score_confidence: full.score_confidence,
+          skill_graph: full.skill_graph,
+          demonstrated_levels: full.demonstrated_levels,
+          aderencia: full.aderencia,
+          score_composition: full.score_composition,
+          skill_dna: full.skill_dna,
+          hard_skills: full.hard_skills,
+          soft_skills: full.soft_skills,
+          behavioral_profile: full.behavioral_profile,
+          disc_interpretation: full.disc_interpretation,
+          personality_analysis: full.personality_analysis,
+          work_style: full.work_style,
+          strengths_detail: full.strengths_detail,
+          weaknesses_detail: full.weaknesses_detail,
+          job_compatibility: full.job_compatibility,
+          consistency_analysis: full.consistency_analysis,
+          company_analysis: full.company_analysis,
+          evidence_categories: full.evidence_categories,
+          interview_questions: full.interview_questions,
+          overall_score: full.overall_score,
+          overall_confidence: full.overall_confidence,
+          assessment_confidence: full.assessment_confidence,
+          recommendation: full.recommendation,
+        });
+      } catch (e) {
+        console.warn('Failed to persist AI-enriched assessment', e?.message);
+      }
+    })
+    .catch((e) => console.warn('AI enrichment failed', e?.message));
 }
