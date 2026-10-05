@@ -421,13 +421,11 @@ export default function CandidateProfile() {
 
             {/* Section: Privacidade */}
             <SectionHeader title="Privacidade" />
-            <div className="space-y-3">
-              <p className="text-xs text-muted-foreground/70 mb-3">Seu perfil é totalmente visível para empresas em processos seletivos. Seu endereço completo nunca é compartilhado — apenas cidade e estado.</p>
-              <ToggleRow icon={Shield} label="Perfil visível para empresas" desc="Empresas podem encontrar seu perfil em processos seletivos" checked locked />
-              <ToggleRow icon={FileCheck2} label="Currículo visível" desc="Recrutadores podem ver seu currículo" checked locked />
-              <ToggleRow icon={Phone} label="Telefone visível" desc="Empresas podem ver seu telefone" checked locked />
-              <ToggleRow icon={User} label="E-mail visível" desc="Empresas podem ver seu e-mail" checked locked />
-              <ToggleRow icon={Building} label="Permitir contato" desc="Aceito ser contatado por empresas" checked locked />
+            <div className="rounded-xl border border-border bg-muted/30 p-4 flex gap-3">
+              <Shield className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Seu perfil, currículo, telefone e e-mail são visíveis para empresas em processos seletivos, e você pode ser contatado por elas. Seu endereço completo nunca é compartilhado — apenas cidade e estado.
+              </p>
             </div>
           </div>
 
