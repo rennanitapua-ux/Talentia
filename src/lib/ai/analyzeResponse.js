@@ -17,7 +17,8 @@ function localAnalysis({ option, justification, typing, situation }) {
   const decision = option ? option.score ?? 50 : 50;
   const hasJust = len > 0;
   // Justificativa é OPCIONAL: sem texto → score null (não zera, não penaliza)
-  const just = hasJust ? 35 : null;
+  // Para questões abertas (sem option), piso justo para respostas com conteúdo
+  const just = hasJust ? (option ? 35 : 45) : null;
   const suspicious = typingSuspicion(typing);
   // Soft skill evidence from the situation's own tags + the behavior of the chosen option
   const softSkillEvidence = (situation?.soft_skills || []).map((ss) => {
@@ -79,8 +80,14 @@ function finalize(a, { option, typing, situation }) {
     score: e.not_assessable ? null : clamp(e.score ?? 0),
   }));
   // response_score: para escolhas, depende SÓ da decisão (justificativa não diminui).
-  // Para questões abertas, a justificativa É a resposta.
-  const response_score = option ? decision : (justification ?? 0);
+  // Para questões abertas, a justificativa É a resposta — piso justo para respostas com conteúdo.
+  let response_score;
+  if (option) {
+    response_score = decision;
+  } else {
+    const hasText = (justification ?? 0) > 0;
+    response_score = hasText ? Math.max(40, justification ?? 0) : 0;
+  }
   return {
     ...a,
     decision_score: decision,
@@ -121,6 +128,7 @@ ${targetSkills || '—'}
 REGRAS (EVIDÊNCIA, NÃO ADJETIVOS):
 - A ESCOLHA é o principal fator: "bad" → decision_score 0-20; "weak" → 25-45; "good" → 55-75; "best" → 80-100. A justificativa é OPCIONAL e NUNCA diminui a nota da escolha — só pode acrescentar evidência. Se a melhor escolha ("best") foi marcada, o decision_score fica em 80-100, sem pontos negativos.
 - justification_score (0-100 ou null): se NÃO houver justificativa escrita, retorne null. Se houver, avalie clareza, raciocínio e coerência. Justificativa que contradiz a escolha → no máximo 30.
+- QUESTÕES ABERTAS (sem alternativas): o justification_score avalia o CONTEÚDO da resposta, NÃO a forma. Não penalize por brevidade, gramática, falta de estrutura ou linguagem simples. Avalie se a resposta endereça o problema e se a abordagem faz sentido. Resposta curta mas relevante = 40-55. Resposta com bom senso prático e direção clara = 55-70. Resposta elaborada com exemplos concretos = 70-85. Só dê menos de 35 se a resposta for irrelevante, contraditória, evasiva ou se o candidato não respondeu.
 - NÃO identificar uma soft skill só porque o candidato ESCREVEU "sou organizado" ou "tenho boa comunicação". Procure COMPORTAMENTO DEMONSTRADO: o que ele descreveu que faria, com que critérios, em que ordem.
 - soft_skill_evidence: para CADA sub-dimensão que esta situação mira, produza:
   - "observed": o que EFETIVAMENTE apareceu na resposta (fato — ex.: "descreveu 3 etapas antes de decidir").
