@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Loader2, Briefcase, LogIn } from 'lucide-react';
+import { ArrowRight, Loader2, Briefcase } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import Logo from '@/components/Logo';
 import Background from '@/components/Background';
