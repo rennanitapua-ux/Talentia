@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Loader2, CheckCircle2, FileText, User, Briefcase, ShieldCheck, LogIn } from 'lucide-react';
+import { ArrowRight, Loader2, Briefcase, LogIn } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import Logo from '@/components/Logo';
 import Background from '@/components/Background';
 import { userName } from '@/lib/accounts';
 
 // Fluxo de candidatura por link da vaga: /candidatura/vaga/:jobId
-// Público até identificação. Se não autenticado → cadastro/login com returnTo.
-// Se autenticado + perfil incompleto → completar perfil. Se completo → cria candidatura e vai à simulação.
+// O candidato só chega aqui pelo link enviado pela empresa.
+// 1. Se não autenticado → leva direto ao CADASTRO (primeiro cadastro, depois o processo).
+//    Quem já tem conta entra pelo link "já tenho conta" na página de cadastro.
+// 2. Se autenticado → mostra a vaga e um único botão para entrar na simulação.
+//    Perfil é opcional e pode ser completado depois — não bloqueia o início.
 export default function JobApplication() {
   const { jobId } = useParams();
   const navigate = useNavigate();
@@ -34,18 +37,13 @@ export default function JobApplication() {
     })();
   }, [jobId]);
 
-  const startLogin = () => {
-    const returnTo = `/candidatura/vaga/${jobId}`;
-    navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`);
-  };
-  const startRegister = () => {
-    const returnTo = `/candidatura/vaga/${jobId}`;
-    navigate(`/register?returnTo=${encodeURIComponent(returnTo)}&role=candidate`);
-  };
-
-  // Perfil é OPCIONAL — o candidato pode prosseguir mesmo sem completar.
-  // Consideramos "pronto" se ele já salvou o perfil (completed=true) ou se nunca existiu.
-  const profileComplete = () => true;
+  // Não autenticado → cadastro primeiro. A página de cadastro tem link para login.
+  useEffect(() => {
+    if (!state.loading && !state.user) {
+      const returnTo = `/candidatura/vaga/${jobId}`;
+      navigate(`/register?returnTo=${encodeURIComponent(returnTo)}&role=candidate`, { replace: true });
+    }
+  }, [state.loading, state.user, jobId, navigate]);
 
   const apply = async () => {
     setCreating(true);
@@ -82,32 +80,15 @@ export default function JobApplication() {
     );
   }
 
-  // Não autenticado — identificação
+  // Não autenticado — redirecionando ao cadastro (useEffect acima). Mostra loader.
   if (!state.user) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center px-5">
+      <div className="min-h-screen flex items-center justify-center">
         <Background />
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 w-full max-w-md">
-          <div className="flex justify-center mb-6"><Logo size="lg" withText /></div>
-          <div className="glass rounded-2xl shadow-card p-8">
-            <div className="flex items-center gap-2 mb-1">
-              <Briefcase className="w-4 h-4 text-primary" />
-              <span className="text-[10px] font-mono uppercase tracking-wider text-primary">Candidatura</span>
-            </div>
-            <h1 className="text-2xl font-bold mb-2">Candidate-se à vaga</h1>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              Para se candidatar, você precisa de uma conta TalentIA. Se já tem, entre. Se não, crie agora — é rápido e seus dados ficam guardados para futuras candidaturas.
-            </p>
-            <div className="space-y-3">
-              <button onClick={startLogin} className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-medium flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors">
-                <LogIn className="w-4 h-4" /> Já tenho conta — Entrar
-              </button>
-              <button onClick={startRegister} className="w-full h-12 rounded-xl border border-border bg-card text-foreground font-medium flex items-center justify-center gap-2 hover:bg-accent transition-colors">
-                Criar conta <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </motion.div>
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="w-7 h-7 text-primary animate-spin" />
+          <span className="text-sm">Preparando seu cadastro...</span>
+        </div>
       </div>
     );
   }
@@ -119,23 +100,12 @@ export default function JobApplication() {
         <Background />
         <div className="relative z-10 text-center">
           <p className="text-muted-foreground">{state.error || 'Vaga indisponível.'}</p>
-          <button onClick={() => navigate('/candidate')} className="mt-4 text-sm text-primary hover:underline">Ver vagas abertas</button>
         </div>
       </div>
     );
   }
 
-  const { job, profile, application } = state;
-
-  // Perfil é opcional — candidato pode prosseguir mesmo sem completar.
-  // Mostramos o status do perfil como informativo, mas nunca bloqueia.
-  const profileSteps = [
-    { icon: User, label: 'Dados pessoais e CPF', done: !!(profile?.full_name && profile?.cpf) },
-    { icon: FileText, label: 'Endereço e contato', done: !!(profile?.cep && profile?.phone) },
-    { icon: Briefcase, label: 'Experiência e currículo', done: job.resume_required === false ? true : !!profile?.resume_url },
-    { icon: ShieldCheck, label: 'Privacidade configurada', done: profile != null },
-  ];
-  const allDone = profileSteps.every((s) => s.done);
+  const { job, application } = state;
 
   return (
     <div className="min-h-screen relative">
@@ -148,33 +118,26 @@ export default function JobApplication() {
       <div className="relative z-10 max-w-2xl mx-auto px-6 py-10">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
           <div className="mb-6">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-primary mb-1">Vaga: {job.title}</div>
-            <h1 className="text-2xl font-bold mb-2">{allDone ? 'Tudo pronto para a simulação' : 'Complete seu perfil (opcional)'}</h1>
+            <div className="flex items-center gap-2 mb-1">
+              <Briefcase className="w-4 h-4 text-primary" />
+              <span className="text-[10px] font-mono uppercase tracking-wider text-primary">Vaga: {job.title}</span>
+            </div>
+            <h1 className="text-2xl font-bold mb-2">{application ? 'Continuar candidatura' : 'Bem-vindo à simulação'}</h1>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {allDone
-                ? 'Seu perfil está completo. Você pode iniciar a simulação agora.'
-                : 'Completar o perfil ajuda a empresa a conhecer você melhor, mas é opcional — você pode prosseguir para a simulação a qualquer momento.'}
+              {job.company_name} · {job.sector || '—'}
             </p>
+            {job.company_problems && (
+              <p className="text-sm text-foreground/70 leading-relaxed mt-3">{job.company_problems}</p>
+            )}
           </div>
-          <div className="glass rounded-2xl shadow-card p-6 space-y-4">
-            {profileSteps.map((s, i) => <Step key={i} {...s} />)}
-          </div>
-          {!allDone && (
-            <button
-              onClick={() => navigate(`/candidate/profile?returnTo=${encodeURIComponent(`/candidatura/vaga/${jobId}`)}`)}
-              className="w-full mt-4 h-12 rounded-xl border border-border bg-card text-foreground font-medium flex items-center justify-center gap-2 hover:bg-accent transition-colors"
-            >
-              Completar perfil <ArrowRight className="w-4 h-4" />
-            </button>
-          )}
-          <div className="glass rounded-2xl shadow-card p-6 mt-6">
+          <div className="glass rounded-2xl shadow-card p-6">
             {application && (
               <div className="mb-4 p-3 rounded-lg bg-muted/40 border border-border text-xs text-muted-foreground">
                 Você já iniciou esta candidatura. Continue de onde parou.
               </div>
             )}
             <p className="text-xs text-muted-foreground/70 leading-relaxed mb-5">
-              A simulação avalia como você age em situações reais da vaga. Suas respostas geram evidências usadas pela IA para analisar aderência ao contexto — não é uma prova de certo/errado.
+              A simulação avalia como você age em situações reais da vaga. Suas respostas geram evidências usadas pela IA para analisar aderência ao contexto — não é uma prova de certo/errado. Você pode completar seu perfil depois, sem perder o que já respondeu.
             </p>
             <button
               onClick={apply}
@@ -186,18 +149,6 @@ export default function JobApplication() {
           </div>
         </motion.div>
       </div>
-    </div>
-  );
-}
-
-function Step({ icon: Icon, label, done }) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${done ? 'bg-emerald-500/15 text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
-        <Icon className="w-4 h-4" />
-      </div>
-      <span className="text-sm text-foreground/80 flex-1">{label}</span>
-      {done ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <span className="text-[10px] font-mono text-muted-foreground/60">pendente</span>}
     </div>
   );
 }
