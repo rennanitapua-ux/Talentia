@@ -203,6 +203,22 @@
     },
     "total_time_seconds": {
       "type": "number"
+    },
+    "analysis_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "retrying"
+      ],
+      "default": "pending",
+      "description": "Status da an\u00e1lise de IA \u2014 permite funcionar sem IA e mostrar progresso"
+    },
+    "evidence_sources": {
+      "type": "object",
+      "description": "Rastreia quais fontes de evid\u00eancia foram usadas no c\u00e1lculo do score"
     }
   },
   "required": [

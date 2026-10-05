@@ -85,6 +85,7 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
     integrity: finalIntegrity,
     focus_violations: totalViolations(finalIntegrity),
     status: 'completed',
+    analysis_status: 'processing',
     completed_at: new Date().toISOString(),
     total_time_seconds: analyzed.reduce((s, r) => s + (r.time_spent_seconds || 0), 0),
   });
@@ -92,6 +93,7 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
 
   // Enriquecimento com IA em segundo plano — atualiza o registro quando pronto.
   // Não bloqueia a navegação do candidato; a página de resultado atualiza via subscription.
+  // Se a IA falhar, o score local (já salvo) continua válido — o app não para.
   const ctx = {
     candidateName: sim.candidate_name, job, responses: analyzed,
     disc: sim.disc_results, discAnswers: sim.disc_answers, integrity: finalIntegrity, companyProfile,
@@ -100,6 +102,7 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
     .then(async (full) => {
       try {
         await base44.entities.Simulation.update(sim.id, {
+          analysis_status: 'completed',
           profile_summary: full.profile_summary,
           summary: full.summary,
           soft_skills_narrative: full.soft_skills_narrative,
@@ -131,7 +134,12 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
         });
       } catch (e) {
         console.warn('Failed to persist AI-enriched assessment', e?.message);
+        // Marca como failed mas mantém o score local — o app continua funcionando
+        await base44.entities.Simulation.update(sim.id, { analysis_status: 'failed' }).catch(() => {});
       }
     })
-    .catch((e) => console.warn('AI enrichment failed', e?.message));
+    .catch(async (e) => {
+      console.warn('AI enrichment failed', e?.message);
+      await base44.entities.Simulation.update(sim.id, { analysis_status: 'failed' }).catch(() => {});
+    });
 }

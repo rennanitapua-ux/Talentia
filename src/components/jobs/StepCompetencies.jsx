@@ -5,6 +5,12 @@ import { COMPETENCY_LIBRARY } from '@/lib/jobOptions';
 
 const LEVEL_LABELS = ['—', 'Básico', 'Iniciante', 'Operacional', 'Sólido', 'Proficiente', 'Avançado', 'Especialista', 'Referência', 'Líder', 'Topo do mercado'];
 
+const IMPORTANCE_OPTIONS = [
+  { key: 'obrigatoria', label: 'Obrigatória', weight: 1.0, color: 'bg-rose-500/15 text-rose-400 border-rose-500/30' },
+  { key: 'desejavel', label: 'Desejável', weight: 0.6, color: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+  { key: 'desenvolvivel', label: 'Desenvolvível', weight: 0.3, color: 'bg-primary/15 text-primary border-primary/30' },
+];
+
 export default function StepCompetencies({ form, update }) {
   const [custom, setCustom] = useState('');
   const selected = form.competencies;
@@ -16,19 +22,25 @@ export default function StepCompetencies({ form, update }) {
       update('competency_requirements', requirements.filter((r) => r.name !== c));
     } else {
       update('competencies', [...selected, c]);
-      update('competency_requirements', [...requirements, { name: c, required_level: 7 }]);
+      update('competency_requirements', [...requirements, { name: c, required_level: 7, importance: 'obrigatoria', eliminatory: false }]);
     }
   };
   const addCustom = () => {
     const v = custom.trim();
     if (v && !selected.includes(v)) {
       update('competencies', [...selected, v]);
-      update('competency_requirements', [...requirements, { name: v, required_level: 7 }]);
+      update('competency_requirements', [...requirements, { name: v, required_level: 7, importance: 'obrigatoria', eliminatory: false }]);
     }
     setCustom('');
   };
   const setLevel = (name, level) => {
     update('competency_requirements', requirements.map((r) => (r.name === name ? { ...r, required_level: level } : r)));
+  };
+  const setImportance = (name, importance) => {
+    update('competency_requirements', requirements.map((r) => (r.name === name ? { ...r, importance } : r)));
+  };
+  const toggleEliminatory = (name) => {
+    update('competency_requirements', requirements.map((r) => (r.name === name ? { ...r, eliminatory: !r.eliminatory } : r)));
   };
   const all = [...COMPETENCY_LIBRARY, ...selected.filter((c) => !COMPETENCY_LIBRARY.includes(c))];
 
@@ -80,6 +92,19 @@ export default function StepCompetencies({ form, update }) {
                       </button>
                     ))}
                   </div>
+                </div>
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Importância:</span>
+                  {IMPORTANCE_OPTIONS.map((opt) => (
+                    <button key={opt.key} type="button" onClick={() => setImportance(r.name, opt.key)}
+                      className={`px-2.5 h-7 rounded-md text-[11px] font-medium border transition-colors ${(r.importance || 'obrigatoria') === opt.key ? opt.color : 'bg-muted text-muted-foreground border-border hover:bg-accent'}`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                  <button type="button" onClick={() => toggleEliminatory(r.name)}
+                    className={`px-2.5 h-7 rounded-md text-[11px] font-medium border transition-colors ${r.eliminatory ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' : 'bg-muted text-muted-foreground border-border hover:bg-accent'}`}>
+                    {r.eliminatory ? '✓ Eliminatória' : 'Eliminatória'}
+                  </button>
                 </div>
               </div>
             ))}
