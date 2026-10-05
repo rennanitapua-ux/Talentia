@@ -18,8 +18,9 @@ export default function CompanyJobCreate() {
   const [form, setForm] = useState({
     company_name: '', title: '', sector: '', difficulty: 'mid', seniority_level: 6, openings: 1,
     company_problems: '', situations: [], company_context: '', product: '', client: '', competencies: [],
+    process_depth: 'padrao', depth_custom: { choiceCount: 10, openCount: 1 },
   });
-  const [assessment, setAssessment] = useState({ status: 'idle', count: 12, data: null });
+  const [assessment, setAssessment] = useState({ status: 'idle', data: null });
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState('');
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -34,17 +35,39 @@ export default function CompanyJobCreate() {
     form.competencies.length < 2 ? 'Escolha pelo menos 2 competências.' : '',
   ][step];
 
-  const generate = async (useFallback = false) => {
+  const generate = async (config, useFallback = false) => {
     setAssessment((a) => ({ ...a, status: 'generating' }));
-    const data = useFallback ? buildFallbackAssessment(form, assessment.count) : await generateAssessment(form, assessment.count);
+    const data = useFallback ? buildFallbackAssessment(form, config) : await generateAssessment(form, config);
     setAssessment((a) => ({ ...a, status: data ? 'ready' : 'error', data }));
   };
 
   const removeSituation = (idx) =>
     setAssessment((a) => ({ ...a, data: { ...a.data, situations: a.data.situations.filter((_, i) => i !== idx) } }));
 
-  const addCustomSituation = (s) =>
+  const addSituation = (s) =>
     setAssessment((a) => ({ ...a, data: { ...a.data, situations: [...(a.data?.situations || []), s] } }));
+
+  const replaceSituation = (idx, s) =>
+    setAssessment((a) => ({ ...a, data: { ...a.data, situations: a.data.situations.map((x, i) => (i === idx ? s : x)) } }));
+
+  const duplicateSituation = (idx) =>
+    setAssessment((a) => {
+      const cur = a.data?.situations || [];
+      const copy = { ...cur[idx], id: `${cur[idx].id}_dup_${Date.now()}`, title: `${cur[idx].title} (cópia)` };
+      const next = [...cur];
+      next.splice(idx + 1, 0, copy);
+      return { ...a, data: { ...a.data, situations: next } };
+    });
+
+  const moveSituation = (idx, dir) =>
+    setAssessment((a) => {
+      const cur = a.data?.situations || [];
+      const target = idx + dir;
+      if (target < 0 || target >= cur.length) return a;
+      const next = [...cur];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return { ...a, data: { ...a.data, situations: next } };
+    });
 
   const publish = async () => {
     setPublishing(true);
@@ -53,6 +76,8 @@ export default function CompanyJobCreate() {
       const { data } = assessment;
       const job = await base44.entities.Job.create({
         ...form, role: form.title, openings: Number(form.openings) || 1, status: 'published',
+        process_depth: form.process_depth || 'padrao',
+        depth_custom: form.process_depth === 'personalizada' ? form.depth_custom : undefined,
         virtual_company_profile: data.virtual_company_profile,
         assessment: { version: 2, source: data.source, generated_at: new Date().toISOString(), situations: data.situations },
         simulation_scenarios: [],
@@ -91,11 +116,18 @@ export default function CompanyJobCreate() {
           {step === 3 && (
             <StepAssessment
               state={assessment}
-              setCount={(count) => setAssessment((a) => ({ ...a, count }))}
-              onGenerate={() => generate(false)}
-              onFallback={() => generate(true)}
+              depth={form.process_depth}
+              depthCustom={form.depth_custom}
+              form={form}
+              onUpdateDepth={(v) => update('process_depth', v)}
+              onUpdateDepthCustom={(v) => update('depth_custom', v)}
+              onGenerate={(config) => generate(config, false)}
+              onFallback={(config) => generate(config, true)}
               onRemove={removeSituation}
-              onAddCustom={addCustomSituation}
+              onAdd={addSituation}
+              onReplace={replaceSituation}
+              onMove={moveSituation}
+              onDuplicate={duplicateSituation}
               onPublish={publish}
               publishing={publishing}
               competencyCount={form.competencies.length}

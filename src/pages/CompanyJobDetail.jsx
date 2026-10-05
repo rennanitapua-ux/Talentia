@@ -9,6 +9,7 @@ import SituationPreview from '@/components/jobs/SituationPreview';
 import { seatStatus } from '@/lib/seats';
 import { ADERENCIA, ADERENCIA_ORDER } from '@/lib/aderencia';
 import { generateAssessment, buildFallbackAssessment } from '@/lib/ai/generateAssessment';
+import { depthConfig } from '@/lib/processDepth';
 import AssessmentVersionHistory from '@/components/company/AssessmentVersionHistory';
 
 const HIRING_STATUS = {
@@ -56,7 +57,8 @@ export default function CompanyJobDetail() {
     }
     setRegenerating(true);
     try {
-      const data = useFallback ? buildFallbackAssessment(job, (job.assessment?.situations?.length) || 12) : await generateAssessment(job, (job.assessment?.situations?.length) || 12);
+      const cfg = depthConfig(job.process_depth, job.depth_custom);
+      const data = useFallback ? buildFallbackAssessment(job, cfg) : await generateAssessment(job, cfg);
       if (!data) { alert('Não conseguimos gerar a simulação agora. Tente novamente.'); return; }
       const versions = job.assessment_versions || [];
       if (job.assessment) {

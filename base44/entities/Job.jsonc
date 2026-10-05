@@ -132,6 +132,29 @@
       "maximum": 10,
       "default": 6,
       "description": "N\u00edvel de dom\u00ednio exigido (0-10) \u2014 substitui a senioridade fixa"
+    },
+    "process_depth": {
+      "type": "string",
+      "enum": [
+        "leve",
+        "padrao",
+        "aprofundada",
+        "personalizada"
+      ],
+      "default": "padrao",
+      "description": "Profundidade do processo seletivo \u2014 define quantidade e complexidade da avalia\u00e7\u00e3o. A estrutura m\u00ednima (DISC + perguntas estruturadas + pelo menos 1 quest\u00e3o aberta) \u00e9 sempre obrigat\u00f3ria, independentemente do n\u00edvel."
+    },
+    "depth_custom": {
+      "type": "object",
+      "description": "Configura\u00e7\u00e3o personalizada quando process_depth='personalizada': { choiceCount, openCount }",
+      "properties": {
+        "choiceCount": {
+          "type": "number"
+        },
+        "openCount": {
+          "type": "number"
+        }
+      }
     }
   },
   "required": [

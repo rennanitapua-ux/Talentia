@@ -5,38 +5,65 @@ import { inferSoftSkills, softSkillsForPrompt } from '@/lib/softSkills';
 
 const LETTERS = ['a', 'b', 'c', 'd'];
 
-function normalizeSituation(s, i, competencies, softSkillTags) {
+function normalizeSoftSkills(s, softSkillTags) {
+  return (s.soft_skills || []).filter((ss) => ss.skill && ss.dimension).map((ss) => ({
+    skill: ss.skill,
+    dimension: ss.dimension,
+  }));
+}
+
+function normalizeChoice(s, i, competencies, softSkillTags) {
   const options = shuffle((s.options || []).filter((o) => o?.text).slice(0, 4)).map((o, k) => {
     const quality = QUALITY_SCORE[o.quality] !== undefined ? o.quality : 'weak';
     return { id: LETTERS[k], text: String(o.text).trim(), quality, score: QUALITY_SCORE[quality], behavior: o.behavior || '' };
   });
-  // soft_skills: array of { skill, dimension } tags the AI assigned
-  const softSkills = (s.soft_skills || []).filter((ss) => ss.skill && ss.dimension).map((ss) => ({
-    skill: ss.skill,
-    dimension: ss.dimension,
-  }));
+  const softSkills = normalizeSoftSkills(s, softSkillTags);
   return {
     id: `s${i + 1}`,
+    type: 'choice',
     title: s.title || `Situação ${i + 1}`,
     character: s.character?.name ? { name: s.character.name, role: s.character.role || '' } : null,
     context: s.context || '',
     question: s.question || 'O que você faz?',
     options,
-    justification_prompt: s.justification_prompt || 'Por que você escolheu essa opção? Seja específico e cite o que você considerou.',
+    justification_prompt: s.justification_prompt || 'Quer explicar sua resposta? (opcional)',
     competencies: s.competencies?.length ? s.competencies : [competencies[i % competencies.length]].filter(Boolean),
     soft_skills: softSkills.length ? softSkills : softSkillTags,
     difficulty: s.difficulty || 'intermediario',
   };
 }
 
-const isValid = (s) => s?.context && s?.question && (s.options || []).length === 4;
+function normalizeOpen(s, i, competencies, softSkillTags) {
+  const softSkills = normalizeSoftSkills(s, softSkillTags);
+  return {
+    id: `o${i + 1}`,
+    type: 'open',
+    title: s.title || `Questão aberta ${i + 1}`,
+    character: null,
+    context: s.context || '',
+    question: s.question || 'Conte sobre uma situação real que você viveu nessa área.',
+    options: [],
+    justification_prompt:
+      s.justification_prompt ||
+      'Conte sobre uma situação real: o que aconteceu, o que você fez, qual decisão tomou e qual foi o resultado. Escreva com suas próprias palavras.',
+    competencies: s.competencies?.length ? s.competencies : [competencies[i % competencies.length]].filter(Boolean),
+    soft_skills: softSkills.length ? softSkills : softSkillTags,
+    difficulty: s.difficulty || 'intermediario',
+  };
+}
 
-export async function generateAssessment(job, count = 12) {
+const isValidChoice = (s) => s?.context && s?.question && (s.options || []).length === 4;
+const isValidOpen = (s) => s?.context && s?.question && s?.type === 'open';
+
+// config: { choiceCount, openCount }
+export async function generateAssessment(job, config = {}) {
+  const choiceCount = Number(config.choiceCount) || 10;
+  const openCount = Math.max(1, Number(config.openCount) || 1);
   const competencies = job.competencies?.length ? job.competencies : ['Resolução de problemas', 'Comunicação'];
   const targetSkills = inferSoftSkills(job);
   const skillsBlock = softSkillsForPrompt(targetSkills);
 
-  const prompt = `Você é o motor de simulações do TalentIA. Crie uma simulação de trabalho REAL para avaliar SOFT SKILLS de candidatos a esta vaga. Escreva em português do Brasil.
+  const prompt = `Você é o motor de simulações do TalentIA. Crie uma avaliação de trabalho REAL para avaliar competências de candidatos a esta vaga. Escreva em português do Brasil.
 
 VAGA
 - Empresa: ${job.company_name || 'Não informada'}
@@ -53,32 +80,56 @@ ${skillsBlock}
 SITUAÇÕES REAIS ESCRITAS PELA EMPRESA (base obrigatória):
 ${(job.situations || []).map((s, i) => `${i + 1}. ${s}`).join('\n') || '— (use o problema real da empresa)'}
 
-GERE EXATAMENTE ${count} SITUAÇÕES. Regras:
+GERE EXATAMENTE ${choiceCount} SITUAÇÕES DE MÚLTIPLA ESCOLHA (type:"choice") E ${openCount} QUESTÕES ABERTAS (type:"open").
+
+PARA AS SITUAÇÕES DE MÚLTIPLA ESCOLHA (type:"choice"):
 1. Parta das situações reais e do problema da empresa. Use primeiro as situações escritas pela empresa e depois crie desdobramentos (consequência de uma decisão, prazo apertado, cliente irritado, conflito com colega, erro próprio, dilema ético, priorização, dados incompletos). Nunca repita cenário.
-2. Cada situação deve mirar 1 ou 2 sub-dimensões específicas da biblioteca de soft skills. Distribua as situações para cobrir o máximo de sub-dimensões possível — não concentre tudo numa só skill.
-3. "context": 2 a 4 frases concretas, com nomes, números e prazos. Direto ao ponto, sem enrolação.
-4. "question": pergunta CURTA e DIRETA (no máximo 12 palavras). Ex.: "O que você faz primeiro?", "Como você responde ao cliente agora?".
+2. Cada situação deve mirar 1 ou 2 sub-dimensões específicas da biblioteca de soft skills. Distribua para cobrir o máximo de sub-dimensões possível.
+3. "context": 2 a 4 frases concretas, com nomes, números e prazos. Direto ao ponto.
+4. "question": pergunta CURTA e DIRETA (máximo 12 palavras). Ex.: "O que você faz primeiro?", "Como você responde ao cliente agora?".
 5. "options": EXATAMENTE 4 alternativas com tamanho e tom parecidos — nenhuma pode parecer certa só pelo texto:
    - 1 com quality "best": a melhor decisão para o contexto;
    - 1 com quality "good": aceitável, porém incompleta;
    - 1 com quality "weak": fraca (passiva, lenta, desorganizada ou só parcialmente correta);
-   - 1 com quality "bad": RUIM DE VERDADE — impulsiva, antiética, agressiva, que empurra o problema, promete o que não pode cumprir ou ignora o cliente. Deve ser tentadora para alguém despreparado.
-   Cada alternativa tem "behavior": UM adjetivo do comportamento que ela revela (impulsivo, ponderado, calmo, ansioso, evasivo, assertivo, colaborativo, autoritário, analítico, intuitivo, proativo, passivo).
-6. "soft_skills": array de objetos { "skill": "<key da skill>", "dimension": "<key da sub-dimensão>" } que esta situação mira. Use os keys exatos da biblioteca acima.
-7. "justification_prompt": pedido curto para o candidato justificar a escolha.
+   - 1 com quality "bad": RUIM DE VERDADE — impulsiva, antiética, agressiva, que empurra o problema. Deve ser tentadora para alguém despreparado.
+   Cada alternativa tem "behavior": UM adjetivo do comportamento que ela revela.
+6. "soft_skills": array de objetos { "skill": "<key>", "dimension": "<key>" } que esta situação mira. Use os keys exatos da biblioteca.
+7. "justification_prompt": pedido curto e OPCIONAL para o candidato justificar a escolha.
 8. "competencies": 1 ou 2 competências da lista declarada que a situação mede.
 9. "character": quem traz a situação (nome brasileiro e cargo) ou null.
 10. Progressão: comece direto e termine com as situações mais complexas.
 
+PARA AS QUESTÕES ABERTAS (type:"open"):
+1. NÃO inclua o campo "options". A questão aberta deixa o candidato responder livremente.
+2. A pergunta deve buscar EVIDÊNCIA de comportamento real, não opinião genérica. Peça uma situação vivida: o que aconteceu, o que fez, qual decisão tomou e o resultado.
+3. Contextualize para a função e o problema real da empresa. NÃO use sempre a mesma pergunta genérica.
+4. "context": 1 a 3 frases que situam o candidato (opcional, mas recomendado).
+5. "question": a pergunta aberta em si, clara e específica para a vaga.
+6. "justification_prompt": instruções de como responder (situação, ação, decisão, resultado).
+7. "soft_skills" e "competencies": o que a resposta pode revelar.
+8. Varie as questões abertas entre si — não repita o mesmo tema.
+
 Responda SOMENTE com JSON válido:
-{"virtual_company_profile":"2 frases sobre a empresa e o momento dela","situations":[{"title":"título curto","character":{"name":"","role":""},"context":"","question":"","options":[{"text":"","quality":"best|good|weak|bad","behavior":""}],"soft_skills":[{"skill":"","dimension":""}],"justification_prompt":"","competencies":[""],"difficulty":"basico|intermediario|avancado"}]}`;
+{"virtual_company_profile":"2 frases sobre a empresa e o momento dela","situations":[{"type":"choice","title":"","character":{"name":"","role":""},"context":"","question":"","options":[{"text":"","quality":"best|good|weak|bad","behavior":""}],"soft_skills":[{"skill":"","dimension":""}],"justification_prompt":"","competencies":[""],"difficulty":"basico|intermediario|avancado"},{"type":"open","title":"","context":"","question":"","justification_prompt":"","soft_skills":[{"skill":"","dimension":""}],"competencies":[""],"difficulty":"basico|intermediario|avancado"}]}`;
 
   const parsed = await askJSON(prompt, {
     models: ['gemini_3_flash', 'gemini_3_flash'],
-    validate: (p) => (p.situations || []).filter(isValid).length >= Math.ceil(count * 0.6),
+    validate: (p) => {
+      const all = p.situations || [];
+      const choices = all.filter(isValidChoice).length;
+      const opens = all.filter(isValidOpen).length;
+      return choices >= Math.ceil(choiceCount * 0.6) && opens >= 1;
+    },
   });
   if (!parsed) return null;
-  const situations = parsed.situations.filter(isValid).slice(0, count).map((s, i) => normalizeSituation(s, i, competencies, []));
+  const all = parsed.situations || [];
+  const choices = all.filter(isValidChoice).slice(0, choiceCount).map((s, i) => normalizeChoice(s, i, competencies, []));
+  const opens = all.filter(isValidOpen).slice(0, openCount).map((s, i) => normalizeOpen(s, i, competencies, []));
+  // Garante pelo menos 1 questão aberta (regra de ouro).
+  const situations = [...choices, ...opens];
+  if (opens.length === 0) {
+    situations.push(normalizeOpen({ question: `Conte sobre uma situação real que você viveu como ${job.title || 'profissional'}: o que aconteceu, o que você fez e qual foi o resultado.`, context: job.company_problems || '' }, 0, competencies, []));
+  }
   return { virtual_company_profile: parsed.virtual_company_profile || '', situations, source: 'ai' };
 }
 
@@ -111,16 +162,25 @@ const TEMPLATES = [
 
 const TWISTS = ['', ' Agora o prazo é até o fim do dia.', ' O cliente está visivelmente irritado.', ' Seu gestor está fora e não responde.', ' Um colega discorda da sua abordagem.'];
 
+const OPEN_TEMPLATES = [
+  (job) => `Conte sobre uma situação real em que você precisou resolver um problema relacionado a ${job.product || 'seu trabalho'}. O que aconteceu, o que você fez e qual foi o resultado?`,
+  (job) => `Descreva uma vez em que você cometeu um erro ou enfrentou uma divergência no trabalho. Como você lidou com a situação e o que aprendeu?`,
+  (job) => `Conte sobre uma situação em que precisou tomar uma decisão difícil envolvendo outras pessoas. Como você decidiu e qual foi o resultado?`,
+];
+
 // Local generator used when the AI is unavailable — built from the company's own situations.
-export function buildFallbackAssessment(job, count = 12) {
+export function buildFallbackAssessment(job, config = {}) {
+  const choiceCount = Number(config.choiceCount) || 10;
+  const openCount = Math.max(1, Number(config.openCount) || 1);
   const competencies = job.competencies?.length ? job.competencies : ['Resolução de problemas'];
   const sources = [...(job.situations || [])];
   if (job.company_problems) sources.push(job.company_problems);
   if (!sources.length) sources.push(`Um problema inesperado surge envolvendo ${job.client || 'um cliente'} e ${job.product || 'o serviço da empresa'}.`);
-  const situations = Array.from({ length: count }, (_, i) => {
+
+  const choices = Array.from({ length: choiceCount }, (_, i) => {
     const t = TEMPLATES[i % TEMPLATES.length];
     const twist = TWISTS[Math.floor(i / sources.length) % TWISTS.length];
-    return normalizeSituation({
+    return normalizeChoice({
       title: `Situação ${i + 1}`,
       context: `${sources[i % sources.length]}${twist}`,
       question: t.q,
@@ -128,5 +188,15 @@ export function buildFallbackAssessment(job, count = 12) {
       soft_skills: t.skills,
     }, i, competencies, t.skills);
   });
-  return { virtual_company_profile: '', situations, source: 'fallback' };
+
+  const opens = Array.from({ length: openCount }, (_, i) =>
+    normalizeOpen({
+      title: `Questão aberta ${i + 1}`,
+      context: sources[i % sources.length],
+      question: OPEN_TEMPLATES[i % OPEN_TEMPLATES.length](job),
+      soft_skills: [{ skill: 'resolucao_problemas', dimension: 'iniciativa' }],
+    }, i, competencies, [{ skill: 'resolucao_problemas', dimension: 'iniciativa' }])
+  );
+
+  return { virtual_company_profile: '', situations: [...choices, ...opens], source: 'fallback' };
 }

@@ -14,16 +14,20 @@ const QUALITIES = [
 
 const LETTERS = ['a', 'b', 'c', 'd'];
 
-export default function CustomQuestionForm({ onAdd, onCancel }) {
-  const [title, setTitle] = useState('');
-  const [context, setContext] = useState('');
-  const [question, setQuestion] = useState('');
-  const [options, setOptions] = useState([
-    { text: '', quality: 'best' },
-    { text: '', quality: 'good' },
-    { text: '', quality: 'weak' },
-    { text: '', quality: 'bad' },
-  ]);
+export default function CustomQuestionForm({ initial, onAdd, onCancel }) {
+  const [title, setTitle] = useState(initial?.title || '');
+  const [context, setContext] = useState(initial?.context || '');
+  const [question, setQuestion] = useState(initial?.question || '');
+  const [options, setOptions] = useState(
+    initial?.options?.length === 4
+      ? initial.options.map((o) => ({ text: o.text, quality: o.quality }))
+      : [
+          { text: '', quality: 'best' },
+          { text: '', quality: 'good' },
+          { text: '', quality: 'weak' },
+          { text: '', quality: 'bad' },
+        ]
+  );
 
   const setOpt = (i, field, val) => setOptions((o) => o.map((x, idx) => (idx === i ? { ...x, [field]: val } : x)));
   const valid = title.trim() && question.trim() && options.every((o) => o.text.trim());
@@ -31,7 +35,8 @@ export default function CustomQuestionForm({ onAdd, onCancel }) {
   const submit = () => {
     if (!valid) return;
     const situation = {
-      id: `custom_${Date.now()}`,
+      id: initial?.id || `custom_${Date.now()}`,
+      type: 'choice',
       title: title.trim(),
       character: null,
       context: context.trim(),
@@ -41,12 +46,12 @@ export default function CustomQuestionForm({ onAdd, onCancel }) {
         text: o.text.trim(),
         quality: o.quality,
         score: QUALITY_SCORE[o.quality],
-        behavior: '',
+        behavior: o.behavior || '',
       })),
-      justification_prompt: 'Se quiser, conte um pouco mais sobre sua escolha (opcional).',
-      competencies: [],
-      soft_skills: [],
-      difficulty: 'intermediario',
+      justification_prompt: initial?.justification_prompt || 'Se quiser, conte um pouco mais sobre sua escolha (opcional).',
+      competencies: initial?.competencies || [],
+      soft_skills: initial?.soft_skills || [],
+      difficulty: initial?.difficulty || 'intermediario',
       is_custom: true,
     };
     onAdd(situation);
@@ -57,7 +62,7 @@ export default function CustomQuestionForm({ onAdd, onCancel }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Plus className="w-4 h-4 text-primary" />
-          <span className="text-sm font-semibold text-foreground">Sua pergunta para o teste</span>
+          <span className="text-sm font-semibold text-foreground">{initial ? 'Editar pergunta' : 'Sua pergunta para o teste'}</span>
         </div>
         <button onClick={onCancel} className="text-muted-foreground hover:text-foreground"><Trash2 className="w-4 h-4" /></button>
       </div>
@@ -98,7 +103,7 @@ export default function CustomQuestionForm({ onAdd, onCancel }) {
       <div className="flex gap-2 justify-end">
         <button onClick={onCancel} className="h-9 px-4 rounded-lg text-sm text-muted-foreground hover:text-foreground">Cancelar</button>
         <button onClick={submit} disabled={!valid} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5 hover:bg-primary/90 disabled:opacity-40">
-          <Check className="w-4 h-4" /> Adicionar pergunta
+          <Check className="w-4 h-4" /> {initial ? 'Salvar pergunta' : 'Adicionar pergunta'}
         </button>
       </div>
     </div>
