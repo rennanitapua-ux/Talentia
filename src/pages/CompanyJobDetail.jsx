@@ -103,7 +103,8 @@ export default function CompanyJobDetail() {
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   if (!job) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Vaga não encontrada</div>;
 
-  const shareUrl = `${window.location.origin}/candidatura/vaga/${id}`;
+  const PUBLISHED_URL = 'https://talentia-job.base44.app';
+  const shareUrl = `${PUBLISHED_URL}/candidatura/vaga/${id}`;
   const completedSims = simulations.filter(s => s.status === 'completed');
   const inProgressSims = simulations.filter(s => s.status === 'in_progress');
   const seats = seatStatus(job, simulations);
