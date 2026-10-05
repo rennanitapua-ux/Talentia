@@ -28,7 +28,7 @@ export default function CandidateProfile() {
     birth_date: '', country: 'Brasil', current_role: '', desired_role: '', professional_summary: '',
     experiences: [], education: [], courses: [], certifications: [], competencies: [], languages: [],
     resume_url: '', resume_name: '', profile_photo_url: '',
-    profile_visible: true, resume_visible: true, phone_visible: false, email_visible: false, allow_contact: true,
+    profile_visible: true, resume_visible: true, phone_visible: true, email_visible: true, allow_contact: true,
   });
   const fileResumeRef = useRef(null);
   const filePhotoRef = useRef(null);
@@ -70,11 +70,11 @@ export default function CandidateProfile() {
               resume_url: p.resume_url || '',
               resume_name: p.resume_name || '',
               profile_photo_url: p.profile_photo_url || '',
-              profile_visible: p.profile_visible !== false,
-              resume_visible: p.resume_visible !== false,
-              phone_visible: p.phone_visible === true,
-              email_visible: p.email_visible === true,
-              allow_contact: p.allow_contact !== false,
+              profile_visible: true,
+              resume_visible: true,
+              phone_visible: true,
+              email_visible: true,
+              allow_contact: true,
             });
           } else {
             setForm(f => ({ ...f, full_name: u.full_name || '', email: u.email || '' }));
@@ -422,12 +422,12 @@ export default function CandidateProfile() {
             {/* Section: Privacidade */}
             <SectionHeader title="Privacidade" />
             <div className="space-y-3">
-              <p className="text-xs text-muted-foreground/70 mb-3">Controle o que as empresas podem ver. Seu endereço completo nunca é compartilhado — apenas cidade e estado.</p>
-              <ToggleRow icon={Shield} label="Perfil visível para empresas" desc="Empresas podem encontrar seu perfil em processos seletivos" checked={form.profile_visible} onChange={(v) => update('profile_visible', v)} />
-              <ToggleRow icon={FileCheck2} label="Currículo visível" desc="Recrutadores podem ver seu currículo" checked={form.resume_visible} onChange={(v) => update('resume_visible', v)} />
-              <ToggleRow icon={Phone} label="Telefone visível" desc="Empresas podem ver seu telefone" checked={form.phone_visible} onChange={(v) => update('phone_visible', v)} />
-              <ToggleRow icon={User} label="E-mail visível" desc="Empresas podem ver seu e-mail" checked={form.email_visible} onChange={(v) => update('email_visible', v)} />
-              <ToggleRow icon={Building} label="Permitir contato" desc="Aceito ser contatado por empresas" checked={form.allow_contact} onChange={(v) => update('allow_contact', v)} />
+              <p className="text-xs text-muted-foreground/70 mb-3">Seu perfil é totalmente visível para empresas em processos seletivos. Seu endereço completo nunca é compartilhado — apenas cidade e estado.</p>
+              <ToggleRow icon={Shield} label="Perfil visível para empresas" desc="Empresas podem encontrar seu perfil em processos seletivos" checked locked />
+              <ToggleRow icon={FileCheck2} label="Currículo visível" desc="Recrutadores podem ver seu currículo" checked locked />
+              <ToggleRow icon={Phone} label="Telefone visível" desc="Empresas podem ver seu telefone" checked locked />
+              <ToggleRow icon={User} label="E-mail visível" desc="Empresas podem ver seu e-mail" checked locked />
+              <ToggleRow icon={Building} label="Permitir contato" desc="Aceito ser contatado por empresas" checked locked />
             </div>
           </div>
 
@@ -465,7 +465,7 @@ function Field({ label, hint, children }) {
   );
 }
 
-function ToggleRow({ icon: Icon, label, desc, checked, onChange }) {
+function ToggleRow({ icon: Icon, label, desc, checked, locked, onChange }) {
   return (
     <div className="flex items-center gap-3 py-2">
       <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -475,8 +475,9 @@ function ToggleRow({ icon: Icon, label, desc, checked, onChange }) {
       </div>
       <button
         type="button"
-        onClick={() => onChange(!checked)}
-        className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ${checked ? 'bg-primary' : 'bg-muted'}`}
+        disabled={locked}
+        onClick={locked ? undefined : () => onChange(!checked)}
+        className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ${checked ? 'bg-primary' : 'bg-muted'} ${locked ? 'cursor-not-allowed opacity-90' : ''}`}
       >
         <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${checked ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
       </button>
