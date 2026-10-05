@@ -14,6 +14,36 @@ function typingSuspicion(typing) {
   return (typing?.bulk_inserts || 0) > 0 || (chars > 60 && edits < chars * 0.15);
 }
 
+// Detecta caracteres aleatórios — teclado mashado, repetições, sequências, texto sem vogais.
+// Indica falta de comprometimento: o candidato preencheu só para avançar.
+function detectRandomChars(text) {
+  const t = (text || '').trim();
+  if (t.length < 8) return null; // muito curto para julgar
+  const noSpace = t.toLowerCase().replace(/\s/g, '');
+  if (noSpace.length < 8) return null;
+
+  // 1. Um único caractere repetido (kkkkk, aaaaa, 11111)
+  if (/^(.)\1{4,}$/i.test(noSpace)) return 'Repetição de um único caractere';
+
+  // 2. Poucos caracteres únicos em texto longo (ex: "asdfasdf" tem 4 únicos em 8)
+  const unique = new Set(noSpace).size;
+  if (unique <= 3) return 'Baixíssima diversidade de caracteres';
+
+  // 3. Sequências de teclado (qwerty, asdf, 1234) — ida ou volta
+  const seq = 'qwertyuiopasdfghjklzxcvbnm1234567890';
+  const rev = seq.split('').reverse().join('');
+  for (let i = 0; i <= noSpace.length - 4; i++) {
+    const chunk = noSpace.slice(i, i + 4);
+    if (seq.includes(chunk) || rev.includes(chunk)) return 'Sequência de teclado';
+  }
+
+  // 4. Nenhuma vogal em texto longo — português sempre tem vogais
+  const vowels = (noSpace.match(/[aeiouáéíóúâêôãõ]/gi) || []).length;
+  if (noSpace.length >= 10 && vowels === 0) return 'Texto sem vogais';
+
+  return null;
+}
+
 function localAnalysis({ option, justification, typing, situation }) {
   const len = (justification || '').trim().length;
   const decision = option ? option.score ?? 50 : 50;
@@ -91,12 +121,28 @@ function finalize(a, { option, typing, situation }) {
     const hasText = (justification ?? 0) > 0;
     response_score = hasText ? Math.max(40, justification ?? 0) : null;
   }
+
+  // Caracteres aleatórios = falta de comprometimento. Penaliza a resposta aberta
+  // e sinaliza no comportamento. Não zera (há resposta), mas reduz drasticamente.
+  const randomFlag = detectRandomChars(justification || '');
+  let behavior_signals = a.behavior_signals || [];
+  if (randomFlag) {
+    if (!option) response_score = Math.min(response_score ?? 100, 10);
+    behavior_signals = [
+      { trait: 'falta de comprometimento', evidence: `Texto com caracteres aleatórios: ${randomFlag.toLowerCase()}` },
+      ...(behavior_signals || []),
+    ];
+  }
+
   return {
     ...a,
     decision_score: decision,
     justification_score: justification,
     response_score,
     soft_skill_evidence: softSkillEvidence,
+    behavior_signals,
+    random_chars_detected: !!randomFlag,
+    random_chars_reason: randomFlag,
     ai_detection: { is_ai_generated: !!ai.is_ai_generated, confidence: clamp(ai.confidence), indicators: ai.indicators || [], analysis: ai.analysis || '' },
   };
 }
@@ -144,6 +190,7 @@ REGRAS (EVIDÊNCIA, NÃO ADJETIVOS):
 - quality_metrics.has_concrete_examples: true se houver exemplos concretos na justificativa. Se não houver justificativa, retorne null (não false).
 - behavior_signals: como a pessoa age nesta situação (impulsiva, calma, ansiosa, ponderada, evasiva, assertiva, colaborativa, autoritária, analítica, passiva...), sempre com a evidência.
 - ai_detection: sinais de texto gerado por IA (linguagem genérica e polida demais, estrutura perfeita em tópicos, ausência de voz própria, muitos caracteres para poucas teclas). confidence 0-100. Trate como INDÍCIO, nunca como fato provado.
+- CARACTERES ALEATÓRIOS: se a justificativa for teclado mashado, repetições (kkkkk), sequências (asdf, 1234) ou texto sem sentido, isso indica FALTA DE COMPROMETIMENTO. justification_score no máximo 10 e marque behavior_signals com trait "falta de comprometimento". Não trate como erro de digitação — é desistência.
 - Evite elogios vazios. Seja específico. Cite trechos reais.
 
 Responda SOMENTE com JSON válido:
