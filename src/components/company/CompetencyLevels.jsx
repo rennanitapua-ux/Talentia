@@ -3,8 +3,10 @@ import { Target } from 'lucide-react';
 
 const STATUS = {
   meets: { label: 'Atende', color: 'hsl(160,60%,55%)', bg: 'hsl(160,60%,45%,0.12)' },
+  supera: { label: 'Supera', color: 'hsl(160,60%,45%)', bg: 'hsl(160,60%,45%,0.15)' },
   close: { label: 'Próximo', color: 'hsl(30,80%,60%)', bg: 'hsl(30,80%,55%,0.12)' },
   below: { label: 'Abaixo', color: 'hsl(0,72%,60%)', bg: 'hsl(0,72%,51%,0.12)' },
+  insufficient: { label: 'Sem dados', color: 'hsl(220,14%,60%)', bg: 'hsl(220,14%,20%,0.4)' },
   no_target: { label: 'Sem meta', color: 'hsl(220,14%,60%)', bg: 'hsl(220,14%,20%,0.4)' },
 };
 
@@ -37,14 +39,14 @@ export default function CompetencyLevels({ sim }) {
               </div>
               <div className="relative h-3 rounded-full bg-muted overflow-hidden">
                 {/* Demonstrated bar */}
-                <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${dem * 10}%`, background: st.color }} />
+                <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${(dem ?? 0) * 10}%`, background: st.color }} />
                 {/* Required marker */}
                 {req !== null && (
                   <div className="absolute inset-y-0" style={{ left: `${req * 10}%`, width: '2px', background: 'hsl(220,14%,90%)' }} title={`Exigido: ${req}/10`} />
                 )}
               </div>
               <div className="flex items-center justify-between mt-1.5 text-xs">
-                <span className="text-muted-foreground">Demonstrado: <span className="font-mono font-semibold text-foreground">{dem}/10</span></span>
+                <span className="text-muted-foreground">Demonstrado: <span className="font-mono font-semibold text-foreground">{dem !== null ? `${dem}/10` : '—'}</span></span>
                 <span className="text-muted-foreground">Exigido: <span className="font-mono font-semibold text-foreground">{req !== null ? `${req}/10` : '—'}</span></span>
               </div>
             </div>

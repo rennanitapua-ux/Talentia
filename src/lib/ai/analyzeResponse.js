@@ -3,7 +3,9 @@ import { QUALITY_META } from '@/lib/situations';
 import { SKILL_BY_KEY } from '@/lib/softSkills';
 import { buildEvidenceRecord } from '@/lib/softSkillsRubric';
 
-const DECISION_RANGE = { best: [80, 100], good: [55, 75], weak: [25, 45], bad: [0, 20] };
+// A melhor alternativa ("best") é a MELHOR opção disponível — não há melhor.
+// Portanto, marcar "best" = 100 sempre. O candidato não tem como fazer melhor.
+const DECISION_RANGE = { best: [100, 100], good: [55, 75], weak: [25, 45], bad: [0, 20] };
 
 // Bulk inserts (text appearing at once) or far fewer edits than characters suggest text was not typed.
 function typingSuspicion(typing) {
@@ -127,9 +129,9 @@ SOFT SKILLS QUE ESTA SITUAÇÃO MIRA:
 ${targetSkills || '—'}
 
 REGRAS (EVIDÊNCIA, NÃO ADJETIVOS):
-- A ESCOLHA é o principal fator: "bad" → decision_score 0-20; "weak" → 25-45; "good" → 55-75; "best" → 80-100. A justificativa é OPCIONAL e NUNCA diminui a nota da escolha — só pode acrescentar evidência. Se a melhor escolha ("best") foi marcada, o decision_score fica em 80-100, sem pontos negativos.
-- justification_score (0-100 ou null): se NÃO houver justificativa escrita, retorne null. Se houver, avalie clareza, raciocínio e coerência. Justificativa que contradiz a escolha → no máximo 30.
-- QUESTÕES ABERTAS (sem alternativas): o justification_score avalia o CONTEÚDO da resposta, NÃO a forma. Não penalize por brevidade, gramática, falta de estrutura ou linguagem simples. Avalie se a resposta endereça o problema e se a abordagem faz sentido. Resposta curta mas relevante = 40-55. Resposta com bom senso prático e direção clara = 55-70. Resposta elaborada com exemplos concretos = 70-85. Só dê menos de 35 se a resposta for irrelevante, contraditória, evasiva ou se o candidato não respondeu.
+- A ESCOLHA é o principal fator: "bad" → decision_score 0-20; "weak" → 25-45; "good" → 55-75; "best" → SEMPRE 100. A justificativa é OPCIONAL e NUNCA diminui a nota da escolha — só pode acrescentar evidência. Se a melhor escolha ("best") foi marcada, o decision_score É 100, sem exceção — não há opção melhor disponível.
+- justification_score (0-100 ou null): se NÃO houver justificativa escrita, retorne null. Se houver, avalie o CONTEÚDO (ideias, raciocínio, coerência), NUNCA a forma. NÃO penalize por gramática, ortografia, brevidade, falta de estrutura, linguagem simples ou baixa escolaridade. Nem todo candidato teve acesso à mesma educação — julgue o PENSAMENTO, não a escrita. Justificativa que contradiz a escolha → no máximo 30.
+- QUESTÕES ABERTAS (sem alternativas): o justification_score avalia o CONTEÚDO da resposta, NÃO a forma. NÃO penalize por brevidade, gramática, falta de estrutura, linguagem simples ou baixa escolaridade. Avalie se a resposta endereça o problema e se a abordagem faz sentido. Resposta curta mas relevante = 40-55. Resposta com bom senso prático e direção clara = 55-70. Resposta elaborada com exemplos concretos = 70-85. Só dê menos de 35 se a resposta for irrelevante, contraditória, evasiva ou se o candidato não respondeu.
 - NÃO identificar uma soft skill só porque o candidato ESCREVEU "sou organizado" ou "tenho boa comunicação". Procure COMPORTAMENTO DEMONSTRADO: o que ele descreveu que faria, com que critérios, em que ordem.
 - soft_skill_evidence: para CADA sub-dimensão que esta situação mira, produza:
   - "observed": o que EFETIVAMENTE apareceu na resposta (fato — ex.: "descreveu 3 etapas antes de decidir").
