@@ -56,6 +56,13 @@ export default function Register() {
       const result = await base44.auth.verifyOtp({ email: form.email.trim(), otpCode });
       if (result?.access_token) base44.auth.setToken(result.access_token);
       await saveAccountProfile(role, { ...form, email: form.email.trim() }).catch((e) => console.error(e));
+      // Garante que a sessão está válida antes de redirecionar — evita loop de volta ao cadastro
+      const authed = await base44.auth.isAuthenticated().catch(() => false);
+      if (!authed) {
+        setError("Não foi possível validar sua sessão. Tente novamente.");
+        setLoading(false);
+        return;
+      }
       window.location.href = returnTo !== "/" ? returnTo : roleHome(role);
     } catch (err) {
       setError(err.message || "Código inválido");

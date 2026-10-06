@@ -20,11 +20,20 @@ export default function JobApplication() {
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     (async () => {
-      const user = await base44.auth.me().catch(() => null);
-      if (!user) { setState({ loading: false, user: null }); return; }
+      // Após um hard redirect do cadastro, o SDK pode precisar de um momento
+      // para inicializar. Tentamos me() duas vezes antes de desistir.
+      let user = await base44.auth.me().catch(() => null);
+      if (!user) {
+        await new Promise((r) => setTimeout(r, 800));
+        if (cancelled) return;
+        user = await base44.auth.me().catch(() => null);
+      }
+      if (!user) { if (!cancelled) setState({ loading: false, user: null }); return; }
       const job = await base44.entities.Job.get(jobId).catch(() => null);
-      if (!job) { setState({ loading: false, user, job: null, error: 'Vaga não encontrada ou não publicada.' }); return; }
+      if (!job) { if (!cancelled) setState({ loading: false, user, job: null, error: 'Vaga não encontrada ou não publicada.' }); return; }
       // Empresa (dono da vaga ou com perfil de empresa) não pode se candidatar como candidato.
       // Desconecta e envia ao cadastro de candidato para criar uma sessão de candidato separada.
       const isOwner = job.created_by_id === user.id;
@@ -38,12 +47,16 @@ export default function JobApplication() {
         base44.entities.CandidateProfile.filter({ user_id: user.id }),
         base44.entities.Application.filter({ job_id: jobId, candidate_user_id: user.id }),
       ]);
-      setState({
-        loading: false, user, job,
-        profile: profiles?.[0] || null,
-        application: apps?.[0] || null,
-      });
+      if (!cancelled) {
+        setState({
+          loading: false, user, job,
+          profile: profiles?.[0] || null,
+          application: apps?.[0] || null,
+        });
+      }
     })();
+
+    return () => { cancelled = true; };
   }, [jobId]);
 
   // Não autenticado → cadastro primeiro. A página de cadastro tem link para login.
