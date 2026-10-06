@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,18 @@ export default function Register() {
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  // Se o usuário já está autenticado e caiu aqui (ex: redirect de JobApplication
+  // após me() falhar transitoriamente), manda direto ao destino — quebra o loop.
+  useEffect(() => {
+    let cancelled = false;
+    base44.auth.isAuthenticated().then((authed) => {
+      if (authed && !cancelled) {
+        window.location.href = returnTo !== "/" ? returnTo : roleHome(role);
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
