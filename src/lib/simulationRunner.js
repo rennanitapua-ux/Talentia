@@ -45,6 +45,7 @@ export function analyzeResponse(job, situations, response) {
 }
 
 // Analisa respostas em lotes concorrentes (3 por vez) para evitar rate-limit e falhas em cascata.
+// Cada resposta é analisada independentemente — se uma falha, usa fallback local e não derruba o lote.
 async function analyzeAllResponses(job, situations, responses) {
   const analyzed = [...responses];
   const CONCURRENCY = 3;
@@ -52,8 +53,13 @@ async function analyzeAllResponses(job, situations, responses) {
     const batch = analyzed.slice(i, i + CONCURRENCY);
     await Promise.all(batch.map(async (r, idx) => {
       if (!r.analysis) {
-        const analysis = await analyzeResponse(job, situations, r);
-        analyzed[i + idx] = { ...r, analysis };
+        try {
+          const analysis = await analyzeResponse(job, situations, r);
+          analyzed[i + idx] = { ...r, analysis };
+        } catch (e) {
+          console.warn('Response analysis failed, using minimal fallback', e?.message);
+          analyzed[i + idx] = { ...r, analysis: { response_score: r.choice_score ?? null, source: 'fallback' } };
+        }
       }
     }));
   }
@@ -91,7 +97,12 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
   });
 
   onStep?.(3);
-  await base44.entities.Simulation.update(sim.id, {
+  // Tenta salvar o assessment completo. Se falhar (payload muito grande, timeout, rede),
+  // tenta de novo sem o array de respostas (já salvo incrementalmente). Se ainda falhar,
+  // salva só o status=completed — o candidato nunca fica preso na tela de erro.
+  const completedAt = new Date().toISOString();
+  const totalTime = analyzed.reduce((s, r) => s + (r.time_spent_seconds || 0), 0);
+  const fullPayload = {
     ...localAssessment,
     responses: analyzed,
     ai_flags,
@@ -99,9 +110,43 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
     focus_violations: totalViolations(finalIntegrity),
     status: 'completed',
     analysis_status: 'processing',
-    completed_at: new Date().toISOString(),
-    total_time_seconds: analyzed.reduce((s, r) => s + (r.time_spent_seconds || 0), 0),
-  });
+    completed_at: completedAt,
+    total_time_seconds: totalTime,
+  };
+  const slimPayload = {
+    ...localAssessment,
+    ai_flags,
+    integrity: finalIntegrity,
+    focus_violations: totalViolations(finalIntegrity),
+    status: 'completed',
+    analysis_status: 'processing',
+    completed_at: completedAt,
+    total_time_seconds: totalTime,
+  };
+  const minimalPayload = {
+    status: 'completed',
+    analysis_status: 'processing',
+    completed_at: completedAt,
+    overall_score: localAssessment.overall_score,
+    skill_scores: localAssessment.skill_scores,
+    recommendation: localAssessment.recommendation,
+    overall_confidence: localAssessment.overall_confidence,
+  };
+  let saved = false;
+  for (const payload of [fullPayload, slimPayload, minimalPayload]) {
+    try {
+      await base44.entities.Simulation.update(sim.id, payload);
+      saved = true;
+      break;
+    } catch (e) {
+      console.warn('Simulation update failed, trying smaller payload', e?.message);
+    }
+  }
+  if (!saved) {
+    // Última tentativa: só marca como concluído, sem nenhum campo extra.
+    try { await base44.entities.Simulation.update(sim.id, { status: 'completed', completed_at: completedAt }); }
+    catch (e) { console.error('Could not mark simulation as completed', e?.message); }
+  }
   onStep?.(4);
 
   // Enriquecimento com IA em segundo plano — atualiza o registro quando pronto.

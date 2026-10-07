@@ -137,29 +137,37 @@ export default function CandidateSimulation() {
     await Promise.allSettled(pendingRef.current);
     await saveChain.current;
     try {
-      const finalSim = await finalizeSimulation({
+      await finalizeSimulation({
         sim: { ...sim, id: simIdRef.current }, job: ctx.job, situations,
         responses: responsesRef.current, integrity: integrityRef.current, onStep: setFinishStep,
       });
-      // Vincula a candidatura (Application) à simulação concluída
-      try {
-        const apps = await base44.entities.Application.filter({ job_id: id, candidate_user_id: ctx.user.id });
-        if (apps?.[0]) {
-          await base44.entities.Application.update(apps[0].id, {
-            simulation_id: simIdRef.current,
-            stage: 'completed',
-            completed_at: new Date().toISOString(),
-            history: [...(apps[0].history || []), { at: new Date().toISOString(), stage: 'completed', status: apps[0].status || 'em_analise', note: 'Simulação concluída' }],
-          });
-        }
-      } catch (e) {
-        console.warn('Application link failed', e?.message);
-      }
-      navigate(`/candidate/results/${simIdRef.current}`, { replace: true });
     } catch (e) {
-      console.error(e);
-      setFinishError(true);
+      // finalizeSimulation é à prova de falhas, mas se algo escapar, garante que
+      // a simulação fica marcada como concluída para o candidato ver seus resultados.
+      console.error('finalizeSimulation threw', e?.message);
+      try {
+        await base44.entities.Simulation.update(simIdRef.current, {
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+        });
+      } catch (e2) { console.error('Fallback save also failed', e2?.message); }
     }
+    // Vincula a candidatura (Application) à simulação concluída
+    try {
+      const apps = await base44.entities.Application.filter({ job_id: id, candidate_user_id: ctx.user.id });
+      if (apps?.[0]) {
+        await base44.entities.Application.update(apps[0].id, {
+          simulation_id: simIdRef.current,
+          stage: 'completed',
+          completed_at: new Date().toISOString(),
+          history: [...(apps[0].history || []), { at: new Date().toISOString(), stage: 'completed', status: apps[0].status || 'em_analise', note: 'Simulação concluída' }],
+        });
+      }
+    } catch (e) {
+      console.warn('Application link failed', e?.message);
+    }
+    // Sempre navega para os resultados — o candidato nunca fica preso.
+    navigate(`/candidate/results/${simIdRef.current}`, { replace: true });
   };
 
   useEffect(() => {
