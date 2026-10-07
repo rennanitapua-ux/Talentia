@@ -109,7 +109,7 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
     integrity: finalIntegrity,
     focus_violations: totalViolations(finalIntegrity),
     status: 'completed',
-    analysis_status: 'processing',
+    analysis_status: 'pending',
     completed_at: completedAt,
     total_time_seconds: totalTime,
   };
@@ -119,13 +119,13 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
     integrity: finalIntegrity,
     focus_violations: totalViolations(finalIntegrity),
     status: 'completed',
-    analysis_status: 'processing',
+    analysis_status: 'pending',
     completed_at: completedAt,
     total_time_seconds: totalTime,
   };
   const minimalPayload = {
     status: 'completed',
-    analysis_status: 'processing',
+    analysis_status: 'pending',
     completed_at: completedAt,
     overall_score: localAssessment.overall_score,
     skill_scores: localAssessment.skill_scores,
@@ -148,56 +148,71 @@ export async function finalizeSimulation({ sim, job, situations, responses, inte
     catch (e) { console.error('Could not mark simulation as completed', e?.message); }
   }
   onStep?.(4);
+  // A avaliação local (sem IA) já está salva. O enriquecimento com IA acontece
+  // sob demanda quando a empresa abre o candidato — otimiza créditos de integração.
+}
 
-  // Enriquecimento com IA em segundo plano — atualiza o registro quando pronto.
-  // Não bloqueia a navegação do candidato; a página de resultado atualiza via subscription.
-  // Se a IA falhar, o score local (já salvo) continua válido — o app não para.
+// Enriquece a avaliação com IA sob demanda — chamado pela empresa ao abrir o candidato.
+// Só gasta créditos quando a empresa realmente revisa, não quando o candidato termina.
+export async function enrichSimulation(sim, job) {
+  let companyProfile = null;
+  try {
+    if (job?.created_by_id) {
+      const profiles = await base44.entities.CompanyProfile.filter({ user_id: job.created_by_id }, '-created_date', 5);
+      companyProfile = profiles?.[0] || null;
+    }
+  } catch (e) {
+    console.warn('Failed to load company profile for enrichment', e?.message);
+  }
+
+  try { await base44.entities.Simulation.update(sim.id, { analysis_status: 'processing' }); }
+  catch (e) { console.warn('Could not mark as processing', e?.message); }
+
+  const responses = sim.responses || [];
+  const integrity = sim.integrity || {};
   const ctx = {
-    candidateName: sim.candidate_name, job, responses: analyzed,
-    disc: sim.disc_results, discAnswers: sim.disc_answers, integrity: finalIntegrity, companyProfile,
+    candidateName: sim.candidate_name, job, responses,
+    disc: sim.disc_results, discAnswers: sim.disc_answers, integrity, companyProfile,
   };
-  enrichAssessmentWithAI(localAssessment, ctx)
-    .then(async (full) => {
-      try {
-        // Persiste todos os campos enriquecidos de uma vez — sem listar cada um.
-        await base44.entities.Simulation.update(sim.id, {
-          analysis_status: 'completed',
-          profile_summary: full.profile_summary,
-          summary: full.summary,
-          soft_skills_narrative: full.soft_skills_narrative,
-          soft_skills_detail: full.soft_skills_detail,
-          skill_scores: full.skill_scores,
-          score_confidence: full.score_confidence,
-          skill_graph: full.skill_graph,
-          demonstrated_levels: full.demonstrated_levels,
-          aderencia: full.aderencia,
-          score_composition: full.score_composition,
-          skill_dna: full.skill_dna,
-          hard_skills: full.hard_skills,
-          soft_skills: full.soft_skills,
-          behavioral_profile: full.behavioral_profile,
-          disc_interpretation: full.disc_interpretation,
-          personality_analysis: full.personality_analysis,
-          work_style: full.work_style,
-          strengths_detail: full.strengths_detail,
-          weaknesses_detail: full.weaknesses_detail,
-          job_compatibility: full.job_compatibility,
-          consistency_analysis: full.consistency_analysis,
-          company_analysis: full.company_analysis,
-          evidence_categories: full.evidence_categories,
-          interview_questions: full.interview_questions,
-          overall_score: full.overall_score,
-          overall_confidence: full.overall_confidence,
-          assessment_confidence: full.assessment_confidence,
-          recommendation: full.recommendation,
-        });
-      } catch (e) {
-        console.warn('Failed to persist AI-enriched assessment', e?.message);
-        await base44.entities.Simulation.update(sim.id, { analysis_status: 'failed' }).catch(() => {});
-      }
-    })
-    .catch(async (e) => {
-      console.warn('AI enrichment failed', e?.message);
-      await base44.entities.Simulation.update(sim.id, { analysis_status: 'failed' }).catch(() => {});
+
+  const full = await enrichAssessmentWithAI(sim, ctx);
+
+  try {
+    await base44.entities.Simulation.update(sim.id, {
+      analysis_status: 'completed',
+      profile_summary: full.profile_summary,
+      summary: full.summary,
+      soft_skills_narrative: full.soft_skills_narrative,
+      soft_skills_detail: full.soft_skills_detail,
+      skill_scores: full.skill_scores,
+      score_confidence: full.score_confidence,
+      skill_graph: full.skill_graph,
+      demonstrated_levels: full.demonstrated_levels,
+      aderencia: full.aderencia,
+      score_composition: full.score_composition,
+      skill_dna: full.skill_dna,
+      hard_skills: full.hard_skills,
+      soft_skills: full.soft_skills,
+      behavioral_profile: full.behavioral_profile,
+      disc_interpretation: full.disc_interpretation,
+      personality_analysis: full.personality_analysis,
+      work_style: full.work_style,
+      strengths_detail: full.strengths_detail,
+      weaknesses_detail: full.weaknesses_detail,
+      job_compatibility: full.job_compatibility,
+      consistency_analysis: full.consistency_analysis,
+      company_analysis: full.company_analysis,
+      evidence_categories: full.evidence_categories,
+      interview_questions: full.interview_questions,
+      overall_score: full.overall_score,
+      overall_confidence: full.overall_confidence,
+      assessment_confidence: full.assessment_confidence,
+      recommendation: full.recommendation,
     });
+  } catch (e) {
+    console.warn('Failed to persist enriched assessment', e?.message);
+    await base44.entities.Simulation.update(sim.id, { analysis_status: 'failed' }).catch(() => {});
+  }
+
+  return full;
 }

@@ -21,6 +21,7 @@ import { getRecommendation } from '@/lib/skillScoring';
 import { getSituations } from '@/lib/situations';
 import { seatStatus } from '@/lib/seats';
 import { useSignedUrl } from '@/lib/useSignedUrl';
+import { enrichSimulation } from '@/lib/simulationRunner';
 
 const HIRING_STATUS = {
   em_analise: { label: 'Em Análise', color: '#64748b', bg: 'bg-muted', text: 'text-muted-foreground' },
@@ -36,19 +37,42 @@ export default function CompanyCandidateDetail() {
   const [sim, setSim] = useState(null);
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [enriching, setEnriching] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const { url: photoUrl } = useSignedUrl(sim?.candidate_profile_photo);
   const { url: resumeUrl } = useSignedUrl(sim?.candidate_resume_url);
 
   useEffect(() => {
+    let cancelled = false;
     base44.entities.Simulation.get(id).then(async (s) => {
+      if (cancelled) return;
       setSim(s);
+      let j = null;
       if (s?.job_id) {
-        const j = await base44.entities.Job.get(s.job_id);
-        setJob(j);
+        j = await base44.entities.Job.get(s.job_id).catch(() => null);
+        if (!cancelled) setJob(j);
       }
-      setLoading(false);
-    }).catch(() => setLoading(false));
+      // Dispara o enriquecimento com IA sob demanda — só quando a empresa abre o candidato.
+      if (s && j && (s.analysis_status === 'pending' || s.analysis_status === 'failed')) {
+        if (!cancelled) setEnriching(true);
+        try {
+          const full = await enrichSimulation(s, j);
+          if (!cancelled) setSim(prev => ({ ...prev, ...full, analysis_status: 'completed' }));
+        } catch (e) {
+          console.warn('On-demand enrichment failed', e?.message);
+          if (!cancelled) setSim(prev => ({ ...prev, analysis_status: 'failed' }));
+        }
+        if (!cancelled) setEnriching(false);
+      }
+      if (!cancelled) setLoading(false);
+    }).catch(() => { if (!cancelled) setLoading(false); });
+
+    const unsubscribe = base44.entities.Simulation.subscribe((event) => {
+      if (event.id === id && event.type === 'update') {
+        base44.entities.Simulation.get(id).then(s => { if (!cancelled) setSim(s); }).catch(() => {});
+      }
+    });
+    return () => { cancelled = true; unsubscribe(); };
   }, [id]);
 
   const updateHiringStatus = async (status) => {
@@ -123,6 +147,15 @@ export default function CompanyCandidateDetail() {
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-10 report-export-area">
+        {enriching && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6 p-4 rounded-2xl bg-primary/5 border border-primary/20 flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <div>
+              <div className="text-sm font-medium text-primary">Gerando avaliação detalhada...</div>
+              <div className="text-xs text-muted-foreground">A IA está analisando as respostas do candidato. Isso leva alguns segundos.</div>
+            </div>
+          </motion.div>
+        )}
         {/* Candidate profile + hiring status */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-card">
