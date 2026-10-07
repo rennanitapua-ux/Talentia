@@ -9,6 +9,7 @@ import DiscResults from '@/components/DiscResults';
 import AnalysisReport from '@/components/AnalysisReport';
 import SoftSkillsDetail from '@/components/company/SoftSkillsDetail';
 import { getRecommendation } from '@/lib/skillScoring';
+import { computeLocalAssessment } from '@/lib/ai/finalAssessment';
 
 const HIRING_STATUS = {
   em_analise: { label: 'Em Análise', color: '#64748b', icon: Clock },
@@ -27,10 +28,51 @@ export default function CandidateResults() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.entities.Simulation.get(id).then(s => {
-      setSim(s);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    let cancelled = false;
+
+    (async () => {
+      const s = await base44.entities.Simulation.get(id).catch(() => null);
+      if (cancelled) return;
+      if (!s) { setSim(null); setLoading(false); return; }
+
+      // Se a avaliação está incompleta (IA processando ou update falhou),
+      // computa uma avaliação local básica para o candidato ver imediatamente.
+      const needsBasic = !s.summary || s.overall_score == null || !s.soft_skills_detail || Object.keys(s.skill_scores || {}).length === 0;
+      if (needsBasic && s.responses?.length > 0) {
+        try {
+          const job = await base44.entities.Job.get(s.job_id).catch(() => null);
+          if (job) {
+            const local = computeLocalAssessment({
+              candidateName: s.candidate_name, job, responses: s.responses,
+              disc: s.disc_results, discAnswers: s.disc_answers, integrity: s.integrity || {},
+            });
+            // Sim takes priority; local fills the gaps.
+            if (!cancelled) {
+              setSim({
+                ...s,
+                summary: s.summary || local.summary,
+                overall_score: s.overall_score != null ? s.overall_score : local.overall_score,
+                skill_scores: Object.keys(s.skill_scores || {}).length ? s.skill_scores : local.skill_scores,
+                soft_skills_detail: s.soft_skills_detail || local.soft_skills_detail,
+                demonstrated_levels: s.demonstrated_levels || local.demonstrated_levels,
+                aderencia: s.aderencia || local.aderencia,
+                behavioral_observations: s.behavioral_observations || local.behavioral_observations,
+                interview_questions: s.interview_questions?.length ? s.interview_questions : local.interview_questions,
+                score_composition: s.score_composition || local.score_composition,
+                recommendation: s.recommendation || local.recommendation,
+                overall_confidence: s.overall_confidence || local.overall_confidence,
+                assessment_confidence: s.assessment_confidence || local.assessment_confidence,
+              });
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Could not compute local assessment for results', e?.message);
+        }
+      }
+      if (!cancelled) { setSim(s); setLoading(false); }
+    })();
 
     // Atualiza o resultado quando o enriquecimento da IA terminar (em segundo plano).
     const unsubscribe = base44.entities.Simulation.subscribe((event) => {
@@ -38,7 +80,7 @@ export default function CandidateResults() {
         base44.entities.Simulation.get(id).then(setSim).catch(() => {});
       }
     });
-    return unsubscribe;
+    return () => { cancelled = true; unsubscribe(); };
   }, [id]);
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-brand-violet border-t-transparent rounded-full animate-spin" /></div>;
